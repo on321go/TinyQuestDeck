@@ -1,0 +1,292 @@
+{
+  "classes": [
+    {
+      "id": "knight",
+      "name": "Knight",
+      "role": "Brave front-line protector.",
+      "baseStats": { "might": 2, "mind": 1, "speed": 1 },
+      "hpByLevel": [15, 20, 25],
+      "coreAbilityIDs": ["brave-heart", "shield"],
+      "pathIDs": ["champion", "guardian", "warlord"],
+      "spellListID": null,
+      "baseSpells": [],
+      "theme": { "background": "#AEB8C7", "panel": "#FBF6D8", "accent": "#5E6B7E", "ink": "#23262B", "emblem": "shield" }
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard",
+      "role": "Smart ranged spellcaster with big magical moments.",
+      "baseStats": { "might": 1, "mind": 2, "speed": 1 },
+      "hpByLevel": [10, 12, 15],
+      "coreAbilityIDs": [],
+      "pathIDs": ["dragon-guard", "loremaster"],
+      "spellListID": "wizard",
+      "baseSpells": [
+        { "spellID": "zap", "readyUses": 2 },
+        { "spellID": "shield-bubble", "readyUses": 2 },
+        { "spellID": "sleep-dust" },
+        { "spellID": "light" }
+      ],
+      "theme": { "background": "#C9B6DA", "panel": "#FBF6D8", "accent": "#6B4E8E", "ink": "#241C2E", "emblem": "spellbook-orb" }
+    }
+  ],
+
+  "paths": [
+    {
+      "id": "champion", "classID": "knight", "name": "Champion", "blurb": "Hard hitter.",
+      "startingGearIDs": ["heavy-melee", "armor"],
+      "pathPowerOptionIDs": ["finishing-blow"],
+      "signatureOptionIDs": ["champions-strike", "executioner"],
+      "specialSpells": []
+    },
+    {
+      "id": "guardian", "classID": "knight", "name": "Guardian", "blurb": "Defender.",
+      "startingGearIDs": ["light-melee", "shield", "armor"],
+      "pathPowerOptionIDs": ["i-take-it"],
+      "signatureOptionIDs": ["unbreakable", "last-stand"],
+      "specialSpells": []
+    },
+    {
+      "id": "warlord", "classID": "knight", "name": "Warlord", "blurb": "Team leader.",
+      "startingGearIDs": ["heavy-melee", "adv-clothes"],
+      "pathPowerOptionIDs": ["battle-cry"],
+      "signatureOptionIDs": ["banner-bearer", "warlords-eye"],
+      "specialSpells": []
+    },
+    {
+      "id": "dragon-guard", "classID": "wizard", "name": "Dragon Guard",
+      "blurb": "Fire-magic warrior with sword, armor, and spells.",
+      "startingGearIDs": ["magic-weapon", "armor", "shield"],
+      "pathPowerOptionIDs": ["fire-explosion", "fire-armor"],
+      "signatureOptionIDs": ["storm-caller", "elemental-teleport"],
+      "specialSpells": ["zap", "spark", "frostbolt", "fireball"]
+    },
+    {
+      "id": "loremaster", "classID": "wizard", "name": "Loremaster",
+      "blurb": "Knows a little of everything.",
+      "startingGearIDs": ["magic-weapon", "adv-clothes"],
+      "pathPowerOptionIDs": ["arcane-insight", "overcharge"],
+      "signatureOptionIDs": ["knowing-eye", "spell-master"],
+      "specialSpells": ["detect-magic", "mage-hand", "featherfall", "spider-climb"]
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "brave-heart", "name": "Brave Heart", "text": "Never affected by fear.",
+      "actionCost": "passive", "reset": "atWill",
+      "effects": [ { "kind": "conditionImmunity", "condition": "frightened" } ]
+    },
+    {
+      "id": "shield", "name": "Shield",
+      "text": "Once per fight, if a shield is equipped, block all damage from one attack on you or a friend next to you.",
+      "actionCost": "reaction", "reset": "oncePerFight"
+    },
+
+    {
+      "id": "finishing-blow", "name": "Finishing Blow",
+      "text": "Hit a Hurt, Stuck, or Frightened monster for +3 damage. Once per fight, this also works on a monster below half HP.",
+      "actionCost": "free", "reset": "recharge",
+      "effects": [
+        { "kind": "modifier", "value": 3, "target": "damage", "scope": "nextAttack",
+          "requires": ["hurt", "stuck", "frightened"] }
+      ]
+    },
+    {
+      "id": "champions-strike", "name": "Champion's Strike",
+      "text": "Once per fight, your hit deals max weapon damage + Might. Add Finishing Blow if it applies.",
+      "actionCost": "free", "reset": "recharge",
+      "effects": [ { "kind": "maxDamage", "addStat": "might" } ]
+    },
+    {
+      "id": "executioner", "name": "Executioner",
+      "text": "Enemies at half HP or less take +5 from Finishing Blow. Once per fight, dropping a monster to 0 HP gives a free sword swing at another nearby monster.",
+      "actionCost": "passive", "reset": "oncePerFight"
+    },
+
+    {
+      "id": "i-take-it", "name": "I Take It",
+      "text": "When a friend next to you is hit, take the hit instead for half damage.",
+      "actionCost": "reaction", "reset": "atWill", "affects": "oneAlly"
+    },
+    {
+      "id": "unbreakable", "name": "Unbreakable",
+      "text": "Shield works twice per fight. I Take It now also heals the protected friend or yourself 2 HP.",
+      "actionCost": "passive", "reset": "atWill"
+    },
+    {
+      "id": "last-stand", "name": "Last Stand",
+      "text": "Once per adventure, when you would drop to 0 HP, stay at 1 HP. Your next attack auto-hits and deals double damage. If it drops the enemy, a friend or you heal d6 HP.",
+      "actionCost": "reaction", "reset": "oncePerAdventure"
+    },
+
+    {
+      "id": "battle-cry", "name": "Battle Cry",
+      "text": "Once per fight, shout your battle cry as a free action. Friends within sight get +2 to their next attack roll and +2 damage.",
+      "actionCost": "free", "reset": "recharge", "affects": "alliesInSight",
+      "effects": [
+        { "kind": "modifier", "value": 2, "target": "toHit", "scope": "nextAttack" },
+        { "kind": "modifier", "value": 2, "target": "damage", "scope": "nextAttack" }
+      ]
+    },
+    {
+      "id": "banner-bearer", "name": "Banner Bearer",
+      "text": "Once per adventure, plant your sword. Friends within sight heal d6 + Might HP and lose Hurt, Stuck, and Frightened. Battle Cry resets and you choose an enemy to Frighten.",
+      "actionCost": "action", "reset": "oncePerAdventure", "affects": "alliesInSight"
+    },
+    {
+      "id": "warlords-eye", "name": "Warlord's Eye",
+      "text": "Once per fight, add +5 to hit for any ally rolling (even if the roll failed) plus max damage.",
+      "actionCost": "reaction", "reset": "recharge", "affects": "oneAlly",
+      "effects": [
+        { "kind": "modifier", "value": 5, "target": "toHit", "scope": "nextAttack" },
+        { "kind": "maxDamage" }
+      ]
+    },
+
+    {
+      "id": "fire-explosion", "name": "Fire Explosion",
+      "text": "Hit all enemies around you for d6 fire damage.",
+      "actionCost": "action", "reset": "recharge",
+      "attack": { "damageDice": "d6", "targets": { "kind": "area" } }
+    },
+    {
+      "id": "fire-armor", "name": "Fire Armor",
+      "text": "For the fight, enemies roll d20 to hit you with -2, and enemy melee attacks deal 2 damage back to the attacker.",
+      "actionCost": "action", "reset": "recharge"
+    },
+    {
+      "id": "storm-caller", "name": "Storm Caller",
+      "text": "Charge your weapon with elemental energy. Hold it to the sky and say \u201cI have the power!\u201d Weapon attacks become ranged and hit 3 enemies \u2014 the first takes full dice damage, the rest take d6 + Mind.",
+      "actionCost": "action", "reset": "oncePerAdventure"
+    },
+    {
+      "id": "elemental-teleport", "name": "Elemental Teleport",
+      "text": "Teleport to a spot in line of sight. This activates Fire Explosion even if it's on cooldown.",
+      "actionCost": "action", "reset": "oncePerAdventure"
+    },
+
+    {
+      "id": "arcane-insight", "name": "Arcane Insight",
+      "text": "Ask the GM one true question about an object, creature, place, or person.",
+      "actionCost": "action", "reset": "recharge"
+    },
+    {
+      "id": "overcharge", "name": "Overcharge",
+      "text": "Once per fight, before you roll, shout \u201cOvercharge!\u201d The next spell deals max damage on a hit.",
+      "actionCost": "free", "reset": "recharge",
+      "effects": [ { "kind": "maxDamage" } ]
+    },
+    {
+      "id": "knowing-eye", "name": "Knowing Eye",
+      "text": "You always know enemy info \u2014 HP, shields, weaknesses, and strengths.",
+      "actionCost": "free", "reset": "atWill"
+    },
+    {
+      "id": "spell-master", "name": "Spell Master",
+      "text": "Have up to 8 Ready Spells instead of 6. Once per adventure, recharge your spells.",
+      "actionCost": "passive", "reset": "atWill",
+      "effects": [ { "kind": "readySpellCap", "cap": 8 } ]
+    }
+  ],
+
+  "spells": [
+    { "id": "zap", "name": "Zap", "tier": "core",
+      "text": "Roll d20 + Mind against one foe. Deal d6 + Mind damage.",
+      "attack": { "toHitStat": "mind", "damageDice": "d6", "damageStat": "mind", "targets": { "kind": "single" } } },
+    { "id": "shield-bubble", "name": "Shield Bubble", "tier": "core",
+      "text": "Block all damage from one attack on yourself or a friend." },
+    { "id": "sleep-dust", "name": "Sleep Dust", "tier": "core",
+      "text": "One small enemy falls Asleep. Big monsters resist (13+).",
+      "effects": [ { "kind": "applyCondition", "condition": "asleep", "toSelf": false } ] },
+    { "id": "light", "name": "Light", "tier": "core",
+      "text": "Make magical light, bright as a torch. Lasts the whole scene." },
+
+    { "id": "spark", "name": "Spark", "tier": "t1",
+      "text": "Ranged lightning. d20 + Mind to hit. Damage d6. Hits 3 targets.",
+      "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "multiple", "count": 3 } } },
+    { "id": "mage-hand", "name": "Mage Hand", "tier": "t1",
+      "text": "An invisible hand grabs small things, pushes buttons, unties knots, or fetches items. Lasts the scene." },
+    { "id": "detect-magic", "name": "Detect Magic", "tier": "t1",
+      "text": "For one minute, magical things nearby glow blue to you." },
+    { "id": "featherfall", "name": "Featherfall", "tier": "t1",
+      "text": "You and friends fall slowly and safely from any height." },
+
+    { "id": "frostbolt", "name": "Frostbolt", "tier": "t2",
+      "text": "Ice shard. d20 + Mind to hit. Damage d6 + Mind. Target is Stuck.",
+      "attack": { "toHitStat": "mind", "damageDice": "d6", "damageStat": "mind", "targets": { "kind": "single" } },
+      "effects": [ { "kind": "applyCondition", "condition": "stuck", "toSelf": false } ] },
+    { "id": "mirror-image", "name": "Mirror Image", "tier": "t2",
+      "text": "Three copies appear. The next three attacks against you hit a copy instead." },
+    { "id": "invisibility", "name": "Invisibility", "tier": "t2",
+      "text": "You or a friend you touch becomes invisible until attacking or casting." },
+    { "id": "spider-climb", "name": "Spider Climb", "tier": "t2",
+      "text": "You or a friend climbs walls and ceilings for the scene. No Speed roll needed." },
+
+    { "id": "fireball", "name": "Fireball", "tier": "t3",
+      "text": "Hits up to 6 clustered enemies in a wide explosion. d20 + Mind. d6 + Mind to each. Careful near friends.",
+      "attack": { "toHitStat": "mind", "damageDice": "d6", "damageStat": "mind", "targets": { "kind": "cluster", "max": 6 } } },
+    { "id": "polymorph", "name": "Polymorph", "tier": "t3",
+      "text": "Turn one creature into a harmless animal for the scene. Big bosses resist with Might 13+." },
+    { "id": "wall-of-stone", "name": "Wall of Stone", "tier": "t3",
+      "text": "Create a 10 ft long, 6 ft tall stone wall. Blocks enemies and attacks. Lasts the scene." },
+    { "id": "teleport", "name": "Teleport", "tier": "t3",
+      "text": "Once per adventure, move the party somewhere you have been before." }
+  ],
+
+  "spellLists": [
+    {
+      "id": "wizard", "name": "Wizard Spells",
+      "spellIDs": [
+        "zap", "shield-bubble", "sleep-dust", "light",
+        "spark", "mage-hand", "detect-magic", "featherfall",
+        "frostbolt", "mirror-image", "invisibility", "spider-climb",
+        "fireball", "polymorph", "wall-of-stone", "teleport"
+      ]
+    }
+  ],
+
+  "gear": [
+    { "id": "heavy-melee", "name": "Heavy Melee", "category": "heavyMelee",
+      "attack": { "toHitStat": "might", "damageDice": "d6", "damageStat": "might", "targets": { "kind": "single" } } },
+    { "id": "light-melee", "name": "Light Melee", "category": "lightMelee",
+      "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } } },
+    { "id": "ranged-physical", "name": "Ranged Physical", "category": "rangedPhysical",
+      "attack": { "toHitStat": "speed", "damageDice": "d6", "damageStat": "speed", "targets": { "kind": "single" } } },
+    { "id": "magic-weapon", "name": "Magic Weapon", "category": "magicMental",
+      "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } } },
+    { "id": "armor", "name": "Armor", "category": "armor", "maxHP": 2 },
+    { "id": "shield", "name": "Shield", "category": "shield", "maxHP": 1 },
+    { "id": "adv-clothes", "name": "Adventurer Clothes", "category": "advClothes", "maxHP": 0 }
+  ],
+
+  "races": [
+    {
+      "id": "human", "name": "Human",
+      "tagline": "Curious, adaptable, found everywhere.",
+      "lore": "The most common folk in the world. What they lack in pointed ears or magical heritage they make up for in pure stubborn grit. A Human will try anything once \u2014 and twice if the first time was funny.",
+      "appearance": ["Average size for a person", "Every shade of skin, hair, and eyes"],
+      "nameIdeas": ["Tom", "Lila", "Mei", "Owen", "Kestrel", "Rowan", "Hazel", "Marko", "Anya", "Iris", "Theo"],
+      "ability": {
+        "id": "try-anything-once", "name": "Try Anything Once",
+        "text": "Once per rest, when you fail a d20 roll, re-roll the same thing and keep whichever result is better. Pick your moment.",
+        "actionCost": "reaction", "reset": "rest",
+        "effects": [ { "kind": "reroll", "target": "any", "keep": "better" } ]
+      }
+    },
+    {
+      "id": "catfolk", "name": "Catfolk",
+      "tagline": "Curious, clever, always landing on their feet.",
+      "lore": "People with the heads, tails, and senses of cats. They walk on two legs with a cat's grace and a cat's curiosity, investigate anything that makes a noise, purr when happy, and have very strong opinions about birds.",
+      "appearance": ["Cat ears, eyes, whiskers, and a long balancing tail", "Soft fur", "Hands with retractable claws"],
+      "nameIdeas": ["Mittens", "Tabbi", "Asha", "Jin", "Mira", "Sable", "Pip", "Calix", "Velvet"],
+      "ability": {
+        "id": "always-land-on-your-feet", "name": "Always Land on Your Feet",
+        "text": "You never take damage from falling, no matter how high. +1 to Speed rolls for balance, climbing, or jumping. You see in dim light as well as anyone sees in bright light.",
+        "actionCost": "passive", "reset": "atWill"
+      }
+    }
+  ],
+
+  "companions": []
+}
