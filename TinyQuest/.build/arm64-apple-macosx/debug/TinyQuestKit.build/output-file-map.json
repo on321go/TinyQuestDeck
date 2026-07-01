@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/master.swiftdeps"
+  },
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestKit/Core.swift": {
+    "dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core.d",
+    "object": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core.swift.o",
+    "swiftmodule": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core~partial.swiftmodule",
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core.swiftdeps"
+  }
+}

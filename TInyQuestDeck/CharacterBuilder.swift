@@ -21,6 +21,7 @@ final class RosterStore {
 struct RosterView: View {
     @State private var content = ContentStore()      // reused from ContentBrowser.swift
     @State private var roster = RosterStore()
+    @State private var combat = CombatStore()
     @State private var building = false
 
     var body: some View {
@@ -46,7 +47,7 @@ struct RosterView: View {
                 }
             }
             .navigationDestination(for: CharacterChoices.self) { c in
-                HeroSummaryView(character: c, repo: content.repo!)
+                PlaySheetView(character: c, repo: content.repo!, combat: combat)
             }
             .sheet(isPresented: $building) {
                 if let repo = content.repo {
@@ -71,18 +72,7 @@ struct RosterView: View {
                 Button("New Hero") { building = true }.buttonStyle(.borderedProminent)
             }
         } else {
-            List {
-                ForEach(roster.characters) { c in
-                    NavigationLink(value: c) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(c.name).font(.headline)
-                            Text(subtitle(for: c, repo: repo))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .onDelete { roster.remove(at: $0) }
-            }
+            HeroGrid(characters: roster.characters, repo: repo) { roster.remove($0) }
         }
     }
 
@@ -182,30 +172,6 @@ struct CharacterBuilderView: View {
     }
 }
 
-// MARK: - Hero summary (read-only)
-
-struct HeroSummaryView: View {
-    let character: CharacterChoices
-    let repo: ContentRepository
-
-    var body: some View {
-        Form {
-            if let summary = startingSummary(for: character, using: repo) {
-                Section {
-                    LabeledContent("Race", value: summary.raceName)
-                    LabeledContent("Class", value: summary.className)
-                    LabeledContent("Path", value: summary.pathName)
-                    LabeledContent("Level", value: "\(character.level)")
-                }
-                Section("Sheet") { StartingSummaryRows(summary: summary) }
-            } else {
-                Text("This hero references content that didn't load.")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .navigationTitle(character.name)
-    }
-}
 
 // MARK: - Shared summary rows (used in builder preview + hero summary)
 

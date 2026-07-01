@@ -25,7 +25,7 @@ struct TInyQuestDeckApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RosterView()
         }
         .modelContainer(sharedModelContainer)
     }

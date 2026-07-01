@@ -13,6 +13,7 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var id = UUID()
     var name: String
     var raceID: String
+    var portraitID: String? = nil
     var classID: String
     var pathID: String
     var level: Int = 1

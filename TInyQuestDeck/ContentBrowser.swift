@@ -32,7 +32,7 @@ final class ContentStore {
         } catch let e as ContentValidationError {
             error = e.description          // lists every broken reference / HP mismatch
         } catch {
-            error = "Failed to decode content.json:\n\(error)"
+            //error = "Failed to decode content.json:\n\(error)" as! any Error
         }
     }
 }

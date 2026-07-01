@@ -1,0 +1,4 @@
+module TinyQuestContent {
+    header "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/TinyQuestContent-Swift.h"
+    requires objc
+}

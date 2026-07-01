@@ -1,0 +1,23 @@
+{
+  "": {
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/master.swiftdeps"
+  },
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Definitions.swift": {
+    "dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions.d",
+    "object": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions.swift.o",
+    "swiftmodule": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions~partial.swiftmodule",
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions.swiftdeps"
+  },
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/EffectHint.swift": {
+    "dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint.d",
+    "object": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint.swift.o",
+    "swiftmodule": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint~partial.swiftmodule",
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint.swiftdeps"
+  },
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Repository.swift": {
+    "dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository.d",
+    "object": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository.swift.o",
+    "swiftmodule": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository~partial.swiftmodule",
+    "swift-dependencies": "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository.swiftdeps"
+  }
+}

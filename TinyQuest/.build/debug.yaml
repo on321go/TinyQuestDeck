@@ -1,0 +1,69 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "TinyQuestContent-arm64-apple-macosx16.0-debug.module": ["<TinyQuestContent-arm64-apple-macosx16.0-debug.module>"]
+  "TinyQuestKit-arm64-apple-macosx16.0-debug.module": ["<TinyQuestKit-arm64-apple-macosx16.0-debug.module>"]
+  "main": ["<TinyQuestContent-arm64-apple-macosx16.0-debug.module>","<TinyQuestKit-arm64-apple-macosx16.0-debug.module>"]
+  "test": ["<TinyQuestContent-arm64-apple-macosx16.0-debug.module>","<TinyQuestKit-arm64-apple-macosx16.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestKit/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Definitions.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/EffectHint.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Repository.swift"]
+    outputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/sources"]
+    description: "Write auxiliary file /Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/sources"
+
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestKit/Core.swift"]
+    outputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/sources"]
+    description: "Write auxiliary file /Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/sources"
+
+  "/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<TinyQuestContent-arm64-apple-macosx16.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestContent.swiftmodule"]
+    outputs: ["<TinyQuestContent-arm64-apple-macosx16.0-debug.module>"]
+
+  "<TinyQuestKit-arm64-apple-macosx16.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestKit.swiftmodule"]
+    outputs: ["<TinyQuestKit-arm64-apple-macosx16.0-debug.module>"]
+
+  "C.TinyQuestContent-arm64-apple-macosx16.0-debug.module":
+    tool: shell
+    inputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Definitions.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/EffectHint.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/Repository.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestKit.swiftmodule","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/sources"]
+    outputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Definitions.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/EffectHint.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/Repository.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestContent.swiftmodule"]
+    description: "Compiling Swift Module 'TinyQuestContent' (3 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","TinyQuestContent","-emit-dependencies","-emit-module","-emit-module-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestContent.swiftmodule","-output-file-map","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/sources","-I","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-enable-batch-mode","-index-store-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j8","-DSWIFT_PACKAGE","-DDEBUG","-module-cache-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestContent.build/TinyQuestContent-Swift.h","-color-diagnostics","-swift-version","6","-F","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","tinyquest"]
+
+  "C.TinyQuestKit-arm64-apple-macosx16.0-debug.module":
+    tool: shell
+    inputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestKit/Core.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/sources"]
+    outputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/Core.swift.o","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestKit.swiftmodule"]
+    description: "Compiling Swift Module 'TinyQuestKit' (1 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","TinyQuestKit","-emit-dependencies","-emit-module","-emit-module-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules/TinyQuestKit.swiftmodule","-output-file-map","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/sources","-I","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-enable-batch-mode","-index-store-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j8","-DSWIFT_PACKAGE","-DDEBUG","-module-cache-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/.build/arm64-apple-macosx/debug/TinyQuestKit.build/TinyQuestKit-Swift.h","-color-diagnostics","-swift-version","6","-F","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","tinyquest"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestContent/","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Sources/TinyQuestKit/","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Package.swift","/Users/joeyrubin/Documents/Apps/TInyQuestDeck/TinyQuest/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
