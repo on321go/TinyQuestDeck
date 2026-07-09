@@ -1,23 +1,18 @@
 //  CharacterChoices.swift
 //  The content-is-data payload: a character is the CHOICES a player made, never a
-//  computed sheet. (This is the plain-struct stand-in for the TDD's SavedCharacter;
-//  it becomes the SwiftData model in step 4.)
+//  computed sheet. Becomes the SwiftData model in step 4.
 //
-//  Design rulings (July 2026 UI reset):
-//   • Path Powers and Signature Powers are GRANT-ALL at L2/L3 — not choices.
-//   • Gear is a stored choice. The sheet's Gear section starts BLANK; the kid adds
-//     items (seeded picker = the path's book kit). Equipped gear drives Max HP,
-//     the active weapon profile, and gear-gated abilities (Shield).
-//   • Pets, magic items, and normal items are free-form user additions (the loot
-//     model may formalize magic items later; strings are fine pre-persistence).
-//   • "Race" stays the internal identifier; the book's "Kind" is presentational.
+//  Rulings: grant-all powers (no choice fields); blank-start equipped gear; pets
+//  reference a book companion (companionID) or are custom (nil = standard 5 HP,
+//  +2 hit, d6); magic/normal items are free-form strings pre-loot-model.
 
 import Foundation
 
 struct PetChoice: Identifiable, Hashable, Codable {
     var id = UUID()
     var name: String
-    var imageID: String? = nil      // future pet-image gallery slot
+    var companionID: String? = nil   // book companion; nil = custom standard pet
+    var imageID: String? = nil       // future pet-image gallery slot
 }
 
 struct CharacterChoices: Identifiable, Hashable, Codable {
@@ -28,13 +23,13 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var classID: String
     var pathID: String
     var level: Int = 1
-    var statBoosts: [String: Int] = [:]         // stat.rawValue -> total +N from level-ups
-    var equippedGearIDs: [String] = []          // Gear section contents; starts empty
-    var pets: [PetChoice] = []                  // standard pet: 5 HP, +2 hit / d6
-    var magicItems: [String] = []               // free-form until the loot model lands
-    var normalItems: [String] = []              // free-form
-    var spellbookIDs: [String] = []             // caster: grows via loot
-    var readySpellIDs: [String] = []            // caster: cap 6 (8 with Spell Master)
+    var statBoosts: [String: Int] = [:]
+    var equippedGearIDs: [String] = []          // Gear box; starts empty; cap 5 (UI rule)
+    var pets: [PetChoice] = []
+    var magicItems: [String] = []
+    var normalItems: [String] = []
+    var spellbookIDs: [String] = []             // all known spells
+    var readySpellIDs: [String] = []            // subset; cap 6 (8 with Spell Master)
 }
 
 // Small convenience the repo protocol didn't ship (lookup a class by id).
@@ -42,9 +37,7 @@ extension ContentRepository {
     func klass(_ id: String) -> ClassDefinition? { classes().first { $0.id == id } }
 }
 
-// MARK: - Lightweight "what you start with" derivation
-// Previews the path's RECOMMENDED book kit (Build Info on the path detail screen).
-// It intentionally reads path.startingGearIDs — the offer, not equipped state.
+// MARK: - "What you start with" preview (Build Info on the path detail screen)
 
 struct StartingSpell: Hashable { let name: String; let uses: Int }
 

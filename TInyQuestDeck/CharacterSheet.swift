@@ -1,19 +1,11 @@
 //  CharacterSheet.swift
 //  The derived sheet: choices + content -> the numbers read at the table. Pure, no
 //  SwiftUI, fully testable. Nothing here is stored; it's recomputed from CharacterChoices.
-//  This is the STATIC (resting) sheet — current HP / conditions / live chips come later.
 //
-//  Gear is the character's EQUIPPED gear (a stored choice), not the path's book kit.
-//  Consequences:
-//   • maxHP = hpByLevel[level] + Σ equipped maxHP + passive maxHP hints — so adding
-//     Armor on the sheet immediately raises Max HP, matching the mockup behavior.
-//   • Abilities can be gear-gated: Shield requires an equipped shield. Gated
-//     abilities stay ON the sheet with isAvailable == false so the UI can render
-//     the mockup's strikethrough "Not Equipped" state instead of hiding them.
-//   • Path Powers and Signature Powers are grant-all: every listed power appears
-//     once the level threshold is met. No selection state exists anywhere.
-//   • Dual wield is a GLOBAL derived rule: two equipped lightMelee weapons = the
-//     second attack is a free action (hasDualWield). Two rolls, two attacks.
+//  GRANT-ALL: at L1 the character has class core + path core (L1 slot) + race
+//  abilities; L2 adds ALL pathPowerIDs; L3 adds ALL signaturePowerIDs. No choice
+//  fields exist anywhere — if a power is missing on the sheet, the bug is here
+//  or in content, never in selection state.
 
 import Foundation
 
@@ -22,7 +14,7 @@ enum AbilitySource: String, Hashable { case core, race, pathPower, signature }
 struct SheetAbility: Hashable {
     let ability: AbilityDefinition
     let source: AbilitySource
-    /// False when the ability names a gear category that isn't currently equipped
+    /// False when the ability names a gear category that isn't equipped
     /// (Shield with no shield). UI renders these struck-through, not hidden.
     let isAvailable: Bool
 }
@@ -56,7 +48,8 @@ struct CharacterSheet: Hashable {
     var theme: ThemeToken?
 
     var readySpells: [SheetSpell] { spells.filter(\.isReady) }
-    /// Equipped gear that can attack — the Gear section's weapon lines.
+    var benchSpells: [SheetSpell] { spells.filter { !$0.isReady } }
+    /// Equipped gear that can attack — the Gear box's weapon lines.
     var weapons: [GearDefinition] { gear.filter { $0.attack != nil } }
     /// Global rule: a second equipped light melee weapon grants a free-action second
     /// attack (its own roll). Counts the array, NOT a category set — duplicates matter.
@@ -83,16 +76,18 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
         return SheetAbility(ability: a, source: source, isAvailable: available)
     }
 
-    // Abilities the character actually has AT THIS LEVEL. Grant-all: no choice fields.
+    // ---- Ability assembly. Order: class core, path core (L1), race, L2 powers, L3 powers.
     var abilities: [SheetAbility] = cls.coreAbilityIDs
         .compactMap { repo.ability($0) }
         .map { sheetAbility($0, .core) }
-    
+    abilities += path.coreAbilityIDs
+        .compactMap { repo.ability($0) }
+        .map { sheetAbility($0, .core) }
     abilities.append(sheetAbility(race.ability, .race))
     if level >= 2 {
-        abilities += path.coreAbilityIDs
+        abilities += path.pathPowerIDs
             .compactMap { repo.ability($0) }
-            .map { sheetAbility($0, .core) }
+            .map { sheetAbility($0, .pathPower) }
     }
     if level >= 3 {
         abilities += path.signaturePowerIDs
@@ -110,14 +105,14 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
         case .maxHP(let d):             bonusHP += d
         case .conditionImmunity(let k): immunities.append(k)
         case .readySpellCap(let cap):   capFromHints = max(capFromHints, cap)
-        default: break                  // modifier/maxDamage/applyCondition/etc. are runtime, not resting
+        default: break                  // runtime hints, not resting
         }
     }
 
     let maxHP = cls.hpByLevel[level - 1] + gear.reduce(0) { $0 + $1.maxHP } + bonusHP
 
-    // Spells. Cast counts come from the starting grants (loot-granted counts arrive with a
-    // loot model later; unknown -> 1). At L1 every ready spell is a starting spell, so exact.
+    // Spells. Cast counts come from starting grants (loot counts arrive with the
+    // loot model; unknown -> 1).
     let grantUses = Dictionary(
         startingGrants(classID: c.classID, pathID: c.pathID, repo: repo).map { ($0.spellID, $0.readyUses) },
         uniquingKeysWith: { first, _ in first })
@@ -137,7 +132,7 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
         theme: path.themeOverride ?? cls.theme)
 }
 
-// MARK: - Display helpers (used by the play sheet; pure string formatting)
+// MARK: - Display helpers
 
 func diceString(_ d: DiceExpr) -> String { d.count == 1 ? "d\(d.faces)" : "\(d.count)d\(d.faces)" }
 
@@ -152,5 +147,13 @@ func attackSummary(_ a: AttackProfile) -> String {
     case .cluster(let m):   line += " · up to \(m)"
     case .area:             line += " · all around"
     }
+    return line
+}
+
+/// Companion statline: flat hitBonus, not stat-based ("d20 +2 · d6").
+func companionStatline(_ comp: CompanionDefinition) -> String {
+    var line = "HP \(comp.maxHP)"
+    if let hit = comp.hitBonus { line += " · +\(hit) hit" }
+    if let atk = comp.attack { line += " · \(diceString(atk.damageDice))" }
     return line
 }

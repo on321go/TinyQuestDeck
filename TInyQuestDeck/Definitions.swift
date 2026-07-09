@@ -2,13 +2,14 @@
 //  TinyQuestContent — Codable definitions loaded from JSON, read-only at runtime.
 //  A saved character stores *choices*; the sheet is derived from choices + these.
 //
-//  July 2026 UI-reset rulings baked in here:
-//   • Path Powers and Signature Powers are GRANT-ALL (pathPowerIDs / signaturePowerIDs,
-//     renamed from *OptionIDs). No selection exists; deriveSheet grants everything at
-//     the level threshold. autoSelectedPathPowerID is deleted — grant-all made it dead.
+//  Canonical as of the character-sheet v2 pass:
+//   • Path Powers / Signature Powers are GRANT-ALL (pathPowerIDs / signaturePowerIDs).
+//   • Paths can grant LEVEL-1 abilities (coreAbilityIDs): Druid's Quick Cast,
+//     Mystic's Reactive Caster, Shadow's Silent Step, Wild's cosmetic pet.
 //   • Abilities can be gear-gated (requiresGearCategory): Shield needs a shield.
-//   • "Race" stays the internal identifier + JSON key. The book's "Kind" is
-//     presentational only — a UI display-string concern, not a schema one.
+//   • Companions carry a flat hitBonus (book pets roll d20 + N, not d20 + stat);
+//     a companion attack's nil toHitStat means "d20 + hitBonus", not auto-hit.
+//   • "Race" stays the internal identifier + JSON key; "Kind" is presentational.
 
 import Foundation
 
@@ -19,10 +20,10 @@ public struct ThemeToken: Codable, Hashable, Sendable {
     public let panel: String        // hex (the cream fields)
     public let accent: String       // hex
     public let ink: String          // hex
-    public let emblem: String       // motif id: "shield", "spellbook-orb", "tarot", "bow"
+    public let emblem: String       // motif id: "shield", "spellbook-orb", "tarot", "bow", "sun"
 }
 
-// MARK: - Gear (weapon categories + armor/shield/clothes; named loot items slot in later, same shape)
+// MARK: - Gear
 
 public enum GearCategory: String, Codable, Sendable {
     case heavyMelee, lightMelee, rangedPhysical, magicMental
@@ -56,7 +57,7 @@ public struct SpellDefinition: Codable, Hashable, Sendable, Identifiable {
     public let tier: SpellTier
     public let text: String
     public let attack: AttackProfile?   // nil = utility
-    public let effects: [EffectHint]    // on-hit conditions etc.; default []
+    public let effects: [EffectHint]    // default []
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -76,10 +77,9 @@ public struct SpellListDefinition: Codable, Hashable, Sendable, Identifiable {
 }
 
 /// A starting/granted spell carries its own Ready cast-count (the ☐ boxes).
-/// Path-specific, not intrinsic: Cleric grants Bless×2, Mystic grants Bless×1.
 public struct SpellGrant: Codable, Hashable, Sendable {
     public let spellID: String
-    public let readyUses: Int   // default 1 (box-less spells = 1 cast/Rest)
+    public let readyUses: Int   // default 1
 
     public init(spellID: String, readyUses: Int = 1) {
         self.spellID = spellID; self.readyUses = readyUses
@@ -100,10 +100,10 @@ public struct AbilityDefinition: Codable, Hashable, Sendable, Identifiable {
     public let actionCost: ActionCost
     public let reset: ResetTrigger
     public let affects: Recipient                    // default .selfTarget
-    public let attack: AttackProfile?                // damage-dealing powers (Fire Explosion)
+    public let attack: AttackProfile?
     public let effects: [EffectHint]                 // default []
-    /// Gear gate: the ability is unavailable (shown struck-through, hints inert)
-    /// unless something of this category is equipped. Shield -> .shield. Default nil.
+    /// Gear gate: unavailable (struck-through, hints inert) unless something of
+    /// this category is equipped. Shield -> .shield. Default nil.
     public let requiresGearCategory: GearCategory?
 
     public init(from decoder: Decoder) throws {
@@ -120,7 +120,7 @@ public struct AbilityDefinition: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-// MARK: - Companions (designed now; instances encoded later. Acts at end of round.)
+// MARK: - Companions (the book's named pets; Wild Scout's bonded friend uses the same shape)
 
 public struct CompanionGrowth: Codable, Hashable, Sendable {
     public let name: String
@@ -132,12 +132,15 @@ public struct CompanionDefinition: Codable, Hashable, Sendable, Identifiable {
     public let id: String
     public let name: String
     public let maxHP: Int
-    public let attack: AttackProfile?          // reuses the shared shape
-    public let trick: AbilityDefinition?       // reuses ability shape (its signature trick)
-    public let growthStates: [CompanionGrowth]? // Ember the Whelpling grows over a campaign
+    /// Flat to-hit bonus ("HP 5 · +3 hit · d6"). Companion attacks with nil
+    /// toHitStat mean "d20 + hitBonus", NOT auto-hit (unlike hero attacks).
+    public let hitBonus: Int?
+    public let attack: AttackProfile?
+    public let trick: AbilityDefinition?        // its signature trick
+    public let growthStates: [CompanionGrowth]? // Ember grows over a campaign
 }
 
-// MARK: - Race ("Kind" in the book/UI). Identity, never math. Ability usually narrative.
+// MARK: - Race ("Kind" in the book/UI). Identity, never math.
 
 public struct RaceDefinition: Codable, Hashable, Sendable, Identifiable {
     public let id: String
@@ -156,11 +159,11 @@ public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
     public let name: String
     public let role: String
     public let baseStats: StatMap
-    public let hpByLevel: [Int]            // class-uniform across paths: Knight [15,20,25]
+    public let hpByLevel: [Int]
     public let coreAbilityIDs: [String]
     public let pathIDs: [String]
-    public let spellListID: String?        // nil for non-casters
-    public let baseSpells: [SpellGrant]    // default [] (non-casters); the default loadout
+    public let spellListID: String?
+    public let baseSpells: [SpellGrant]
     public let theme: ThemeToken
 
     public init(from decoder: Decoder) throws {
@@ -183,19 +186,18 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
     public let classID: String
     public let name: String
     public let blurb: String
-    /// The book's recommended kit — seeds the Gear section's Add picker and the
-    /// Build Info preview. NOT auto-equipped: characters start with Gear blank.
+    /// The book's recommended kit — seeds the Gear picker and Build Info.
+    /// NOT auto-equipped: characters start with Gear blank.
     public let startingGearIDs: [String]
-    /// GRANT-ALL at L2. (Renamed from pathPowerIDs — there is no choice.)
+    /// LEVEL-1 abilities specific to this path (default []).
     public let coreAbilityIDs: [String]
+    /// GRANT-ALL at L2.
     public let pathPowerIDs: [String]
-    /// GRANT-ALL at L3. (Renamed from signatureOptionIDs.)
+    /// GRANT-ALL at L3.
     public let signaturePowerIDs: [String]
-    public let specialSpells: [String]            // thematic/accessible pool (IDs), not grants
-    /// Replaces ClassDefinition.baseSpells when present (Mystic drops Animal Friend, adds Dispel).
-    /// nil for both Wizard paths -> they use the class default loadout.
+    public let specialSpells: [String]
     public let startingLoadoutOverride: [SpellGrant]?
-    public let themeOverride: ThemeToken?         // Mystic
+    public let themeOverride: ThemeToken?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -213,14 +215,12 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-// Level-up rule is GLOBAL, not path data: at L2 and L3, boost one stat by +2 (player picks),
-// bump HP to ClassDefinition.hpByLevel[level-1], gain ALL Path Powers (L2) / ALL Signature
-// Powers (L3) — no picks beyond the stat boost. Recorded as choices on SavedCharacter.
-//
-// Dual wield is likewise a GLOBAL rule, derived not authored: two equipped lightMelee
-// weapons = second attack as a free action (CharacterSheet.hasDualWield).
+// Level-up rule is GLOBAL, not path data: at L2/L3 boost one stat +2 (player picks),
+// HP -> hpByLevel[level-1], gain ALL Path Powers (L2) / ALL Signature Powers (L3).
+// Dual wield is likewise GLOBAL and derived: two equipped lightMelee weapons = a
+// free-action second attack (CharacterSheet.hasDualWield).
 
-// MARK: - The bundle the loader decodes (single content.json for M1)
+// MARK: - The bundle the loader decodes
 
 public struct ContentBundle: Codable, Sendable {
     public let classes: [ClassDefinition]
@@ -230,7 +230,7 @@ public struct ContentBundle: Codable, Sendable {
     public let spellLists: [SpellListDefinition]
     public let gear: [GearDefinition]
     public let races: [RaceDefinition]
-    public let companions: [CompanionDefinition]   // empty this pass
+    public let companions: [CompanionDefinition]
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

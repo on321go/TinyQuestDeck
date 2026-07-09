@@ -17,6 +17,8 @@ public protocol ContentRepository {
     /// Every gear item in the content — the sheet's Add picker and the future
     /// Dungeon Shop both need the full catalog, not just per-kit lookups.
     func allGear() -> [GearDefinition]
+    func companion(_ id: String) -> CompanionDefinition?
+    func companions() -> [CompanionDefinition]
 }
 
 public struct ContentIssue: Equatable, Sendable, CustomStringConvertible {
@@ -43,6 +45,7 @@ public final class ValidatingContentRepository: ContentRepository {
     private let spellListByID: [String: SpellListDefinition]
     private let gearByID: [String: GearDefinition]
     private let raceByID: [String: RaceDefinition]
+    private let companionByID: [String: CompanionDefinition]
 
     public init(bundle: ContentBundle) throws {
         self.bundle = bundle
@@ -53,6 +56,7 @@ public final class ValidatingContentRepository: ContentRepository {
         spellListByID = Dictionary(uniqueKeysWithValues: bundle.spellLists.map { ($0.id, $0) })
         gearByID = Dictionary(uniqueKeysWithValues: bundle.gear.map { ($0.id, $0) })
         raceByID = Dictionary(uniqueKeysWithValues: bundle.races.map { ($0.id, $0) })
+        companionByID = Dictionary(uniqueKeysWithValues: bundle.companions.map { ($0.id, $0) })
 
         let issues = Self.validate(bundle,
             classByID: classByID, pathByID: pathByID, abilityByID: abilityByID,
@@ -69,6 +73,8 @@ public final class ValidatingContentRepository: ContentRepository {
     public func spellList(_ id: String) -> SpellListDefinition? { spellListByID[id] }
     public func gear(_ id: String) -> GearDefinition? { gearByID[id] }
     public func allGear() -> [GearDefinition] { bundle.gear.sorted { $0.name < $1.name } }
+    public func companion(_ id: String) -> CompanionDefinition? { companionByID[id] }
+    public func companions() -> [CompanionDefinition] { bundle.companions }
 
     // MARK: Validation
 
