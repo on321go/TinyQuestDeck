@@ -4,16 +4,21 @@
 //  it becomes the SwiftData model in step 4.)
 //
 //  Design rulings (July 2026 UI reset):
-//   • Path Powers and Signature Powers are GRANT-ALL at L2/L3 — not choices. The old
-//     chosenPathPowerID / chosenSignatureID fields are gone; deriveSheet grants every
-//     power the path lists once the level threshold is met.
+//   • Path Powers and Signature Powers are GRANT-ALL at L2/L3 — not choices.
 //   • Gear is a stored choice. The sheet's Gear section starts BLANK; the kid adds
 //     items (seeded picker = the path's book kit). Equipped gear drives Max HP,
 //     the active weapon profile, and gear-gated abilities (Shield).
-//   • "Race" stays the internal identifier; the book's "Kind" is presentational only
-//     (UI display strings), so nothing here renames.
+//   • Pets, magic items, and normal items are free-form user additions (the loot
+//     model may formalize magic items later; strings are fine pre-persistence).
+//   • "Race" stays the internal identifier; the book's "Kind" is presentational.
 
 import Foundation
+
+struct PetChoice: Identifiable, Hashable, Codable {
+    var id = UUID()
+    var name: String
+    var imageID: String? = nil      // future pet-image gallery slot
+}
 
 struct CharacterChoices: Identifiable, Hashable, Codable {
     var id = UUID()
@@ -25,6 +30,9 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var level: Int = 1
     var statBoosts: [String: Int] = [:]         // stat.rawValue -> total +N from level-ups
     var equippedGearIDs: [String] = []          // Gear section contents; starts empty
+    var pets: [PetChoice] = []                  // standard pet: 5 HP, +2 hit / d6
+    var magicItems: [String] = []               // free-form until the loot model lands
+    var normalItems: [String] = []              // free-form
     var spellbookIDs: [String] = []             // caster: grows via loot
     var readySpellIDs: [String] = []            // caster: cap 6 (8 with Spell Master)
 }
@@ -35,9 +43,8 @@ extension ContentRepository {
 }
 
 // MARK: - Lightweight "what you start with" derivation
-// This previews the path's RECOMMENDED book kit (Build Info on the path detail screen:
-// "Armor +2 HP · Total HP: 17 · Add Shield for +1"). It intentionally still reads
-// path.startingGearIDs — it's the offer, not the character's actual equipped state.
+// Previews the path's RECOMMENDED book kit (Build Info on the path detail screen).
+// It intentionally reads path.startingGearIDs — the offer, not equipped state.
 
 struct StartingSpell: Hashable { let name: String; let uses: Int }
 
@@ -48,7 +55,7 @@ struct StartingSummary: Hashable {
     var might: Int
     var mind: Int
     var speed: Int
-    var hp: Int                                 // hpByLevel + full book kit equipped
+    var hp: Int
     var gearNames: [String]
     var spells: [StartingSpell]
 }

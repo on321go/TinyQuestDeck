@@ -14,6 +14,9 @@ public protocol ContentRepository {
     func spell(_ id: String) -> SpellDefinition?
     func spellList(_ id: String) -> SpellListDefinition?
     func gear(_ id: String) -> GearDefinition?
+    /// Every gear item in the content — the sheet's Add picker and the future
+    /// Dungeon Shop both need the full catalog, not just per-kit lookups.
+    func allGear() -> [GearDefinition]
 }
 
 public struct ContentIssue: Equatable, Sendable, CustomStringConvertible {
@@ -65,6 +68,7 @@ public final class ValidatingContentRepository: ContentRepository {
     public func spell(_ id: String) -> SpellDefinition? { spellByID[id] }
     public func spellList(_ id: String) -> SpellListDefinition? { spellListByID[id] }
     public func gear(_ id: String) -> GearDefinition? { gearByID[id] }
+    public func allGear() -> [GearDefinition] { bundle.gear.sorted { $0.name < $1.name } }
 
     // MARK: Validation
 
@@ -102,6 +106,7 @@ public final class ValidatingContentRepository: ContentRepository {
         for p in b.paths {
             let o = "path:\(p.id)"
             need(classByID[p.classID] != nil, o, "classID '\(p.classID)' does not resolve")
+            for a in p.coreAbilityIDs { need(abilityByID[a] != nil, o, "coreAbilityID '\(a)' does not resolve") }
             for g in p.startingGearIDs { need(gearByID[g] != nil, o, "startingGearID '\(g)' does not resolve") }
             need(!p.pathPowerIDs.isEmpty, o, "pathPowerIDs is empty")
             for a in p.pathPowerIDs { need(abilityByID[a] != nil, o, "pathPower '\(a)' does not resolve") }
@@ -122,8 +127,14 @@ public final class ValidatingContentRepository: ContentRepository {
         }
 
         // Cross-check derived starting HP against the rulebook's stated path totals.
+        // NOTE: sums ALL startingGearIDs — safe because kit weapons carry 0 maxHP;
+        // the "offer vs equipped" distinction doesn't affect the HP math.
         for (pathID, expected) in Self.expectedStartingHP {
-            guard let p = pathByID[pathID], let c = classByID[p.classID] else { continue }
+            guard let p = pathByID[pathID], let c = classByID[p.classID] else {
+                issues.append(ContentIssue(owner: "path:\(pathID)",
+                    problem: "expectedStartingHP references a path that does not resolve"))
+                continue
+            }
             let total = (c.hpByLevel.first ?? 0) + p.startingGearIDs.compactMap { gearByID[$0]?.maxHP }.reduce(0, +)
             need(total == expected, "path:\(pathID)", "derived L1 HP \(total) != rulebook total \(expected)")
         }
@@ -133,7 +144,9 @@ public final class ValidatingContentRepository: ContentRepository {
     /// Rulebook "Total HP" at Level 1, per path — the number on the page.
     static let expectedStartingHP: [String: Int] = [
         "champion": 17, "guardian": 18, "warlord": 15,
-        "dragon-guard": 13, "loremaster": 10,
+        "shadow": 12, "hunter": 14, "wild": 12,
+        "cleric": 15, "druid": 12, "mystic": 12,
+        "dragon-guard": 13, "archmage": 10,
     ]
 }
 
