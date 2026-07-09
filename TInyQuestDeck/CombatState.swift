@@ -67,13 +67,15 @@ final class CombatStore {
     }
 
     /// Recharge: roll a d6; on a 6, re-arm every (Recharge)-reset power. Returns the roll.
-    @discardableResult
-    func recharge(_ id: UUID, rechargeAbilityIDs: [String]) -> Int {
-        let roll = Int.random(in: 1...6)
-        if roll == 6, var s = states[id] {
-            rechargeAbilityIDs.forEach { s.usedAbilityIDs.remove($0) }
-            states[id] = s
-        }
-        return roll
+    func recharge(_ id: UUID, rolled: Int, rechargeAbilityIDs: [String]) {
+        guard rolled == 6, var s = states[id] else { return }
+        rechargeAbilityIDs.forEach { s.usedAbilityIDs.remove($0) }
+        states[id] = s
+    }
+    
+    func adjustMaxHP(_ id: UUID, delta: Int, newMaxHP: Int) {
+        guard var s = states[id] else { return }
+        s.currentHP = max(0, min(newMaxHP, s.currentHP + delta))
+        states[id] = s
     }
 }

@@ -61,7 +61,7 @@ struct ContentBrowserView: View {
             }
             .navigationTitle("Content")
             .navigationDestination(for: ClassDefinition.self) { ClassDetailView(klass: $0, repo: store.repo!) }
-            .navigationDestination(for: PathDefinition.self)  { PathDetailView(path: $0, repo: store.repo!) }
+            //.navigationDestination(for: PathDefinition.self)  { PathDetailView(path: $0, repo: store.repo!) }
         }
         .onAppear { if store.repo == nil && store.error == nil { store.load() } }
     }
@@ -141,37 +141,37 @@ struct ClassDetailView: View {
 
 // MARK: - Path detail
 
-struct PathDetailView: View {
-    let path: PathDefinition
-    let repo: ValidatingContentRepository
-
-    var body: some View {
-        List {
-            Section { Text(path.blurb).font(.subheadline) }
-
-            Section("Starting gear") {
-                ForEach(path.startingGearIDs.compactMap { repo.gear($0) }) { gear in
-                    LabeledContent(gear.name, value: gear.maxHP > 0 ? "+\(gear.maxHP) HP" : gear.category.rawValue)
-                }
-            }
-
-            Section(path.pathPowerOptionIDs.count > 1 ? "Level 2 — choose one" : "Level 2 power") {
-                ForEach(path.pathPowerOptionIDs.compactMap { repo.ability($0) }) { AbilityRow(ability: $0) }
-            }
-
-            Section("Level 3 — choose one") {
-                ForEach(path.signatureOptionIDs.compactMap { repo.ability($0) }) { AbilityRow(ability: $0) }
-            }
-
-            if !path.specialSpells.isEmpty {
-                Section("Themed spell pool") {
-                    ForEach(path.specialSpells.compactMap { repo.spell($0) }) { Text($0.name) }
-                }
-            }
-        }
-        .navigationTitle(path.name)
-    }
-}
+//struct PathDetailView: View {
+//    let path: PathDefinition
+//    let repo: ValidatingContentRepository
+//
+//    var body: some View {
+//        List {
+//            Section { Text(path.blurb).font(.subheadline) }
+//
+//            Section("Starting gear") {
+//                ForEach(path.startingGearIDs.compactMap { repo.gear($0) }) { gear in
+//                    LabeledContent(gear.name, value: gear.maxHP > 0 ? "+\(gear.maxHP) HP" : gear.category.rawValue)
+//                }
+//            }
+//
+//            Section(path.pathPowerIDs.count > 1 ? "Level 2 — choose one" : "Level 2 power") {
+//                ForEach(path.pathPowerIDs.compactMap { repo.ability($0) }) { AbilityRow(ability: $0) }
+//            }
+//
+//            Section("Level 3 — choose one") {
+//                ForEach(path.signaturePowerIDs.compactMap { repo.ability($0) }) { AbilityRow(ability: $0) }
+//            }
+//
+//            if !path.specialSpells.isEmpty {
+//                Section("Themed spell pool") {
+//                    ForEach(path.specialSpells.compactMap { repo.spell($0) }) { Text($0.name) }
+//                }
+//            }
+//        }
+//        .navigationTitle(path.name)
+//    }
+//}
 
 // MARK: - Shared
 

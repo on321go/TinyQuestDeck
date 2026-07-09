@@ -103,9 +103,9 @@ public final class ValidatingContentRepository: ContentRepository {
             let o = "path:\(p.id)"
             need(classByID[p.classID] != nil, o, "classID '\(p.classID)' does not resolve")
             for g in p.startingGearIDs { need(gearByID[g] != nil, o, "startingGearID '\(g)' does not resolve") }
-            need(!p.pathPowerOptionIDs.isEmpty, o, "pathPowerOptionIDs is empty")
-            for a in p.pathPowerOptionIDs { need(abilityByID[a] != nil, o, "pathPower '\(a)' does not resolve") }
-            for a in p.signatureOptionIDs { need(abilityByID[a] != nil, o, "signature '\(a)' does not resolve") }
+            need(!p.pathPowerIDs.isEmpty, o, "pathPowerIDs is empty")
+            for a in p.pathPowerIDs { need(abilityByID[a] != nil, o, "pathPower '\(a)' does not resolve") }
+            for a in p.signaturePowerIDs { need(abilityByID[a] != nil, o, "signature '\(a)' does not resolve") }
             let catalog = classByID[p.classID]?.spellListID.flatMap { spellListByID[$0] }.map { Set($0.spellIDs) }
             for s in p.specialSpells {
                 need(spellByID[s] != nil, o, "specialSpell '\(s)' does not resolve")

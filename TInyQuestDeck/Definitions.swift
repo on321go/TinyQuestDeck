@@ -1,6 +1,14 @@
 //  Definitions.swift
 //  TinyQuestContent — Codable definitions loaded from JSON, read-only at runtime.
 //  A saved character stores *choices*; the sheet is derived from choices + these.
+//
+//  July 2026 UI-reset rulings baked in here:
+//   • Path Powers and Signature Powers are GRANT-ALL (pathPowerIDs / signaturePowerIDs,
+//     renamed from *OptionIDs). No selection exists; deriveSheet grants everything at
+//     the level threshold. autoSelectedPathPowerID is deleted — grant-all made it dead.
+//   • Abilities can be gear-gated (requiresGearCategory): Shield needs a shield.
+//   • "Race" stays the internal identifier + JSON key. The book's "Kind" is
+//     presentational only — a UI display-string concern, not a schema one.
 
 import Foundation
 
@@ -48,7 +56,7 @@ public struct SpellDefinition: Codable, Hashable, Sendable, Identifiable {
     public let tier: SpellTier
     public let text: String
     public let attack: AttackProfile?   // nil = utility
-    public let effects: [EffectHint]    // on-hit conditions etc.; default []  [ADDED]
+    public let effects: [EffectHint]    // on-hit conditions etc.; default []
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -91,9 +99,12 @@ public struct AbilityDefinition: Codable, Hashable, Sendable, Identifiable {
     public let text: String
     public let actionCost: ActionCost
     public let reset: ResetTrigger
-    public let affects: Recipient         // default .selfTarget
-    public let attack: AttackProfile?     // damage-dealing powers (Fire Explosion)  [ADDED]
-    public let effects: [EffectHint]      // default []
+    public let affects: Recipient                    // default .selfTarget
+    public let attack: AttackProfile?                // damage-dealing powers (Fire Explosion)
+    public let effects: [EffectHint]                 // default []
+    /// Gear gate: the ability is unavailable (shown struck-through, hints inert)
+    /// unless something of this category is equipped. Shield -> .shield. Default nil.
+    public let requiresGearCategory: GearCategory?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -105,6 +116,7 @@ public struct AbilityDefinition: Codable, Hashable, Sendable, Identifiable {
         affects = try c.decodeIfPresent(Recipient.self, forKey: .affects) ?? .selfTarget
         attack = try c.decodeIfPresent(AttackProfile.self, forKey: .attack)
         effects = try c.decodeIfPresent([EffectHint].self, forKey: .effects) ?? []
+        requiresGearCategory = try c.decodeIfPresent(GearCategory.self, forKey: .requiresGearCategory)
     }
 }
 
@@ -125,7 +137,7 @@ public struct CompanionDefinition: Codable, Hashable, Sendable, Identifiable {
     public let growthStates: [CompanionGrowth]? // Ember the Whelpling grows over a campaign
 }
 
-// MARK: - Race ("Kind"). Identity, never math. Ability usually narrative (effects: []).
+// MARK: - Race ("Kind" in the book/UI). Identity, never math. Ability usually narrative.
 
 public struct RaceDefinition: Codable, Hashable, Sendable, Identifiable {
     public let id: String
@@ -171,10 +183,14 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
     public let classID: String
     public let name: String
     public let blurb: String
+    /// The book's recommended kit — seeds the Gear section's Add picker and the
+    /// Build Info preview. NOT auto-equipped: characters start with Gear blank.
     public let startingGearIDs: [String]
-    /// L2 power. Single-element = auto-selected; multi = pick-one (Wizard, mirrors L3 signature).
-    public let pathPowerOptionIDs: [String]
-    public let signatureOptionIDs: [String]       // pick one at L3
+    /// GRANT-ALL at L2. (Renamed from pathPowerIDs — there is no choice.)
+    public let coreAbilityIDs: [String]
+    public let pathPowerIDs: [String]
+    /// GRANT-ALL at L3. (Renamed from signatureOptionIDs.)
+    public let signaturePowerIDs: [String]
     public let specialSpells: [String]            // thematic/accessible pool (IDs), not grants
     /// Replaces ClassDefinition.baseSpells when present (Mystic drops Animal Friend, adds Dispel).
     /// nil for both Wizard paths -> they use the class default loadout.
@@ -188,22 +204,21 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
         name = try c.decode(String.self, forKey: .name)
         blurb = try c.decode(String.self, forKey: .blurb)
         startingGearIDs = try c.decode([String].self, forKey: .startingGearIDs)
-        pathPowerOptionIDs = try c.decode([String].self, forKey: .pathPowerOptionIDs)
-        signatureOptionIDs = try c.decode([String].self, forKey: .signatureOptionIDs)
+        coreAbilityIDs = try c.decodeIfPresent([String].self, forKey: .coreAbilityIDs) ?? []
+        pathPowerIDs = try c.decode([String].self, forKey: .pathPowerIDs)
+        signaturePowerIDs = try c.decode([String].self, forKey: .signaturePowerIDs)
         specialSpells = try c.decodeIfPresent([String].self, forKey: .specialSpells) ?? []
         startingLoadoutOverride = try c.decodeIfPresent([SpellGrant].self, forKey: .startingLoadoutOverride)
         themeOverride = try c.decodeIfPresent(ThemeToken.self, forKey: .themeOverride)
     }
-
-    /// Convenience for the builder: single-option paths auto-select their L2 power.
-    public var autoSelectedPathPowerID: String? {
-        pathPowerOptionIDs.count == 1 ? pathPowerOptionIDs.first : nil
-    }
 }
 
 // Level-up rule is GLOBAL, not path data: at L2 and L3, boost one stat by +2 (player picks),
-// bump HP to ClassDefinition.hpByLevel[level-1], gain Path Power (L2) / Signature (L3).
-// Recorded as the kid's *choices* on SavedCharacter, so no per-path levelTrack is needed.
+// bump HP to ClassDefinition.hpByLevel[level-1], gain ALL Path Powers (L2) / ALL Signature
+// Powers (L3) — no picks beyond the stat boost. Recorded as choices on SavedCharacter.
+//
+// Dual wield is likewise a GLOBAL rule, derived not authored: two equipped lightMelee
+// weapons = second attack as a free action (CharacterSheet.hasDualWield).
 
 // MARK: - The bundle the loader decodes (single content.json for M1)
 

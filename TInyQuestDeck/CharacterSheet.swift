@@ -2,6 +2,18 @@
 //  The derived sheet: choices + content -> the numbers read at the table. Pure, no
 //  SwiftUI, fully testable. Nothing here is stored; it's recomputed from CharacterChoices.
 //  This is the STATIC (resting) sheet — current HP / conditions / live chips come later.
+//
+//  Gear is the character's EQUIPPED gear (a stored choice), not the path's book kit.
+//  Consequences:
+//   • maxHP = hpByLevel[level] + Σ equipped maxHP + passive maxHP hints — so adding
+//     Armor on the sheet immediately raises Max HP, matching the mockup behavior.
+//   • Abilities can be gear-gated: Shield requires an equipped shield. Gated
+//     abilities stay ON the sheet with isAvailable == false so the UI can render
+//     the mockup's strikethrough "Not Equipped" state instead of hiding them.
+//   • Path Powers and Signature Powers are grant-all: every listed power appears
+//     once the level threshold is met. No selection state exists anywhere.
+//   • Dual wield is a GLOBAL derived rule: two equipped lightMelee weapons = the
+//     second attack is a free action (hasDualWield). Two rolls, two attacks.
 
 import Foundation
 
@@ -10,6 +22,9 @@ enum AbilitySource: String, Hashable { case core, race, pathPower, signature }
 struct SheetAbility: Hashable {
     let ability: AbilityDefinition
     let source: AbilitySource
+    /// False when the ability names a gear category that isn't currently equipped
+    /// (Shield with no shield). UI renders these struck-through, not hidden.
+    let isAvailable: Bool
 }
 
 struct SheetSpell: Hashable {
@@ -30,17 +45,24 @@ struct CharacterSheet: Hashable {
     var speed: Int
     var maxHP: Int
 
-    var gear: [GearDefinition]
+    var gear: [GearDefinition]         // equipped, in the order the kid added it
     var abilities: [SheetAbility]
 
     var isCaster: Bool
-    var spells: [SheetSpell]          // full spellbook; ready ones flagged
+    var spells: [SheetSpell]           // full spellbook; ready ones flagged
     var readySpellCap: Int
 
     var conditionImmunities: [ConditionKind]
     var theme: ThemeToken?
 
     var readySpells: [SheetSpell] { spells.filter(\.isReady) }
+    /// Equipped gear that can attack — the Gear section's weapon lines.
+    var weapons: [GearDefinition] { gear.filter { $0.attack != nil } }
+    /// Global rule: a second equipped light melee weapon grants a free-action second
+    /// attack (its own roll). Counts the array, NOT a category set — duplicates matter.
+    var hasDualWield: Bool {
+        gear.filter { $0.category == .lightMelee && $0.attack != nil }.count >= 2
+    }
 }
 
 /// Resting sheet for a character. Returns nil only if the choices reference missing content.
@@ -52,32 +74,43 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
     let level = max(1, min(c.level, cls.hpByLevel.count))
     func stat(_ s: Stat) -> Int { cls.baseStats[s] + (c.statBoosts[s.rawValue] ?? 0) }
 
-    let gear = path.startingGearIDs.compactMap { repo.gear($0) }
+    // Equipped gear — duplicates allowed ("Axe X 2" is two entries).
+    let gear = c.equippedGearIDs.compactMap { repo.gear($0) }
+    let equippedCategories = Set(gear.map(\.category))   // for gating only; loses counts
 
-    // Abilities the character actually has AT THIS LEVEL.
+    func sheetAbility(_ a: AbilityDefinition, _ source: AbilitySource) -> SheetAbility {
+        let available = a.requiresGearCategory.map { equippedCategories.contains($0) } ?? true
+        return SheetAbility(ability: a, source: source, isAvailable: available)
+    }
+
+    // Abilities the character actually has AT THIS LEVEL. Grant-all: no choice fields.
     var abilities: [SheetAbility] = cls.coreAbilityIDs
         .compactMap { repo.ability($0) }
-        .map { SheetAbility(ability: $0, source: .core) }
-    abilities.append(SheetAbility(ability: race.ability, source: .race))
-    if level >= 2,
-       let powerID = c.chosenPathPowerID ?? path.autoSelectedPathPowerID,
-       let power = repo.ability(powerID) {
-        abilities.append(SheetAbility(ability: power, source: .pathPower))
+        .map { sheetAbility($0, .core) }
+    
+    abilities.append(sheetAbility(race.ability, .race))
+    if level >= 2 {
+        abilities += path.coreAbilityIDs
+            .compactMap { repo.ability($0) }
+            .map { sheetAbility($0, .core) }
     }
-    if level >= 3, let sigID = c.chosenSignatureID, let sig = repo.ability(sigID) {
-        abilities.append(SheetAbility(ability: sig, source: .signature))
+    if level >= 3 {
+        abilities += path.signaturePowerIDs
+            .compactMap { repo.ability($0) }
+            .map { sheetAbility($0, .signature) }
     }
 
-    // Passive EffectHints from those abilities (the only hints that change resting numbers).
+    // Passive EffectHints (the only hints that change resting numbers). Hints from a
+    // gear-gated ability that isn't available do NOT apply.
     var bonusHP = 0
     var immunities: [ConditionKind] = []
     var capFromHints = 0
-    for hint in abilities.flatMap({ $0.ability.effects }) {
+    for hint in abilities.filter(\.isAvailable).flatMap({ $0.ability.effects }) {
         switch hint {
-        case .maxHP(let d):            bonusHP += d
+        case .maxHP(let d):             bonusHP += d
         case .conditionImmunity(let k): immunities.append(k)
-        case .readySpellCap(let cap):  capFromHints = max(capFromHints, cap)
-        default: break                 // modifier/maxDamage/applyCondition/etc. are runtime, not resting
+        case .readySpellCap(let cap):   capFromHints = max(capFromHints, cap)
+        default: break                  // modifier/maxDamage/applyCondition/etc. are runtime, not resting
         }
     }
 

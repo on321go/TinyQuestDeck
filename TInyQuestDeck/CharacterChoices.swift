@@ -3,9 +3,15 @@
 //  computed sheet. (This is the plain-struct stand-in for the TDD's SavedCharacter;
 //  it becomes the SwiftData model in step 4.)
 //
-//  Level-up fields are here so the model is complete, but the Part-1 builder only sets
-//  the Level-1 ones (name / race / class / path + seeded starting spells). Stat boosts,
-//  path power, and signature get filled in when leveling lands.
+//  Design rulings (July 2026 UI reset):
+//   • Path Powers and Signature Powers are GRANT-ALL at L2/L3 — not choices. The old
+//     chosenPathPowerID / chosenSignatureID fields are gone; deriveSheet grants every
+//     power the path lists once the level threshold is met.
+//   • Gear is a stored choice. The sheet's Gear section starts BLANK; the kid adds
+//     items (seeded picker = the path's book kit). Equipped gear drives Max HP,
+//     the active weapon profile, and gear-gated abilities (Shield).
+//   • "Race" stays the internal identifier; the book's "Kind" is presentational only
+//     (UI display strings), so nothing here renames.
 
 import Foundation
 
@@ -17,9 +23,8 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var classID: String
     var pathID: String
     var level: Int = 1
-    var statBoosts: [String: Int] = [:]        // stat.rawValue -> total +N from level-ups
-    var chosenPathPowerID: String? = nil        // set at L2 (auto for single-option paths)
-    var chosenSignatureID: String? = nil        // set at L3
+    var statBoosts: [String: Int] = [:]         // stat.rawValue -> total +N from level-ups
+    var equippedGearIDs: [String] = []          // Gear section contents; starts empty
     var spellbookIDs: [String] = []             // caster: grows via loot
     var readySpellIDs: [String] = []            // caster: cap 6 (8 with Spell Master)
 }
@@ -30,8 +35,9 @@ extension ContentRepository {
 }
 
 // MARK: - Lightweight "what you start with" derivation
-// A taste of the full sheet derivation (step 3) — enough to preview in the builder and
-// show on a hero's summary. Pure function over the repo; trivially testable.
+// This previews the path's RECOMMENDED book kit (Build Info on the path detail screen:
+// "Armor +2 HP · Total HP: 17 · Add Shield for +1"). It intentionally still reads
+// path.startingGearIDs — it's the offer, not the character's actual equipped state.
 
 struct StartingSpell: Hashable { let name: String; let uses: Int }
 
@@ -42,7 +48,7 @@ struct StartingSummary: Hashable {
     var might: Int
     var mind: Int
     var speed: Int
-    var hp: Int
+    var hp: Int                                 // hpByLevel + full book kit equipped
     var gearNames: [String]
     var spells: [StartingSpell]
 }
@@ -58,9 +64,9 @@ func startingSummary(for c: CharacterChoices, using repo: ContentRepository) -> 
           let path = repo.path(c.pathID),
           let race = repo.race(c.raceID) else { return nil }
 
-    let gear = path.startingGearIDs.compactMap { repo.gear($0) }
+    let kit = path.startingGearIDs.compactMap { repo.gear($0) }
     let level = max(1, min(c.level, cls.hpByLevel.count))
-    let hp = cls.hpByLevel[level - 1] + gear.reduce(0) { $0 + $1.maxHP }
+    let hp = cls.hpByLevel[level - 1] + kit.reduce(0) { $0 + $1.maxHP }
     func stat(_ s: Stat) -> Int { cls.baseStats[s] + (c.statBoosts[s.rawValue] ?? 0) }
 
     let spells = startingGrants(classID: c.classID, pathID: c.pathID, repo: repo)
@@ -72,5 +78,5 @@ func startingSummary(for c: CharacterChoices, using repo: ContentRepository) -> 
     return StartingSummary(
         raceName: race.name, className: cls.name, pathName: path.name,
         might: stat(.might), mind: stat(.mind), speed: stat(.speed),
-        hp: hp, gearNames: gear.map(\.name), spells: spells)
+        hp: hp, gearNames: kit.map(\.name), spells: spells)
 }

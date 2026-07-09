@@ -47,11 +47,12 @@ struct RosterView: View {
                 }
             }
             .navigationDestination(for: CharacterChoices.self) { c in
-                PlaySheetView(character: c, repo: content.repo!, combat: combat)
+                // TEMP: old play sheet deleted; new character sheet is next up
+                Text(c.name).font(.largeTitle)
             }
-            .sheet(isPresented: $building) {
+            .fullScreenCover(isPresented: $building) {
                 if let repo = content.repo {
-                    CharacterBuilderView(repo: repo) { newHero in
+                    CreationFlowView(repo: repo) { newHero in
                         roster.add(newHero)
                         building = false
                     }
