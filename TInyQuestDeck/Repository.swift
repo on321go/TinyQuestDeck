@@ -2,6 +2,9 @@
 //  TinyQuestContent — the seam the UI/VMs depend on (never touches JSON directly),
 //  plus the load-time validator that turns a balance-edit typo into a loud, listed
 //  failure instead of a crash at the table (§10).
+//
+//  Powers-audit pass: hint cross-references are now validated too — an extraUses
+//  or resetAbility hint naming an ability that doesn't resolve fails at launch.
 
 import Foundation
 
@@ -130,6 +133,24 @@ public final class ValidatingContentRepository: ContentRepository {
 
         for l in b.spellLists {
             for s in l.spellIDs { need(spellByID[s] != nil, "spellList:\(l.id)", "spellID '\(s)' does not resolve") }
+        }
+
+        // Hint cross-references: extraUses and resetAbility name OTHER abilities —
+        // a typo there would silently render the wrong number of boxes or re-arm
+        // nothing. Fail loudly instead.
+        for a in b.abilities {
+            let o = "ability:\(a.id)"
+            for hint in a.effects {
+                switch hint {
+                case .extraUses(let targetID, let count):
+                    need(abilityByID[targetID] != nil, o, "extraUses target '\(targetID)' does not resolve")
+                    need(count >= 1, o, "extraUses count must be >= 1")
+                case .resetAbility(let targetID):
+                    need(abilityByID[targetID] != nil, o, "resetAbility target '\(targetID)' does not resolve")
+                default:
+                    break
+                }
+            }
         }
 
         // Cross-check derived starting HP against the rulebook's stated path totals.

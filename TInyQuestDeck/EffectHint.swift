@@ -7,6 +7,12 @@
 //
 //  Forward-compat rule: any unrecognized "kind" decodes to `.unknown` rather than
 //  throwing, so content can ship hints the code doesn't understand yet (§6).
+//
+//  Added in the powers-audit pass:
+//    • extraUses         — Unbreakable ("Shield works twice per fight")
+//    • rechargeSpells    — Spell Master's once-per-rest spell refill
+//    • resetAbility      — Elemental Teleport re-arms Fire Explosion
+//    • companionUpgrade  — Pack Tactics (pet HP 8, bite 3), custom pets only
 
 import Foundation
 
@@ -19,14 +25,34 @@ public enum EffectHint: Hashable, Sendable {
     case conditionImmunity(ConditionKind)
     /// Human "Try Anything Once" -> reroll(.any, .better).
     case reroll(target: RollTarget, keep: KeepRule)
-    /// Wild Scout / future pets. Designed now; instances encoded later.
+    /// A granted pet. Wild's Bonded Companion carries the 5 HP bonded friend here;
+    /// the L2 level-up detects this hint and pops the naming flow.
     case companion(CompanionDefinition)
     /// On-hit / on-cast condition. Frostbolt -> applyCondition(.stuck, toSelf:false).
     case applyCondition(ConditionKind, toSelf: Bool)
     /// Armor/shield Max-HP, Lizardfolk sun-rest heal, etc.
     case maxHP(delta: Int)
-    /// Loremaster Spell Master -> readySpellCap(8). Derivation takes max(baseCap, active caps).
+    /// Archmage Spell Master -> readySpellCap(8). Derivation takes max(baseCap, active caps).
     case readySpellCap(Int)
+    /// Grants extra use-boxes to ANOTHER ability. Unbreakable -> extraUses("shield", 1)
+    /// = Shield renders two checkboxes. Applies only while the granting ability isAvailable.
+    case extraUses(abilityID: String, count: Int)
+    /// On use, refill every rechargeable (non-t3) Ready spell's cast boxes.
+    /// Spell Master's "once per adventure, recharge your spells."
+    case rechargeSpells
+    /// On use, the named ability's spent boxes clear. Elemental Teleport ->
+    /// resetAbility("fire-explosion") — "even if it's on cooldown."
+    case resetAbility(abilityID: String)
+    /// Pack Tactics -> companionUpgrade(maxHP:8, damage:3). Folded into derivePetStats
+    /// for CUSTOM pets only (book companions are named characters and keep their
+    /// printed statlines). Never downgrades: max(base, upgrade).
+    case companionUpgrade(maxHP: Int?, damage: Int?)
+    /// Beast Mode -> petTransform(maxHP:10, damage:4). A TEMPORARY, targeted buff:
+    /// on use the kid picks which pet grows, and a "This Fight" tracker chip becomes
+    /// the transform's lifetime — tap the chip when the fight ends to shrink back.
+    /// Applies to ANY of the hero's pets (kid's choice), max() semantics, and Rest
+    /// clears it automatically. Live state, not derived — see CombatState.PetTransform.
+    case petTransform(maxHP: Int, damage: Int)
     /// Graceful fallback for content the running binary doesn't recognize.
     case unknown
 }
@@ -34,7 +60,9 @@ public enum EffectHint: Hashable, Sendable {
 extension EffectHint: Codable {
     private enum Kind: String, Codable {
         case modifier, maxDamage, conditionImmunity, reroll, companion
-        case applyCondition, maxHP, readySpellCap, unknown
+        case applyCondition, maxHP, readySpellCap
+        case extraUses, rechargeSpells, resetAbility, companionUpgrade, petTransform
+        case unknown
     }
     private enum K: String, CodingKey {
         case kind
@@ -45,6 +73,8 @@ extension EffectHint: Codable {
         case companion                         // companion
         case delta                             // maxHP
         case cap                               // readySpellCap
+        case abilityID, count                  // extraUses / resetAbility
+        case maxHP_ = "maxHP", damage          // companionUpgrade
     }
 
     public init(from decoder: Decoder) throws {
@@ -77,6 +107,19 @@ extension EffectHint: Codable {
             self = .maxHP(delta: try c.decode(Int.self, forKey: .delta))
         case .readySpellCap:
             self = .readySpellCap(try c.decode(Int.self, forKey: .cap))
+        case .extraUses:
+            self = .extraUses(abilityID: try c.decode(String.self, forKey: .abilityID),
+                              count: try c.decodeIfPresent(Int.self, forKey: .count) ?? 1)
+        case .rechargeSpells:
+            self = .rechargeSpells
+        case .resetAbility:
+            self = .resetAbility(abilityID: try c.decode(String.self, forKey: .abilityID))
+        case .companionUpgrade:
+            self = .companionUpgrade(maxHP: try c.decodeIfPresent(Int.self, forKey: .maxHP_),
+                                     damage: try c.decodeIfPresent(Int.self, forKey: .damage))
+        case .petTransform:
+            self = .petTransform(maxHP: try c.decode(Int.self, forKey: .maxHP_),
+                                 damage: try c.decode(Int.self, forKey: .damage))
         case .unknown:
             self = .unknown
         }
@@ -114,6 +157,23 @@ extension EffectHint: Codable {
         case let .readySpellCap(cap):
             try c.encode(Kind.readySpellCap, forKey: .kind)
             try c.encode(cap, forKey: .cap)
+        case let .extraUses(abilityID, count):
+            try c.encode(Kind.extraUses, forKey: .kind)
+            try c.encode(abilityID, forKey: .abilityID)
+            try c.encode(count, forKey: .count)
+        case .rechargeSpells:
+            try c.encode(Kind.rechargeSpells, forKey: .kind)
+        case let .resetAbility(abilityID):
+            try c.encode(Kind.resetAbility, forKey: .kind)
+            try c.encode(abilityID, forKey: .abilityID)
+        case let .companionUpgrade(maxHP, damage):
+            try c.encode(Kind.companionUpgrade, forKey: .kind)
+            try c.encodeIfPresent(maxHP, forKey: .maxHP_)
+            try c.encodeIfPresent(damage, forKey: .damage)
+        case let .petTransform(maxHP, damage):
+            try c.encode(Kind.petTransform, forKey: .kind)
+            try c.encode(maxHP, forKey: .maxHP_)
+            try c.encode(damage, forKey: .damage)
         case .unknown:
             try c.encode(Kind.unknown, forKey: .kind)
         }

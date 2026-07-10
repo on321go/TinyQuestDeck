@@ -37,6 +37,7 @@
       "id": "scout",
       "name": "Scout",
       "role": "Quick, sneaky, precise.",
+      "signatureBox": true,
       "baseStats": {
         "might": 1,
         "mind": 1,
@@ -268,9 +269,7 @@
       "pathPowerIDs": [
         "bonded-companion"
       ],
-      "signaturePowerIDs": [
-        "pack-tactics",
-        "wild-bond"
+      "signaturePowerIDs": ["pack-tactics", "focused-attack", "wild-eyes", "split", "swap", "beast-mode"
       ],
       "specialSpells": []
     },
@@ -486,8 +485,8 @@
       "id": "executioner",
       "name": "Executioner",
       "text": "Enemies at half HP or less take +5 from Finishing Blow. Once per fight, dropping a monster to 0 HP gives a free sword swing at another nearby monster.",
-      "actionCost": "passive",
-      "reset": "oncePerFight"
+      "actionCost": "free",
+      "reset": "recharge"
     },
     {
       "id": "i-take-it",
@@ -502,7 +501,10 @@
       "name": "Unbreakable",
       "text": "Shield works twice per fight. I Take It now also heals the protected friend or yourself 2 HP.",
       "actionCost": "passive",
-      "reset": "atWill"
+      "reset": "atWill",
+      "effects": [
+        { "kind": "extraUses", "abilityID": "shield", "count": 1 }
+      ]
     },
     {
       "id": "last-stand",
@@ -652,22 +654,55 @@
       "name": "Bonded Companion",
       "text": "You have a second small animal friend — name it. The pet has 5 HP. At the end of each round it deals 2 damage to one enemy. At 0 HP it runs away and returns after the next rest.",
       "actionCost": "passive",
-      "reset": "atWill"
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "companion",
+          "companion": {
+            "id": "bonded-friend",
+            "name": "Bonded Friend",
+            "maxHP": 5,
+            "trick": {
+              "id": "pack-bite",
+              "name": "Pack Bite",
+              "text": "At the end of each round, your pet bites one enemy for 2 damage. At 0 HP it runs away and returns after the next rest.",
+              "actionCost": "free",
+              "reset": "atWill"
+            }
+          }
+        }
+      ]
     },
     {
       "id": "pack-tactics",
       "name": "Pack Tactics",
-      "text": "Pet HP becomes 8 and its bite becomes 3 damage. Focused Attack: use your action to command — bite for d6, or grab to make Stuck.",
+      "text": "Pet HP becomes 8 and its bite becomes 3 damage.",
       "actionCost": "passive",
-      "reset": "atWill"
+      "reset": "atWill",
+      "effects": [
+        { "kind": "companionUpgrade", "maxHP": 8, "damage": 3 }
+      ]
     },
-    {
-      "id": "wild-bond",
-      "name": "Wild Bond",
-      "text": "WILD EYES (Free): see through your pet's eyes. SPLIT: split damage with your pet. SWAP (Rest): once per fight, magically swap places. BEAST MODE (Rest): once per adventure, the pet grows for one fight — 10 HP, 4 bite damage.",
-      "actionCost": "passive",
-      "reset": "atWill"
-    },
+    { "id": "focused-attack", "name": "Focused Attack",
+      "text": "Command your pet with your action: it bites for d6 damage, or grabs to make an enemy Stuck.",
+      "actionCost": "action", "reset": "recharge" },
+
+    { "id": "wild-eyes", "name": "Wild Eyes",
+      "text": "See through your pet's eyes, wherever it goes.",
+      "actionCost": "free", "reset": "atWill" },
+
+    { "id": "split", "name": "Split",
+      "text": "When you take damage, split it with your pet — half to you, half to your friend.",
+      "actionCost": "reaction", "reset": "atWill" },
+
+    { "id": "swap", "name": "Swap",
+      "text": "You and your pet magically swap places in a flash of light.",
+      "actionCost": "free", "reset": "rest" },
+
+    { "id": "beast-mode", "name": "Beast Mode",
+      "text": "One of your pets grows HUGE for one fight — 10 HP and a 4-damage bite! When the fight ends, tap the Beast Mode chip in your tracker to shrink them back.",
+      "actionCost": "free", "reset": "rest",
+      "effects": [ { "kind": "petTransform", "maxHP": 10, "damage": 4 } ] },
     {
       "id": "blessed-hands",
       "name": "Blessed Hands",
@@ -732,7 +767,10 @@
       "name": "Heart of the Grove",
       "text": "Voice of the Wild works twice per fight. Animal Shape can now use flying animals. Sacrifice your spirit animal to heal 3 players d6 + Mind.",
       "actionCost": "passive",
-      "reset": "atWill"
+      "reset": "atWill",
+      "effects": [
+        { "kind": "extraUses", "abilityID": "voice-of-the-wild", "count": 1 }
+      ]
     },
     {
       "id": "reactive-caster",
@@ -810,7 +848,10 @@
       "name": "Elemental Teleport",
       "text": "Teleport to a spot in line of sight. This activates Fire Explosion even if it's on cooldown.",
       "actionCost": "action",
-      "reset": "oncePerAdventure"
+      "reset": "oncePerAdventure",
+      "effects": [
+        { "kind": "resetAbility", "abilityID": "fire-explosion" }
+      ]
     },
     {
       "id": "arcane-insight",
@@ -842,13 +883,11 @@
       "id": "spell-master",
       "name": "Spell Master",
       "text": "Have up to 8 Ready Spells instead of 6. Once per adventure, recharge your spells.",
-      "actionCost": "passive",
-      "reset": "atWill",
+      "actionCost": "reaction",
+      "reset": "rest",
       "effects": [
-        {
-          "kind": "readySpellCap",
-          "cap": 8
-        }
+        { "kind": "readySpellCap", "cap": 8 },
+        { "kind": "rechargeSpells" }
       ]
     }
   ],

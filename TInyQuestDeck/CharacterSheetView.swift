@@ -10,6 +10,38 @@
 //
 //  DICE PILLAR: Recharge asks "what did you roll?" — the app never rolls.
 //  Depends on QuestStyle.swift, TapInfo.swift, Color(hex:)/emblemSymbol.
+//
+//  Powers-audit pass:
+//   • Ability rows render totalUses checkboxes (spell-row style): Unbreakable makes
+//     Shield show two, with zero ability IDs in this file.
+//   • Checking a box fires the ability's hints via CombatStore.setAbilitySpent —
+//     Perfect Shot / Battle Cry push their chips into the tracker automatically;
+//     the "+" stays for monster effects and buffs from other players' heroes.
+//   • The rolled 6 now also refills non-t3 Ready spell casts (sheet.rechargeSpellIDs)
+//     and the popover reminds the kid of the free spell swap (honor system — the
+//     ⋯ menu is always open).
+//   • Pet boxes read derivePetStats: Pack Tactics shows HP 8 · bite 3 with no
+//     hardcoding. Leveling into a power that grants a companion (Wild L2) pops
+//     the naming flow automatically — grant-all applies to best friends too.
+//   • SIGNATURE BOX (content-gated via ClassDefinition.signatureBox — Scout only
+//     for now): at L3 signature powers get their OWN gold box, so leveling up
+//     makes a whole new box appear. Other classes keep one Abilities box.
+//   • BEAST MODE (petTransform hint): checking the box asks "Who grows?!" when
+//     the hero has several pets, flips the chosen pet box to beast stats with a
+//     badge, and drops a "This Fight" chip — tap the chip when the fight ends to
+//     shrink back (the use stays spent). Un-checking retracts everything.
+//
+//  Visual pass (this drop):
+//   • Pet box FLIPPED — stats/HP/trick on the LEFT, art on the RIGHT, and the art
+//     is a touch taller so it peeks above the top edge of the box.
+//   • Box TITLES are now BLACK (were white / near-invisible) everywhere EXCEPT the
+//     Scout "✦ Signature Powers" box, which keeps its orange (TierColor.signature).
+//   • Tracker "+" now offers Might / Mind / Speed roll targets (was Mind-only).
+//     RollTarget already carried mightCheck/speedCheck; chip labels come straight
+//     from rollTargetName(), so "+2 Might roll" matches auto-chips exactly.
+//   • Level-up is a POINT-SPEND sheet: 2 points split any way across Might/Speed/
+//     Mind (the rulebook's "+2 to one" is just both points in one row). A sparkle
+//     meter shows points left; Level Up! stays disabled until every point is spent.
 
 import SwiftUI
 
@@ -40,8 +72,8 @@ struct CharacterSheetView: View {
                     .onAppear {
                         combat.seed(c.id, maxHP: sheet.maxHP)
                         c.pets.forEach { pet in
-                            let maxHP = pet.companionID.flatMap { repo.companion($0)?.maxHP } ?? 5
-                            combat.seedPet(c.id, petID: pet.id, maxHP: maxHP)
+                            let stats = derivePetStats(for: pet, abilities: sheet.abilities, repo: repo)
+                            combat.seedPet(c.id, petID: pet.id, maxHP: stats.maxHP)
                         }
                     }
             } else {
@@ -67,8 +99,16 @@ private struct SheetBody: View {
     @State private var addingMagicItem = false
     @State private var addingNormalItem = false
     @State private var namingPet = false
+    @State private var petAlertTitle = "Name your pet!"
     @State private var pendingCompanionID: String? = nil
     @State private var newItemText = ""
+    @State private var pendingTransform: PendingTransform? = nil
+
+    private struct PendingTransform {
+        let ability: AbilityDefinition
+        let boxIndex: Int
+        let total: Int
+    }
 
     private var bg: Color { sheet.theme.map { Color(hex: $0.background) } ?? .blue }
     private var accent: Color { sheet.theme.map { Color(hex: $0.accent) } ?? .blue }
@@ -175,27 +215,54 @@ private struct SheetBody: View {
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
         }
         .buttonStyle(.plain)
-        .confirmationDialog(levelDialogTitle, isPresented: $showLevelUp, titleVisibility: .visible) {
-            if character.level < 3 {
-                Button("Boost Might +2") { levelUp(boosting: .might) }
-                Button("Boost Speed +2") { levelUp(boosting: .speed) }
-                Button("Boost Mind +2")  { levelUp(boosting: .mind) }
+        .sheet(isPresented: $showLevelUp) {
+            LevelUpSheet(
+                targetLevel: min(character.level + 1, 3),
+                pointsPool: 2,
+                currentMight: sheet.might,
+                currentSpeed: sheet.speed,
+                currentMind: sheet.mind,
+                atMaxLevel: character.level >= 3,
+                bg: bg, accent: accent
+            ) { alloc in
+                levelUp(applying: alloc)
             }
-            Button("Cancel", role: .cancel) {}
+            .presentationDetents([.medium, .large])
         }
     }
 
-    private var levelDialogTitle: String {
-        character.level < 3
-            ? "Level up to \(character.level + 1)! Boost one stat by +2 — new powers appear automatically."
-            : "Level 3 is the top (for now!)"
-    }
-
-    private func levelUp(boosting stat: Stat) {
+    /// Apply a point allocation across stats. The rulebook's "+2 to one stat" is
+    /// just {stat: 2}; splits like {might: 1, speed: 1} keep the same +2 total.
+    /// Level increment, HP recompute, and companion-naming all stay unchanged.
+    private func levelUp(applying alloc: [Stat: Int]) {
         var c = character
         c.level += 1
-        c.statBoosts[stat.rawValue, default: 0] += 2
+        for (stat, n) in alloc where n != 0 {
+            c.statBoosts[stat.rawValue, default: 0] += n
+        }
         commitChoices(c)
+        promptForGrantedCompanion(atNewLevel: c.level)
+    }
+
+    /// Grant-all applies to best friends too: if the powers that just arrived carry
+    /// a companion hint (Wild's Bonded Companion at L2), pop the naming flow now.
+    /// Data-driven — no ability IDs here.
+    private func promptForGrantedCompanion(atNewLevel level: Int) {
+        guard let path = repo.path(character.pathID) else { return }
+        let newIDs: [String] = switch level {
+            case 2: path.pathPowerIDs
+            case 3: path.signaturePowerIDs
+            default: []
+        }
+        let grantsPet = newIDs.compactMap { repo.ability($0) }
+            .flatMap(\.effects)
+            .contains { if case .companion = $0 { return true } else { return false } }
+        if grantsPet {
+            pendingCompanionID = nil
+            newItemText = ""
+            petAlertTitle = "A new best friend joins you! What's their name?"
+            namingPet = true
+        }
     }
 
     /// Phase 2: buff/debuff indicator area (brain/skull). Space reserved.
@@ -235,8 +302,8 @@ private struct SheetBody: View {
                 RechargeRollView { rolled in
                     combat.apply(character.id, event: .myTurnStarted)
                     combat.recharge(character.id, rolled: rolled,
-                        rechargeAbilityIDs: sheet.abilities
-                            .filter { $0.ability.reset == .recharge }.map(\.ability.id))
+                                    rechargeAbilityIDs: sheet.rechargeAbilityIDs,
+                                    rechargeSpellIDs: sheet.rechargeSpellIDs)
                     showRecharge = false
                 }
                 .presentationCompactAdaptation(.popover)
@@ -268,6 +335,7 @@ private struct SheetBody: View {
         VStack(alignment: .leading, spacing: 14) {
             boxRow(height: SheetMetrics.row1Height) {
                 abilitiesBox
+                if showsSignatureBox { signatureBox }
                 if sheet.isCaster {
                     readySpellsBox
                     ForEach(Array(benchChunks.enumerated()), id: \.offset) { i, chunk in
@@ -296,19 +364,34 @@ private struct SheetBody: View {
         .padding(14)
         .background(bg.opacity(0.85), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black, lineWidth: 2))
-        .alert("Name your pet!", isPresented: $namingPet) {
+        .alert(petAlertTitle, isPresented: $namingPet) {
             TextField("Pet name", text: $newItemText)
             Button("Add") {
+                defer { newItemText = ""; pendingCompanionID = nil; petAlertTitle = "Name your pet!" }
                 guard !newItemText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                 var c = character
                 let pet = PetChoice(name: newItemText, companionID: pendingCompanionID)
                 c.pets.append(pet)
                 roster.update(c)
-                let maxHP = pendingCompanionID.flatMap { repo.companion($0)?.maxHP } ?? 5
-                combat.seedPet(c.id, petID: pet.id, maxHP: maxHP)
-                newItemText = ""; pendingCompanionID = nil
+                let stats = derivePetStats(for: pet, abilities: sheet.abilities, repo: repo)
+                combat.seedPet(c.id, petID: pet.id, maxHP: stats.maxHP)
             }
-            Button("Cancel", role: .cancel) { newItemText = ""; pendingCompanionID = nil }
+            Button("Cancel", role: .cancel) {
+                newItemText = ""; pendingCompanionID = nil; petAlertTitle = "Name your pet!"
+            }
+        }
+        .confirmationDialog("Who grows?!",
+                            isPresented: Binding(get: { pendingTransform != nil },
+                                                 set: { if !$0 { pendingTransform = nil } }),
+                            titleVisibility: .visible,
+                            presenting: pendingTransform) { pending in
+            ForEach(character.pets) { pet in
+                Button(pet.name) {
+                    spendWithTransform(pending.ability, boxIndex: pending.boxIndex,
+                                       total: pending.total, pet: pet)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
@@ -321,11 +404,14 @@ private struct SheetBody: View {
         .scrollClipDisabled(false)
     }
 
-    /// The uniform box: white title above a fixed-size cream panel.
+    /// The uniform box: title above a fixed-size cream panel.
+    /// Titles default to BLACK now (were white / near-invisible on the themed bg);
+    /// the only override in the app is the Scout signature box's orange.
     private func sheetBox<Content: View>(_ title: String, height: CGFloat,
+                                         titleColor: Color = .black,
                                          @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(questFont(18)).foregroundStyle(.white)
+            Text(title).font(questFont(18)).foregroundStyle(titleColor)
                 .shadow(color: .black.opacity(0.3), radius: 1, y: 1)
             VStack(alignment: .leading, spacing: 0) { content() }
                 .padding(12)
@@ -345,11 +431,28 @@ private struct SheetBody: View {
 
     // MARK: Abilities box
 
+    /// Signature powers split into their own gold box only when the class opts in
+    /// (content flag) AND the hero has any — i.e. the box APPEARS at level 3.
+    private var showsSignatureBox: Bool {
+        sheet.showsSignatureBox && !sheet.signatureAbilities.isEmpty
+    }
+
     private var abilitiesBox: some View {
-        sheetBox("Abilities", height: SheetMetrics.row1Height) {
+        abilityListBox("Abilities",
+                       items: showsSignatureBox ? sheet.nonSignatureAbilities : sheet.abilities,
+                       titleColor: .black)
+    }
+
+    private var signatureBox: some View {
+        abilityListBox("✦ Signature Powers", items: sheet.signatureAbilities,
+                       titleColor: TierColor.signature)
+    }
+
+    private func abilityListBox(_ title: String, items: [SheetAbility], titleColor: Color) -> some View {
+        sheetBox(title, height: SheetMetrics.row1Height, titleColor: titleColor) {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(sheet.abilities, id: \.ability.id) { item in abilityRow(item) }
+                    ForEach(items, id: \.ability.id) { item in abilityRow(item) }
                 }
             }
         }
@@ -371,18 +474,22 @@ private struct SheetBody: View {
         }
     }
 
+    /// One ability row: tap-name-for-rules, then totalUses checkboxes (spell-row
+    /// style — Unbreakable's Shield ×2 is just two boxes). Checking a box routes
+    /// through CombatStore.setAbilitySpent so the ability's hints fire (auto-chips,
+    /// resetAbility, rechargeSpells).
     private func abilityRow(_ item: SheetAbility) -> some View {
         let a = item.ability
         let color = tierColor(item.source)
-        let trackable = a.reset != .atWill && a.actionCost != .passive
-        let used = state.usedAbilityIDs.contains(a.id)
+        let spent = state.spentUses(a.id)
+        let fullySpent = state.isFullySpent(a.id, of: item.totalUses)
 
         return HStack(spacing: 8) {
             TapInfo(payload: .init(ability: a, tint: color)) {
                 Text(a.name)
                     .font(questFont(15))
                     .foregroundStyle(item.isAvailable ? color : color.opacity(0.5))
-                    .strikethrough(!item.isAvailable || used)
+                    .strikethrough(!item.isAvailable || fullySpent)
             }
             if let icon = tierIcon(item.source) {
                 Image(systemName: icon).font(.caption).foregroundStyle(color)
@@ -391,15 +498,48 @@ private struct SheetBody: View {
                 Text("Not Equipped").font(questFontLight(12)).foregroundStyle(.red)
             }
             Spacer()
-            if trackable && item.isAvailable {
-                Button { combat.toggleUsed(character.id, a.id) } label: {
-                    Image(systemName: used ? "checkmark.square.fill" : "square")
-                        .font(.title3)
-                        .foregroundStyle(used ? .black.opacity(0.45) : color)
+            if item.totalUses > 0 && item.isAvailable {
+                HStack(spacing: 4) {
+                    ForEach(0..<item.totalUses, id: \.self) { i in
+                        Button {
+                            tapAbilityBox(a, boxIndex: i, total: item.totalUses)
+                        } label: {
+                            Image(systemName: i < spent ? "checkmark.square.fill" : "square")
+                                .font(.title3)
+                                .foregroundStyle(i < spent ? .black.opacity(0.45) : color)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
             }
         }
+    }
+
+    /// Box-tap routing: petTransform abilities being SPENT need a pet target —
+    /// several pets asks the kid ("Who grows?!"), one pet applies immediately, no
+    /// pets (or un-spending) falls through to the plain path. Data-driven; the
+    /// only special case is the hint's presence.
+    private func tapAbilityBox(_ a: AbilityDefinition, boxIndex i: Int, total: Int) {
+        let spending = i >= state.spentUses(a.id)
+        let transforms = a.effects.contains {
+            if case .petTransform = $0 { return true } else { return false }
+        }
+        if spending && transforms && character.pets.count > 1 {
+            pendingTransform = PendingTransform(ability: a, boxIndex: i, total: total)
+        } else if spending && transforms, let pet = character.pets.first {
+            spendWithTransform(a, boxIndex: i, total: total, pet: pet)
+        } else {
+            combat.setAbilitySpent(character.id, ability: a, toBoxIndex: i, total: total,
+                                   rechargeSpellIDs: sheet.rechargeSpellIDs)
+        }
+    }
+
+    private func spendWithTransform(_ a: AbilityDefinition, boxIndex: Int, total: Int, pet: PetChoice) {
+        let stats = derivePetStats(for: pet, abilities: sheet.abilities, repo: repo)
+        combat.setAbilitySpent(character.id, ability: a, toBoxIndex: boxIndex, total: total,
+                               rechargeSpellIDs: sheet.rechargeSpellIDs,
+                               transformPet: TransformTarget(petID: pet.id, petName: pet.name,
+                                                             normalMaxHP: stats.maxHP))
     }
 
     // MARK: Gear box (5 fixed slots)
@@ -618,20 +758,26 @@ private struct SheetBody: View {
         roster.update(c)
     }
 
-    // MARK: Pets (each pet is its OWN box; big image; book companions or custom)
+    // MARK: Pets (each pet is its OWN box; stats are DERIVED — Pack Tactics shows here)
+    //  Layout: info/stats/HP/trick on the LEFT, art on the RIGHT. The art is a touch
+    //  taller than square so it peeks above the top edge of the box (offset up).
 
     private func petBox(_ pet: PetChoice, isLast: Bool) -> some View {
-        let comp = pet.companionID.flatMap { repo.companion($0) }
-        let maxHP = comp?.maxHP ?? 5
+        let stats = derivePetStats(for: pet, abilities: sheet.abilities, repo: repo)
+        let transform = state.petTransforms[pet.id]
+        let maxHP = transform?.maxHP ?? stats.maxHP
+        let statline = transform.map { "HP \($0.maxHP) · bite \($0.damage)" } ?? stats.statline
         let hp = state.petHP[pet.id] ?? maxHP
         return sheetBox("Pet: \(pet.name)", height: SheetMetrics.row2Height) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 10) {
-                    PlaceholderArt(ratio: 1, colors: [bg, accent], symbol: "pawprint.fill",
-                                   caption: comp?.name ?? "custom pet")
-                        .frame(width: 116)
+                    // LEFT: name badge / stats / HP steppers / trick
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(comp.map(companionStatline) ?? "HP 5 · +2 hit · d6")
+                        if transform != nil {
+                            Label("BEAST MODE!", systemImage: "flame.fill")
+                                .font(questFont(13)).foregroundStyle(TierColor.signature)
+                        }
+                        Text(statline)
                             .font(questFontLight(14)).foregroundStyle(.black.opacity(0.75))
                         HStack(spacing: 8) {
                             Text("HP \(hp)/\(maxHP)")
@@ -645,7 +791,7 @@ private struct SheetBody: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        if let trick = comp?.trick {
+                        if let trick = stats.trick {
                             TapInfo(payload: .init(ability: trick, tint: TierColor.path)) {
                                 HStack(spacing: 5) {
                                     Image(systemName: "star.circle.fill").font(.caption)
@@ -655,6 +801,16 @@ private struct SheetBody: View {
                             }
                         }
                     }
+
+                    Spacer(minLength: 8)
+
+                    // RIGHT: pet art, slightly taller than square, peeking above the box.
+                    // (512² art fills fine; nudge ratio/offset if the peek needs tuning.)
+                    PlaceholderArt(ratio: 0.78, colors: [bg, accent],
+                                   symbol: transform != nil ? "flame.fill" : "pawprint.fill",
+                                   caption: pet.companionID.flatMap { repo.companion($0)?.name } ?? "custom pet")
+                        .frame(width: 116)
+                        .offset(y: -20)
                 }
                 Spacer(minLength: 0)
                 if isLast { addPetMenu(label: "Add another pet", size: 13) }
@@ -677,6 +833,7 @@ private struct SheetBody: View {
                     Button(comp.name) {
                         pendingCompanionID = comp.id
                         newItemText = comp.name
+                        petAlertTitle = "Name your pet!"
                         namingPet = true
                     }
                 }
@@ -684,6 +841,7 @@ private struct SheetBody: View {
             Button("Custom pet…") {
                 pendingCompanionID = nil
                 newItemText = ""
+                petAlertTitle = "Name your pet!"
                 namingPet = true
             }
         } label: {
@@ -782,7 +940,7 @@ private struct SheetBody: View {
                 TrackerAddButton(accent: accent) { value, target in
                     let sign = value >= 0 ? "+" : ""
                     combat.addModifier(character.id, Modifier(
-                        label: "\(sign)\(value) \(trackerTargetName(target))",
+                        label: "\(sign)\(value) \(rollTargetName(target))",
                         value: value, target: target, scope: scope, source: .manual))
                 }
             }
@@ -804,17 +962,6 @@ private struct SheetBody: View {
         }
         .frame(maxWidth: .infinity)
     }
-
-    private func trackerTargetName(_ t: RollTarget) -> String {
-        switch t {
-        case .toHit: "Attack roll"
-        case .damage: "Damage"
-        case .mightCheck: "Might roll"
-        case .mindCheck: "Mind roll"
-        case .speedCheck: "Speed roll"
-        case .any: "All rolls"
-        }
-    }
 }
 
 // MARK: - "What did you roll?" — the physical-dice Recharge prompt
@@ -825,8 +972,9 @@ private struct RechargeRollView: View {
     var body: some View {
         VStack(spacing: 12) {
             Text("Roll a d6!").font(questFont(20)).foregroundStyle(.black)
-            Text("On a 6, all your Recharge powers come back.")
+            Text("On a 6, your Recharge powers AND spells come back —\nand you may swap one Ready Spell for free!")
                 .font(questFontLight(14)).foregroundStyle(.black.opacity(0.7))
+                .multilineTextAlignment(.center)
             HStack(spacing: 8) {
                 ForEach(1...6, id: \.self) { n in
                     Button { onRolled(n) } label: {
@@ -861,11 +1009,15 @@ private struct TrackerAddButton: View {
         .buttonStyle(.plain)
         .popover(isPresented: $showing, arrowEdge: .top) {
             VStack(spacing: 12) {
+                // Six targets now — short segment labels keep it readable; the
+                // CHIP text still reads long ("+2 Might roll") via rollTargetName.
                 Picker("Applies to", selection: $target) {
-                    Text("Attack roll").tag(RollTarget.toHit)
+                    Text("Attack").tag(RollTarget.toHit)
                     Text("Damage").tag(RollTarget.damage)
-                    Text("Mind roll").tag(RollTarget.mindCheck)
-                    Text("All rolls").tag(RollTarget.any)
+                    Text("Might").tag(RollTarget.mightCheck)
+                    Text("Mind").tag(RollTarget.mindCheck)
+                    Text("Speed").tag(RollTarget.speedCheck)
+                    Text("All").tag(RollTarget.any)
                 }
                 .pickerStyle(.segmented)
                 Stepper(value: $value, in: -5...5) {
@@ -885,9 +1037,181 @@ private struct TrackerAddButton: View {
                 .buttonStyle(.plain)
             }
             .padding(16)
-            .frame(width: 340)
+            .frame(width: 440)
             .background(TierColor.panelCream)
             .presentationCompactAdaptation(.popover)
         }
+    }
+}
+
+// MARK: - Level-up: spend your points
+
+/// Level-up is a point-spend, not a preset. Each level grants `pointsPool` points
+/// (2 today) the kid distributes across Might / Speed / Mind — the rulebook's
+/// "+2 to one stat" is just "put both points in one row." Every point must be spent
+/// before Level Up! enables. At max level it shows a friendly "top of the ladder"
+/// message instead of the spend UI.
+private struct LevelUpSheet: View {
+    let targetLevel: Int
+    let pointsPool: Int
+    let currentMight: Int
+    let currentSpeed: Int
+    let currentMind: Int
+    let atMaxLevel: Bool
+    let bg: Color
+    let accent: Color
+    var onConfirm: ([Stat: Int]) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var alloc: [Stat: Int] = [.might: 0, .speed: 0, .mind: 0]
+
+    private var spent: Int { alloc.values.reduce(0, +) }
+    private var left: Int { pointsPool - spent }
+
+    var body: some View {
+        VStack {
+            if atMaxLevel { maxedContent } else { spendContent }
+        }
+        .padding(24)
+        .frame(maxWidth: 480)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(bg.opacity(0.85))
+    }
+
+    // MARK: Maxed
+
+    private var maxedContent: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "crown.fill").font(.system(size: 48))
+                .foregroundStyle(TierColor.signature)
+            Text("Level 3 is the top — for now!")
+                .font(questFont(22)).foregroundStyle(.black)
+                .multilineTextAlignment(.center)
+            Text("You're as strong as heroes get on this quest. New adventures might raise the ceiling later!")
+                .font(questFontLight(15)).foregroundStyle(.black.opacity(0.7))
+                .multilineTextAlignment(.center)
+            closeButton("Okay!")
+        }
+        .padding(22)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
+    }
+
+    // MARK: Spend
+
+    private var spendContent: some View {
+        VStack(spacing: 18) {
+            VStack(spacing: 4) {
+                Text("LEVEL UP!").font(questFont(30)).foregroundStyle(.black)
+                Text("You reached Level \(targetLevel)!")
+                    .font(questFont(18)).foregroundStyle(.black.opacity(0.75))
+            }
+
+            // Sparkle meter — bright sparkles = points still to spend.
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(0..<pointsPool, id: \.self) { i in
+                        Image(systemName: "sparkle")
+                            .font(.system(size: 28))
+                            .foregroundStyle(i < left ? TierColor.signature : .black.opacity(0.15))
+                            .scaleEffect(i < left ? 1 : 0.8)
+                            .animation(.snappy, value: left)
+                    }
+                }
+                Text("Points left: \(left)")
+                    .font(questFont(16))
+                    .foregroundStyle(left == 0 ? .green : .black)
+                    .contentTransition(.numericText())
+            }
+            .padding(.vertical, 10).frame(maxWidth: .infinity)
+            .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+
+            Text("Spend your points — all on one stat, or split them!")
+                .font(questFontLight(14)).foregroundStyle(.black.opacity(0.7))
+                .multilineTextAlignment(.center)
+
+            VStack(spacing: 10) {
+                statRow("MIGHT", .might, current: currentMight)
+                statRow("SPEED", .speed, current: currentSpeed)
+                statRow("MIND",  .mind,  current: currentMind)
+            }
+
+            HStack(spacing: 12) {
+                Button { dismiss() } label: {
+                    Text("Cancel").font(questFont(16)).foregroundStyle(.black)
+                        .padding(.horizontal, 22).padding(.vertical, 12)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+
+                Button { onConfirm(alloc); dismiss() } label: {
+                    Label("Level Up!", systemImage: "arrow.up.circle.fill")
+                        .font(questFont(18)).foregroundStyle(.black)
+                        .padding(.horizontal, 24).padding(.vertical, 12)
+                        .background(left == 0 ? TierColor.selectPeach : Color.gray.opacity(0.25),
+                                    in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(.black.opacity(left == 0 ? 1 : 0.25), lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+                .disabled(left != 0)
+            }
+        }
+        .padding(20)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
+    }
+
+    /// One stat row: a stepper on the resulting value. "−" bottoms out at the current
+    /// stat (can't spend below 0 added); "+" is capped by points left.
+    private func statRow(_ label: String, _ stat: Stat, current: Int) -> some View {
+        let added = alloc[stat] ?? 0
+        let newVal = current + added
+        return HStack(spacing: 14) {
+            Text(label).font(questFont(18)).foregroundStyle(.black)
+                .frame(width: 78, alignment: .leading)
+            Spacer()
+            stepButton("minus", enabled: added > 0) { alloc[stat] = max(0, added - 1) }
+            VStack(spacing: 0) {
+                Text("+\(newVal)")
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .foregroundStyle(added > 0 ? .green : Color(hex: "4AA3DF"))
+                    .contentTransition(.numericText())
+                Text(added > 0 ? "+\(added) this level" : "was +\(current)")
+                    .font(questFontLight(11))
+                    .foregroundStyle(added > 0 ? .green : .black.opacity(0.4))
+            }
+            .frame(width: 92)
+            stepButton("plus", enabled: left > 0) { alloc[stat] = added + 1 }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black.opacity(0.15), lineWidth: 1.5))
+    }
+
+    private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.title2.weight(.bold))
+                .foregroundStyle(enabled ? .black : .black.opacity(0.2))
+                .frame(width: 46, height: 46)
+                .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(.black.opacity(enabled ? 1 : 0.2), lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+    }
+
+    private func closeButton(_ title: String) -> some View {
+        Button { dismiss() } label: {
+            Text(title).font(questFont(18)).foregroundStyle(.black)
+                .padding(.horizontal, 28).padding(.vertical, 12)
+                .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
     }
 }

@@ -10,6 +10,11 @@
 //   • Companions carry a flat hitBonus (book pets roll d20 + N, not d20 + stat);
 //     a companion attack's nil toHitStat means "d20 + hitBonus", not auto-hit.
 //   • "Race" stays the internal identifier + JSON key; "Kind" is presentational.
+//
+//  Powers-audit pass:
+//   • ClassDefinition.signatureBox (optional, default false): render L3 signature
+//     powers in their own gold box. Content-gated trial — Scout only for now;
+//     opting another class in is a JSON edit, never a code change.
 
 import Foundation
 
@@ -165,6 +170,10 @@ public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
     public let spellListID: String?
     public let baseSpells: [SpellGrant]
     public let theme: ThemeToken
+    /// Render L3 signature powers in their OWN gold box on the sheet (a level-up
+    /// moment: the box APPEARS at level 3). Content-gated trial — set true on
+    /// scout only for now. Default false/absent.
+    public let signatureBox: Bool?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -178,6 +187,7 @@ public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
         spellListID = try c.decodeIfPresent(String.self, forKey: .spellListID)
         baseSpells = try c.decodeIfPresent([SpellGrant].self, forKey: .baseSpells) ?? []
         theme = try c.decode(ThemeToken.self, forKey: .theme)
+        signatureBox = try c.decodeIfPresent(Bool.self, forKey: .signatureBox)
     }
 }
 
