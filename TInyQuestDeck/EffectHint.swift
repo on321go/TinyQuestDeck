@@ -13,6 +13,10 @@
 //    • rechargeSpells    — Spell Master's once-per-rest spell refill
 //    • resetAbility      — Elemental Teleport re-arms Fire Explosion
 //    • companionUpgrade  — Pack Tactics (pet HP 8, bite 3), custom pets only
+//
+//  Added in the bug-fix pass:
+//    • noteChip          — Fire Armor / Great Blessing: a label-only, honor-system
+//                          reminder chip (value 0, no roll effect) on the user's tracker.
 
 import Foundation
 
@@ -53,6 +57,13 @@ public enum EffectHint: Hashable, Sendable {
     /// Applies to ANY of the hero's pets (kid's choice), max() semantics, and Rest
     /// clears it automatically. Live state, not derived — see CombatState.PetTransform.
     case petTransform(maxHP: Int, damage: Int)
+    /// A label-only REMINDER chip, no roll math (value 0). Fire Armor ->
+    /// noteChip("Fire Armor: foes -2 to hit", .thisFight); Great Blessing ->
+    /// noteChip("+2 heals · 3 turns", .thisFight). Unlike modifier chips, note chips
+    /// fire regardless of `affects` and live on the USER's own tracker as a table
+    /// reminder (the app doesn't track enemy rolls or heal-over-time — honor system).
+    /// `scope` drives expiry like any other chip.
+    case noteChip(label: String, scope: ModifierScope)
     /// Graceful fallback for content the running binary doesn't recognize.
     case unknown
 }
@@ -62,6 +73,7 @@ extension EffectHint: Codable {
         case modifier, maxDamage, conditionImmunity, reroll, companion
         case applyCondition, maxHP, readySpellCap
         case extraUses, rechargeSpells, resetAbility, companionUpgrade, petTransform
+        case noteChip
         case unknown
     }
     private enum K: String, CodingKey {
@@ -75,6 +87,7 @@ extension EffectHint: Codable {
         case cap                               // readySpellCap
         case abilityID, count                  // extraUses / resetAbility
         case maxHP_ = "maxHP", damage          // companionUpgrade
+        case label                             // noteChip
     }
 
     public init(from decoder: Decoder) throws {
@@ -120,6 +133,9 @@ extension EffectHint: Codable {
         case .petTransform:
             self = .petTransform(maxHP: try c.decode(Int.self, forKey: .maxHP_),
                                  damage: try c.decode(Int.self, forKey: .damage))
+        case .noteChip:
+            self = .noteChip(label: try c.decode(String.self, forKey: .label),
+                             scope: try c.decode(ModifierScope.self, forKey: .scope))
         case .unknown:
             self = .unknown
         }
@@ -174,6 +190,10 @@ extension EffectHint: Codable {
             try c.encode(Kind.petTransform, forKey: .kind)
             try c.encode(maxHP, forKey: .maxHP_)
             try c.encode(damage, forKey: .damage)
+        case let .noteChip(label, scope):
+            try c.encode(Kind.noteChip, forKey: .kind)
+            try c.encode(label, forKey: .label)
+            try c.encode(scope, forKey: .scope)
         case .unknown:
             try c.encode(Kind.unknown, forKey: .kind)
         }

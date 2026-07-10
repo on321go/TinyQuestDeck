@@ -24,6 +24,12 @@
 //     (the use box stays spent), un-check the box to retract everything (mis-tap),
 //     Rest clears it like everything else. pruneOrphanedTransforms() keeps the
 //     chip and the transform in lockstep no matter which path removed the chip.
+//
+//  Bug-fix pass:
+//   • noteChip hints (Fire Armor, Great Blessing) push a label-only reminder chip on
+//     use — value 0, no roll effect. Unlike modifier chips these fire regardless of
+//     `affects` (they're the user's own table reminder), and retract on un-spend like
+//     any other ability chip.
 
 import Foundation
 
@@ -76,13 +82,30 @@ struct TransformTarget: Hashable {
 }
 
 /// The chips an ability pushes onto ITS OWN sheet when a use is spent.
-/// RULING: hints apply to the user when `affects` is selfTarget OR alliesInSight —
-/// "friends within sight" includes the shouter, so Battle Cry buffs the Warlord too.
-/// oneAlly buffs (Warlord's Eye, Great Blessing) target somebody ELSE: the receiving
-/// kid adds the chip on their own sheet via the tracker's "+" (Recipient doc, Core.swift).
+///
+/// Two families:
+///   • NOTE chips (noteChip): label-only reminders (value 0). They fire on ANY use,
+///     regardless of `affects`, because they're the user's own table reminder for
+///     things the app doesn't simulate (enemy -to-hit, heal-over-time). Fire Armor,
+///     Great Blessing.
+///   • ROLL-MODIFIER chips (modifier / maxDamage): actually change the user's rolls,
+///     so they apply only when `affects` is selfTarget OR alliesInSight — "friends
+///     within sight" includes the shouter, so Battle Cry buffs the Warlord too.
+///     oneAlly buffs (Warlord's Eye) target somebody ELSE: the receiving kid adds
+///     the chip on their own sheet via the tracker's "+" (Recipient doc, Core.swift).
 func onUseChips(for ability: AbilityDefinition) -> [Modifier] {
-    guard ability.affects == .selfTarget || ability.affects == .alliesInSight else { return [] }
     var chips: [Modifier] = []
+
+    // Note chips fire regardless of `affects`.
+    for hint in ability.effects {
+        if case let .noteChip(label, scope) = hint {
+            chips.append(Modifier(label: label, value: 0, target: .any,
+                                  scope: scope, source: .ability(id: ability.id)))
+        }
+    }
+
+    // Roll-modifier chips only when the buff lands on the user.
+    guard ability.affects == .selfTarget || ability.affects == .alliesInSight else { return chips }
     for hint in ability.effects {
         switch hint {
         case let .modifier(value, target, scope, requires):

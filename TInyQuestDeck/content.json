@@ -37,7 +37,6 @@
       "id": "scout",
       "name": "Scout",
       "role": "Quick, sneaky, precise.",
-      "signatureBox": true,
       "baseStats": {
         "might": 1,
         "mind": 1,
@@ -277,7 +276,8 @@
         "swap",
         "beast-mode"
       ],
-      "specialSpells": []
+      "specialSpells": [],
+      "signatureBox": true
     },
     {
       "id": "cleric",
@@ -551,7 +551,13 @@
       "text": "Once per adventure, plant your sword. Friends within sight heal d6 + Might HP and lose Hurt, Stuck, and Frightened. Battle Cry resets and you choose an enemy to Frighten.",
       "actionCost": "action",
       "reset": "oncePerAdventure",
-      "affects": "alliesInSight"
+      "affects": "alliesInSight",
+      "effects": [
+        {
+          "kind": "resetAbility",
+          "abilityID": "battle-cry"
+        }
+      ]
     },
     {
       "id": "warlords-eye",
@@ -759,7 +765,14 @@
       "text": "Grant a player +2 heals for 3 turns, once per fight.",
       "actionCost": "action",
       "reset": "recharge",
-      "affects": "oneAlly"
+      "affects": "oneAlly",
+      "effects": [
+        {
+          "kind": "noteChip",
+          "label": "+2 heals · 3 turns",
+          "scope": "thisFight"
+        }
+      ]
     },
     {
       "id": "quick-cast",
@@ -874,7 +887,14 @@
       "name": "Fire Armor",
       "text": "For the fight, enemies roll d20 to hit you with -2, and enemy melee attacks deal 2 damage back to the attacker.",
       "actionCost": "action",
-      "reset": "recharge"
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "noteChip",
+          "label": "Fire Armor: foes -2 to hit",
+          "scope": "thisFight"
+        }
+      ]
     },
     {
       "id": "storm-caller",
@@ -1349,7 +1369,7 @@
       "name": "Long Sword",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1397,7 +1417,7 @@
       "name": "Battle Axe",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1409,7 +1429,7 @@
       "name": "War Hammer",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1421,7 +1441,7 @@
       "name": "Mace",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1433,7 +1453,7 @@
       "name": "Club",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1445,7 +1465,7 @@
       "name": "Bat",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1457,7 +1477,7 @@
       "name": "Flail",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"
@@ -1469,7 +1489,7 @@
       "name": "Ball & Chain",
       "category": "lightMelee",
       "attack": {
-        "toHitStat": "speed",
+        "toHitStat": "might",
         "damageDice": "d6",
         "targets": {
           "kind": "single"

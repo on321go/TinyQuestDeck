@@ -11,10 +11,11 @@
 //     a companion attack's nil toHitStat means "d20 + hitBonus", not auto-hit.
 //   • "Race" stays the internal identifier + JSON key; "Kind" is presentational.
 //
-//  Powers-audit pass:
-//   • ClassDefinition.signatureBox (optional, default false): render L3 signature
-//     powers in their own gold box. Content-gated trial — Scout only for now;
-//     opting another class in is a JSON edit, never a code change.
+//  Bug-fix pass:
+//   • signatureBox moved from ClassDefinition to PathDefinition. The gold L3 signature
+//     box is now PATH-gated (Wild only), not class-gated (all Scouts) — the playtest
+//     answer to "class- vs path-level" was path-level. Opting a path in is a JSON edit,
+//     never a code change.
 
 import Foundation
 
@@ -170,10 +171,6 @@ public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
     public let spellListID: String?
     public let baseSpells: [SpellGrant]
     public let theme: ThemeToken
-    /// Render L3 signature powers in their OWN gold box on the sheet (a level-up
-    /// moment: the box APPEARS at level 3). Content-gated trial — set true on
-    /// scout only for now. Default false/absent.
-    public let signatureBox: Bool?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -187,7 +184,6 @@ public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
         spellListID = try c.decodeIfPresent(String.self, forKey: .spellListID)
         baseSpells = try c.decodeIfPresent([SpellGrant].self, forKey: .baseSpells) ?? []
         theme = try c.decode(ThemeToken.self, forKey: .theme)
-        signatureBox = try c.decodeIfPresent(Bool.self, forKey: .signatureBox)
     }
 }
 
@@ -208,6 +204,10 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
     public let specialSpells: [String]
     public let startingLoadoutOverride: [SpellGrant]?
     public let themeOverride: ThemeToken?
+    /// Render L3 signature powers in their OWN gold box on the sheet (a level-up
+    /// moment: the box APPEARS at level 3). Content-gated trial — set true on the
+    /// WILD path only for now. Default false/absent.
+    public let signatureBox: Bool?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -222,13 +222,14 @@ public struct PathDefinition: Codable, Hashable, Sendable, Identifiable {
         specialSpells = try c.decodeIfPresent([String].self, forKey: .specialSpells) ?? []
         startingLoadoutOverride = try c.decodeIfPresent([SpellGrant].self, forKey: .startingLoadoutOverride)
         themeOverride = try c.decodeIfPresent(ThemeToken.self, forKey: .themeOverride)
+        signatureBox = try c.decodeIfPresent(Bool.self, forKey: .signatureBox)
     }
 }
 
-// Level-up rule is GLOBAL, not path data: at L2/L3 boost one stat +2 (player picks),
-// HP -> hpByLevel[level-1], gain ALL Path Powers (L2) / ALL Signature Powers (L3).
-// Dual wield is likewise GLOBAL and derived: two equipped lightMelee weapons = a
-// free-action second attack (CharacterSheet.hasDualWield).
+// Level-up rule is GLOBAL, not path data: at L2/L3 spend 2 stat points (player picks
+// the split — see LevelUpSheet), HP -> hpByLevel[level-1], gain ALL Path Powers (L2)
+// / ALL Signature Powers (L3). Dual wield is likewise GLOBAL and derived: two equipped
+// lightMelee weapons = a free-action second attack (CharacterSheet.hasDualWield).
 
 // MARK: - The bundle the loader decodes
 

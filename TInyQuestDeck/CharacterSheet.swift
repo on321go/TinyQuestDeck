@@ -15,6 +15,10 @@
 //   • Pet stats are DERIVED too (derivePetStats): book companions keep their printed
 //     statlines; custom pets take the granted companion hint (Bonded Companion) as
 //     their base and fold companionUpgrade hints (Pack Tactics) on top, never downgrading.
+//
+//  Bug-fix pass:
+//   • showsSignatureBox now reads PathDefinition.signatureBox (Wild only), not
+//     ClassDefinition (which used to opt in every Scout). Path-level gating.
 
 import Foundation
 
@@ -58,7 +62,7 @@ struct CharacterSheet: Hashable {
 
     var conditionImmunities: [ConditionKind]
     var theme: ThemeToken?
-    /// Content-driven (ClassDefinition.signatureBox — Scout only for now): render
+    /// Content-driven (PathDefinition.signatureBox — Wild only for now): render
     /// L3 signature powers in their OWN gold box. Appearing at level 3 is the point.
     var showsSignatureBox: Bool
 
@@ -170,7 +174,7 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
         readySpellCap: max(6, capFromHints),
         conditionImmunities: immunities,
         theme: path.themeOverride ?? cls.theme,
-        showsSignatureBox: cls.signatureBox ?? false)
+        showsSignatureBox: path.signatureBox ?? false)
 }
 
 // MARK: - Derived pet stats

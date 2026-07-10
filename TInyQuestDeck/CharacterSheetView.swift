@@ -625,7 +625,10 @@ private struct SheetBody: View {
     private func gearFamily(_ g: GearDefinition) -> (order: Int, base: String, stat: Stat?) {
         switch g.category {
         case .heavyMelee:  return (0, "Heavy Weapons", .might)
-        case .lightMelee:  return (1, "Light Weapons", .speed)
+        case .lightMelee:
+            return g.attack?.toHitStat == .might
+                ? (1, "Heavy One-Handers", .might)   // Long Sword, Mace, Battle Axe…
+                : (2, "Finesse Weapons",   .speed)   // Short Sword, Rapier, Dagger
         case .rangedPhysical:
             return g.attack?.damageStat == nil
                 ? (3, "Small Ranged", .speed)
