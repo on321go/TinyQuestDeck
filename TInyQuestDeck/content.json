@@ -165,9 +165,9 @@
       "name": "Champion",
       "blurb": "Hard hitter.",
       "startingGearIDs": [
-        "heavy-melee",
-        "light-melee",
-        "armor"
+        "great-sword",
+        "long-sword",
+        "plate-armor"
       ],
       "pathPowerIDs": [
         "finishing-blow"
@@ -184,9 +184,9 @@
       "name": "Guardian",
       "blurb": "Defender.",
       "startingGearIDs": [
-        "light-melee",
-        "shield",
-        "armor"
+        "long-sword",
+        "iron-shield",
+        "plate-armor"
       ],
       "pathPowerIDs": [
         "i-take-it"
@@ -203,7 +203,7 @@
       "name": "Warlord",
       "blurb": "Team leader.",
       "startingGearIDs": [
-        "heavy-melee",
+        "great-axe",
         "adv-clothes"
       ],
       "pathPowerIDs": [
@@ -221,8 +221,8 @@
       "name": "Shadow",
       "blurb": "Stealthy ninja.",
       "startingGearIDs": [
-        "light-melee",
-        "ranged-physical",
+        "dagger",
+        "bow",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -243,8 +243,8 @@
       "name": "Hunter",
       "blurb": "Sniper.",
       "startingGearIDs": [
-        "ranged-physical",
-        "armor"
+        "bow",
+        "leather-armor"
       ],
       "pathPowerIDs": [
         "perfect-shot"
@@ -260,7 +260,7 @@
       "name": "Wild",
       "blurb": "Beast tamer.",
       "startingGearIDs": [
-        "light-melee",
+        "dagger",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -269,7 +269,13 @@
       "pathPowerIDs": [
         "bonded-companion"
       ],
-      "signaturePowerIDs": ["pack-tactics", "focused-attack", "wild-eyes", "split", "swap", "beast-mode"
+      "signaturePowerIDs": [
+        "pack-tactics",
+        "focused-attack",
+        "wild-eyes",
+        "split",
+        "swap",
+        "beast-mode"
       ],
       "specialSpells": []
     },
@@ -279,9 +285,9 @@
       "name": "Cleric",
       "blurb": "Battle-ready melee healer.",
       "startingGearIDs": [
-        "light-melee",
-        "armor",
-        "shield"
+        "mace",
+        "chain-armor",
+        "wooden-shield"
       ],
       "pathPowerIDs": [
         "blessed-hands"
@@ -305,8 +311,8 @@
       "name": "Druid",
       "blurb": "Forest mage of animals and elements.",
       "startingGearIDs": [
-        "light-melee",
-        "ranged-physical",
+        "club",
+        "sling",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -382,9 +388,9 @@
       "name": "Dragon Guard",
       "blurb": "Fire-magic warrior with sword, armor, and spells.",
       "startingGearIDs": [
-        "magic-weapon",
-        "armor",
-        "shield"
+        "spellblade",
+        "plate-armor",
+        "iron-shield"
       ],
       "pathPowerIDs": [
         "fire-explosion",
@@ -407,7 +413,7 @@
       "name": "Archmage",
       "blurb": "Knows a little of everything.",
       "startingGearIDs": [
-        "magic-weapon",
+        "staff",
         "adv-clothes"
       ],
       "pathPowerIDs": [
@@ -503,7 +509,11 @@
       "actionCost": "passive",
       "reset": "atWill",
       "effects": [
-        { "kind": "extraUses", "abilityID": "shield", "count": 1 }
+        {
+          "kind": "extraUses",
+          "abilityID": "shield",
+          "count": 1
+        }
       ]
     },
     {
@@ -680,29 +690,55 @@
       "actionCost": "passive",
       "reset": "atWill",
       "effects": [
-        { "kind": "companionUpgrade", "maxHP": 8, "damage": 3 }
+        {
+          "kind": "companionUpgrade",
+          "maxHP": 8,
+          "damage": 3
+        }
       ]
     },
-    { "id": "focused-attack", "name": "Focused Attack",
+    {
+      "id": "focused-attack",
+      "name": "Focused Attack",
       "text": "Command your pet with your action: it bites for d6 damage, or grabs to make an enemy Stuck.",
-      "actionCost": "action", "reset": "recharge" },
-
-    { "id": "wild-eyes", "name": "Wild Eyes",
+      "actionCost": "action",
+      "reset": "recharge"
+    },
+    {
+      "id": "wild-eyes",
+      "name": "Wild Eyes",
       "text": "See through your pet's eyes, wherever it goes.",
-      "actionCost": "free", "reset": "atWill" },
-
-    { "id": "split", "name": "Split",
+      "actionCost": "free",
+      "reset": "atWill"
+    },
+    {
+      "id": "split",
+      "name": "Split",
       "text": "When you take damage, split it with your pet — half to you, half to your friend.",
-      "actionCost": "reaction", "reset": "atWill" },
-
-    { "id": "swap", "name": "Swap",
+      "actionCost": "reaction",
+      "reset": "atWill"
+    },
+    {
+      "id": "swap",
+      "name": "Swap",
       "text": "You and your pet magically swap places in a flash of light.",
-      "actionCost": "free", "reset": "rest" },
-
-    { "id": "beast-mode", "name": "Beast Mode",
+      "actionCost": "free",
+      "reset": "rest"
+    },
+    {
+      "id": "beast-mode",
+      "name": "Beast Mode",
       "text": "One of your pets grows HUGE for one fight — 10 HP and a 4-damage bite! When the fight ends, tap the Beast Mode chip in your tracker to shrink them back.",
-      "actionCost": "free", "reset": "rest",
-      "effects": [ { "kind": "petTransform", "maxHP": 10, "damage": 4 } ] },
+      "actionCost": "free",
+      "reset": "rest",
+      "effects": [
+        {
+          "kind": "petTransform",
+          "maxHP": 10,
+          "damage": 4
+        }
+      ]
+    },
     {
       "id": "blessed-hands",
       "name": "Blessed Hands",
@@ -769,7 +805,11 @@
       "actionCost": "passive",
       "reset": "atWill",
       "effects": [
-        { "kind": "extraUses", "abilityID": "voice-of-the-wild", "count": 1 }
+        {
+          "kind": "extraUses",
+          "abilityID": "voice-of-the-wild",
+          "count": 1
+        }
       ]
     },
     {
@@ -850,7 +890,10 @@
       "actionCost": "action",
       "reset": "oncePerAdventure",
       "effects": [
-        { "kind": "resetAbility", "abilityID": "fire-explosion" }
+        {
+          "kind": "resetAbility",
+          "abilityID": "fire-explosion"
+        }
       ]
     },
     {
@@ -886,8 +929,13 @@
       "actionCost": "reaction",
       "reset": "rest",
       "effects": [
-        { "kind": "readySpellCap", "cap": 8 },
-        { "kind": "rechargeSpells" }
+        {
+          "kind": "readySpellCap",
+          "cap": 8
+        },
+        {
+          "kind": "rechargeSpells"
+        }
       ]
     }
   ],
@@ -1232,21 +1280,73 @@
   ],
   "gear": [
     {
-      "id": "heavy-melee",
-      "name": "Heavy Melee",
+      "id": "great-sword",
+      "name": "Great Sword",
       "category": "heavyMelee",
       "attack": {
         "toHitStat": "might",
         "damageDice": "d6",
-        "damageStat": "might",
         "targets": {
           "kind": "single"
-        }
+        },
+        "damageStat": "might"
       }
     },
     {
-      "id": "light-melee",
-      "name": "Light Melee",
+      "id": "great-axe",
+      "name": "Great Axe",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "great-hammer",
+      "name": "Great Hammer",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "polearm",
+      "name": "Polearm",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "halberd",
+      "name": "Halberd",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "long-sword",
+      "name": "Long Sword",
       "category": "lightMelee",
       "attack": {
         "toHitStat": "speed",
@@ -1257,21 +1357,251 @@
       }
     },
     {
-      "id": "ranged-physical",
-      "name": "Ranged Physical",
-      "category": "rangedPhysical",
+      "id": "short-sword",
+      "name": "Short Sword",
+      "category": "lightMelee",
       "attack": {
         "toHitStat": "speed",
         "damageDice": "d6",
-        "damageStat": "speed",
         "targets": {
           "kind": "single"
         }
       }
     },
     {
-      "id": "magic-weapon",
-      "name": "Magic Weapon",
+      "id": "rapier",
+      "name": "Rapier",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "dagger",
+      "name": "Dagger",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "battle-axe",
+      "name": "Battle Axe",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "war-hammer",
+      "name": "War Hammer",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "mace",
+      "name": "Mace",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "club",
+      "name": "Club",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "bat",
+      "name": "Bat",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "flail",
+      "name": "Flail",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "ball-and-chain",
+      "name": "Ball & Chain",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "bow",
+      "name": "Bow",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "throwing-axe",
+      "name": "Throwing Axe",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "rifle",
+      "name": "Rifle",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "hand-crossbow",
+      "name": "Hand Crossbow",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "throwing-dagger",
+      "name": "Throwing Dagger",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "sling",
+      "name": "Sling",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "hand-gun",
+      "name": "Hand Gun",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "wand",
+      "name": "Wand",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "staff",
+      "name": "Staff",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "orb",
+      "name": "Orb",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "spellblade",
+      "name": "Spellblade",
       "category": "magicMental",
       "attack": {
         "toHitStat": "mind",
@@ -1294,14 +1624,38 @@
       }
     },
     {
-      "id": "armor",
-      "name": "Armor",
+      "id": "leather-armor",
+      "name": "Leather Armor",
       "category": "armor",
       "maxHP": 2
     },
     {
-      "id": "shield",
-      "name": "Shield",
+      "id": "chain-armor",
+      "name": "Chain Armor",
+      "category": "armor",
+      "maxHP": 2
+    },
+    {
+      "id": "plate-armor",
+      "name": "Plate Armor",
+      "category": "armor",
+      "maxHP": 2
+    },
+    {
+      "id": "wooden-shield",
+      "name": "Wooden Shield",
+      "category": "shield",
+      "maxHP": 1
+    },
+    {
+      "id": "iron-shield",
+      "name": "Iron Shield",
+      "category": "shield",
+      "maxHP": 1
+    },
+    {
+      "id": "tower-shield",
+      "name": "Tower Shield",
       "category": "shield",
       "maxHP": 1
     },

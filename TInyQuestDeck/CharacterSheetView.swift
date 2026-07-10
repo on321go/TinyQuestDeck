@@ -47,9 +47,9 @@ import SwiftUI
 
 // Fixed metrics — the "full sheet" frame the boxes live in.
 private enum SheetMetrics {
-    static let boxWidth: CGFloat = 330
-    static let row1Height: CGFloat = 300
-    static let row2Height: CGFloat = 240
+    static let boxWidth: CGFloat = 370
+    static let row1Height: CGFloat = 290
+    static let row2Height: CGFloat = 230
     static let trackerHeight: CGFloat = 140
     static let gearCap = 5
     static let bookBoxSize = 6      // spells per Spellbook box
@@ -174,7 +174,7 @@ private struct SheetBody: View {
         let hpColor: Color = state.currentHP <= 0 ? .red
             : (Double(state.currentHP) / Double(max(sheet.maxHP, 1)) <= 0.5 ? .orange : .green)
         return VStack(spacing: 2) {
-            Text("HP").font(questFont(16)).foregroundStyle(.black)
+            Text("Health Points").font(questFont(16)).foregroundStyle(.black)
             Text("\(sheet.maxHP) Max").font(questFontLight(13)).foregroundStyle(.black.opacity(0.6))
             Text("\(state.currentHP)")
                 .font(.system(size: 44, weight: .heavy, design: .rounded))
@@ -207,7 +207,7 @@ private struct SheetBody: View {
         Button { showLevelUp = true } label: {
             HStack(spacing: 10) {
                 Text(sheet.pathName.uppercased()).font(questFont(22))
-                Text("\(sheet.level)").font(questFont(24))
+                Text("Level \(sheet.level)").font(questFont(24))
             }
             .foregroundStyle(.black)
             .padding(.horizontal, 18).padding(.vertical, 10)
@@ -285,7 +285,7 @@ private struct SheetBody: View {
                 .font(.system(size: 34, weight: .heavy, design: .rounded))
                 .foregroundStyle(Color(hex: "4AA3DF"))
         }
-        .frame(width: 96).padding(.vertical, 10)
+        .frame(width: 116).padding(.vertical, 10)
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
     }
@@ -595,17 +595,79 @@ private struct SheetBody: View {
         return lightIndexes.count >= 2 && index != lightIndexes.first
     }
 
+    // MARK: Gear "Add" menu — grouped by weapon family, labelled with the stat it uses,
+    // and ★-marked when it matches the hero's best stat (a nudge, not a restriction —
+    // a mage CAN still grab two swords). Starting kit stays pinned at the top.
+
+    private struct GearGroup: Identifiable {
+        let id: Int          // sort order doubles as identity
+        let title: String
+        let items: [GearDefinition]
+    }
+
+    /// The hero's strongest stat(s) — used to ★ the weapon families that fit them best.
+    private var bestStats: Set<Stat> {
+        let top = max(sheet.might, max(sheet.speed, sheet.mind))
+        var out: Set<Stat> = []
+        if sheet.might == top { out.insert(.might) }
+        if sheet.speed == top { out.insert(.speed) }
+        if sheet.mind  == top { out.insert(.mind) }
+        return out
+    }
+
+    private func statWord(_ s: Stat) -> String {
+        switch s { case .might: "Might"; case .speed: "Speed"; case .mind: "Mind" }
+    }
+
+    /// (sort order, base title, the stat this family rolls to hit with — nil for armor).
+    /// rangedPhysical splits by damage so Bows (d6+Speed) and small ranged (d6) separate,
+    /// even though they share a category. Reorder by changing the leading ints.
+    private func gearFamily(_ g: GearDefinition) -> (order: Int, base: String, stat: Stat?) {
+        switch g.category {
+        case .heavyMelee:  return (0, "Heavy Weapons", .might)
+        case .lightMelee:  return (1, "Light Weapons", .speed)
+        case .rangedPhysical:
+            return g.attack?.damageStat == nil
+                ? (3, "Small Ranged", .speed)
+                : (2, "Ranged Weapons", .speed)
+        case .magicMental: return (4, "Magic Weapons", .mind)
+        case .armor:       return (5, "Armor", nil)
+        case .shield:      return (6, "Shields", nil)
+        case .advClothes:  return (7, "Clothes", nil)
+        }
+    }
+
+    private func gearGroups(_ items: [GearDefinition]) -> [GearGroup] {
+        var buckets: [Int: (title: String, items: [GearDefinition])] = [:]
+        for g in items {
+            let fam = gearFamily(g)
+            let title: String = {
+                guard let stat = fam.stat else { return fam.base }
+                let star = bestStats.contains(stat) ? "★ " : ""
+                return "\(star)\(fam.base)  ·  \(statWord(stat))"
+            }()
+            buckets[fam.order, default: (title, [])].items.append(g)
+        }
+        return buckets.keys.sorted().map {
+            GearGroup(id: $0, title: buckets[$0]!.title, items: buckets[$0]!.items)
+        }
+    }
+
+    private func gearMenuButton(_ g: GearDefinition) -> some View {
+        Button { addGear(g.id) } label: { Text(g.name) }
+    }
+
     private var gearAddMenu: some View {
         let kitIDs = repo.path(character.pathID)?.startingGearIDs ?? []
         let kit = kitIDs.compactMap { repo.gear($0) }
         let others = repo.allGear().filter { !kitIDs.contains($0.id) }
         return Menu {
-            Section("Starting kit") {
-                ForEach(kit) { g in Button(g.name) { addGear(g.id) } }
+            Section("Starting Kit") {
+                ForEach(kit) { g in gearMenuButton(g) }
             }
-            if !others.isEmpty {
-                Section("More gear") {
-                    ForEach(others) { g in Button(g.name) { addGear(g.id) } }
+            ForEach(gearGroups(others)) { group in
+                Section(group.title) {
+                    ForEach(group.items) { g in gearMenuButton(g) }
                 }
             }
         } label: {
