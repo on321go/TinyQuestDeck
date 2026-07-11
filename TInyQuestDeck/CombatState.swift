@@ -30,6 +30,18 @@
 //     use — value 0, no roll effect. Unlike modifier chips these fire regardless of
 //     `affects` (they're the user's own table reminder), and retract on un-spend like
 //     any other ability chip.
+//
+//  Druid "Voice of the Wild" pass:
+//   • summon (Spirit Animal): a live, APP-summoned creature — NOT a PetChoice, so it
+//     never touches stored choices, Rest wipes it for free, and SwiftData won't
+//     persist it. One live at a time. Its own box shows HP + an end-of-round bite
+//     REMINDER (display only — no auto-attack, no RNG). Unlike Beast Mode it has no
+//     tracker chip: its own box (steppers + Sacrifice) is self-managing, so there's
+//     nothing to keep in lockstep. Lifetime: until 0 HP, Sacrifice, or Rest.
+//   • The mode pick (Roots / Bloom / Spirit) happens in the VIEW, mirroring Beast
+//     Mode's "Who grows?!" — Roots/Bloom push manual note chips there; only Spirit
+//     reaches this file, gated by a SummonSpec (parallel to TransformTarget). The
+//     `.summon` hint carries the mechanical data; onUseChips stays dumb for it.
 
 import Foundation
 
@@ -43,6 +55,23 @@ struct PetTransform: Hashable, Sendable {
     let modifierID: UUID    // the "This Fight" chip that owns this transform
 }
 
+/// A live, app-summoned creature (Voice of the Wild's Spirit Animal). NOT a
+/// PetChoice — never in stored choices, so Rest wipes it for free (state is rebuilt)
+/// and SwiftData never persists it. Its box shows HP + an end-of-round bite reminder
+/// (display only — the app never rolls or auto-attacks). One live at a time.
+struct Summon: Hashable, Sendable {
+    var name: String
+    let maxHP: Int
+    var currentHP: Int
+    let damage: Int              // end-of-round bite, shown as a reminder
+    let sourceAbilityID: String  // so a mis-tap un-spend of that box can clear it
+    let sourceBoxIndex: Int
+}
+
+/// The kid chose Spirit Animal in the view's picker; presence tells setAbilitySpent
+/// to actually summon (parallel to TransformTarget gating Beast Mode).
+struct SummonSpec: Hashable { let name: String }
+
 struct CombatState: Hashable {
     var currentHP: Int
     var conditions: Set<ConditionKind> = []
@@ -51,6 +80,7 @@ struct CombatState: Hashable {
     var modifiers: [Modifier] = []            // the tracker's chips (all three scopes)
     var petHP: [UUID: Int] = [:]              // PetChoice.id -> current HP
     var petTransforms: [UUID: PetTransform] = [:]  // PetChoice.id -> live Beast Mode
+    var summon: Summon? = nil                       // live Spirit Animal (one at a time)
 
     func remainingCasts(_ spellID: String, of total: Int) -> Int {
         max(0, total - (spellUsesSpent[spellID] ?? 0))
@@ -169,12 +199,14 @@ final class CombatStore {
     /// Spend/restore ability uses by tapping boxes — same fill/empty semantics as
     /// spell casts. SPENDING fires the ability's on-use hints (chips push into the
     /// tracker, resetAbility re-arms its target, rechargeSpells refills the passed
-    /// Ready casts). UN-spending (kids mis-tap) retracts every chip this ability
-    /// pushed; other side effects are left alone (un-recharging spells would be
-    /// weirder than the mis-tap).
+    /// Ready casts, summon creates the Spirit Animal when the kid chose Spirit).
+    /// UN-spending (kids mis-tap) retracts every chip this ability pushed and clears
+    /// a spirit this box summoned; other side effects are left alone (un-recharging
+    /// spells would be weirder than the mis-tap).
     func setAbilitySpent(_ id: UUID, ability: AbilityDefinition, toBoxIndex index: Int,
                          total: Int, rechargeSpellIDs: [String],
-                         transformPet: TransformTarget? = nil) {
+                         transformPet: TransformTarget? = nil,
+                         summonSpec: SummonSpec? = nil) {
         guard var s = states[id] else { return }
         let spent = s.abilityUsesSpent[ability.id] ?? 0
         let newSpent = (index < spent) ? index : min(total, index + 1)
@@ -203,6 +235,12 @@ final class CombatStore {
                     s.petTransforms[t.petID] = PetTransform(
                         maxHP: newMax, damage: damage,
                         normalMaxHP: t.normalMaxHP, modifierID: chip.id)
+                case let .summon(maxHP, damage):
+                    // Only summon if the kid chose Spirit AND nothing's already out.
+                    guard let spec = summonSpec, s.summon == nil else { break }
+                    s.summon = Summon(name: spec.name, maxHP: maxHP, currentHP: maxHP,
+                                      damage: damage, sourceAbilityID: ability.id,
+                                      sourceBoxIndex: index)
                 default:
                     break
                 }
@@ -210,6 +248,12 @@ final class CombatStore {
         } else {
             s.modifiers.removeAll { $0.source == .ability(id: ability.id) }
             s.pruneOrphanedTransforms()
+            // Mis-tap undo: if un-checking freed the box that summoned the spirit,
+            // the spirit goes with it. (Roots/Bloom chips are manual-source, so they
+            // persist — the kid taps those away.)
+            if let sm = s.summon, sm.sourceAbilityID == ability.id, sm.sourceBoxIndex >= newSpent {
+                s.summon = nil
+            }
         }
         states[id] = s
     }
@@ -260,11 +304,31 @@ final class CombatStore {
         states[id] = s
     }
 
+    // MARK: Summoned creatures (Voice of the Wild's Spirit Animal)
+
+    /// Step the spirit's HP. At 0 it dissipates (box disappears) — a temporary
+    /// creature, unlike a pet which lingers at 0 until Rest.
+    func adjustSummonHP(_ id: UUID, by delta: Int) {
+        guard var s = states[id], var sm = s.summon else { return }
+        let hp = max(0, min(sm.maxHP, sm.currentHP + delta))
+        if hp <= 0 { s.summon = nil } else { sm.currentHP = hp; s.summon = sm }
+        states[id] = s
+    }
+
+    /// Sacrifice (Heart of the Grove): the view pushes the honor-system heal chip,
+    /// then calls this to remove the spirit.
+    func clearSummon(_ id: UUID) {
+        guard var s = states[id] else { return }
+        s.summon = nil
+        states[id] = s
+    }
+
     // MARK: Rest / Recharge
 
-    /// Rest: full reset (HP, conditions, used powers, spent casts, chips, pet HP).
-    /// RULING: Rest is also the adventure boundary — oncePerAdventure powers reset
-    /// here too, by design, because CombatState is rebuilt from scratch.
+    /// Rest: full reset (HP, conditions, used powers, spent casts, chips, pet HP,
+    /// and any live summon). RULING: Rest is also the adventure boundary —
+    /// oncePerAdventure powers reset here too, by design, because CombatState is
+    /// rebuilt from scratch.
     func rest(_ id: UUID, maxHP: Int) {
         states[id] = CombatState(currentHP: maxHP)
     }

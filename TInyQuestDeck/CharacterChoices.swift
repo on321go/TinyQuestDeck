@@ -12,7 +12,7 @@ struct PetChoice: Identifiable, Hashable, Codable {
     var id = UUID()
     var name: String
     var companionID: String? = nil   // book companion; nil = custom standard pet
-    var imageID: String? = nil       // future pet-image gallery slot
+    var imageID: String? = nil       // pet-image gallery slot ("3" -> pet-3)
 }
 
 struct CharacterChoices: Identifiable, Hashable, Codable {
@@ -30,6 +30,10 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var normalItems: [String] = []
     var spellbookIDs: [String] = []             // all known spells
     var readySpellIDs: [String] = []            // subset; cap 6 (8 with Spell Master)
+    /// Druid's Voice-of-the-Wild spirit animal art (spirit-image gallery slot,
+    /// "2" -> spirit-2). Persists across summons/Rests — a character trait, not
+    /// live combat state. nil = default (spirit-1).
+    var spiritImageID: String? = nil
 }
 
 // Small convenience the repo protocol didn't ship (lookup a class by id).

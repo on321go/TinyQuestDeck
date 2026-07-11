@@ -765,14 +765,7 @@
       "text": "Grant a player +2 heals for 3 turns, once per fight.",
       "actionCost": "action",
       "reset": "recharge",
-      "affects": "oneAlly",
-      "effects": [
-        {
-          "kind": "noteChip",
-          "label": "+2 heals · 3 turns",
-          "scope": "thisFight"
-        }
-      ]
+      "affects": "oneAlly"
     },
     {
       "id": "quick-cast",
@@ -793,7 +786,14 @@
       "name": "Voice of the Wild",
       "text": "Roots — two enemies are Stuck. Bloom — flowers bloom and poison the air, two enemies Hurt. Or call an animal spirit (HP 5, attacks for 2 at the end of the round).",
       "actionCost": "free",
-      "reset": "recharge"
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "summon",
+          "maxHP": 5,
+          "damage": 2
+        }
+      ]
     },
     {
       "id": "wild-storm",
@@ -822,6 +822,12 @@
           "kind": "extraUses",
           "abilityID": "voice-of-the-wild",
           "count": 1
+        },
+        {
+          "kind": "summonSacrifice",
+          "players": 3,
+          "dice": "d6",
+          "addStat": "mind"
         }
       ]
     },

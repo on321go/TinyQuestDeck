@@ -64,7 +64,19 @@ public enum EffectHint: Hashable, Sendable {
     /// reminder (the app doesn't track enemy rolls or heal-over-time — honor system).
     /// `scope` drives expiry like any other chip.
     case noteChip(label: String, scope: ModifierScope)
+    /// Voice of the Wild's Spirit Animal -> summon(maxHP:5, endOfRoundDamage:2). A
+    /// TEMPORARY app-summoned creature (its own live box, NOT a PetChoice): it never
+    /// touches stored choices, so Rest wipes it for free and SwiftData won't persist
+    /// it. Lifetime: until 0 HP, Sacrifice, or Rest. Ruling: ONE live at a time.
+    case summon(maxHP: Int, endOfRoundDamage: Int)
+    /// Heart of the Grove -> summonSacrifice(players:3, dice:"d6", addStat:.mind).
+    /// Presence flags the summon box's Sacrifice button (folded to
+    /// CharacterSheet.summonSacrifice). Honor-system heal — Druid picks who; no
+    /// cross-character state. Distinct from `.companion` so the L2 naming flow
+    /// (which scans for `.companion`) never fires on Voice of the Wild.
+    case summonSacrifice(players: Int, dice: DiceExpr, addStat: Stat?)
     /// Graceful fallback for content the running binary doesn't recognize.
+    
     case unknown
 }
 
@@ -74,6 +86,7 @@ extension EffectHint: Codable {
         case applyCondition, maxHP, readySpellCap
         case extraUses, rechargeSpells, resetAbility, companionUpgrade, petTransform
         case noteChip
+        case summon, summonSacrifice
         case unknown
     }
     private enum K: String, CodingKey {
@@ -88,6 +101,7 @@ extension EffectHint: Codable {
         case abilityID, count                  // extraUses / resetAbility
         case maxHP_ = "maxHP", damage          // companionUpgrade
         case label                             // noteChip
+        case players, dice                     // summon/summonSacrifice (maxHP_, damage, addStat reused)
     }
 
     public init(from decoder: Decoder) throws {
@@ -136,6 +150,13 @@ extension EffectHint: Codable {
         case .noteChip:
             self = .noteChip(label: try c.decode(String.self, forKey: .label),
                              scope: try c.decode(ModifierScope.self, forKey: .scope))
+        case .summon:
+            self = .summon(maxHP: try c.decode(Int.self, forKey: .maxHP_),
+                           endOfRoundDamage: try c.decode(Int.self, forKey: .damage))
+        case .summonSacrifice:
+            self = .summonSacrifice(players: try c.decode(Int.self, forKey: .players),
+                                    dice: try c.decode(DiceExpr.self, forKey: .dice),
+                                    addStat: try c.decodeIfPresent(Stat.self, forKey: .addStat))
         case .unknown:
             self = .unknown
         }
@@ -194,6 +215,15 @@ extension EffectHint: Codable {
             try c.encode(Kind.noteChip, forKey: .kind)
             try c.encode(label, forKey: .label)
             try c.encode(scope, forKey: .scope)
+        case let .summon(maxHP, endOfRoundDamage):
+            try c.encode(Kind.summon, forKey: .kind)
+            try c.encode(maxHP, forKey: .maxHP_)
+            try c.encode(endOfRoundDamage, forKey: .damage)
+        case let .summonSacrifice(players, dice, addStat):
+            try c.encode(Kind.summonSacrifice, forKey: .kind)
+            try c.encode(players, forKey: .players)
+            try c.encode(dice, forKey: .dice)
+            try c.encodeIfPresent(addStat, forKey: .addStat)
         case .unknown:
             try c.encode(Kind.unknown, forKey: .kind)
         }

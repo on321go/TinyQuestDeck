@@ -19,6 +19,13 @@
 //  Bug-fix pass:
 //   • showsSignatureBox now reads PathDefinition.signatureBox (Wild only), not
 //     ClassDefinition (which used to opt in every Scout). Path-level gating.
+//
+//  Druid "Voice of the Wild" pass:
+//   • summonSacrifice: a DERIVED flag+data, non-nil only while Heart of the Grove
+//     (Druid L3) is active. It enables the summon box's Sacrifice button and carries
+//     the honor-system heal reminder copy. Like every other resting number it's read
+//     off a passive EffectHint; the live Spirit Animal itself is in CombatState, not
+//     here (it isn't a resting number — it's summoned mid-fight).
 
 import Foundation
 
@@ -39,6 +46,20 @@ struct SheetSpell: Hashable {
     let spell: SpellDefinition
     let readyUses: Int     // cast boxes
     let isReady: Bool
+}
+
+/// Derived flag + data for the summon box's Sacrifice button. Non-nil only while
+/// Heart of the Grove (Druid L3) is active. Heal is honor-system copy (Druid rolls
+/// and picks who) — no cross-character state.
+struct SummonSacrifice: Hashable {
+    let players: Int
+    let dice: DiceExpr
+    let addStat: Stat?
+    var reminderLabel: String {
+        var s = "Heal \(players) players \(diceString(dice))"
+        if let addStat { s += " + \(addStat.rawValue.capitalized)" }
+        return s
+    }
 }
 
 struct CharacterSheet: Hashable {
@@ -65,6 +86,9 @@ struct CharacterSheet: Hashable {
     /// Content-driven (PathDefinition.signatureBox — Wild only for now): render
     /// L3 signature powers in their OWN gold box. Appearing at level 3 is the point.
     var showsSignatureBox: Bool
+    /// Non-nil while Heart of the Grove is active: enables the summon box's Sacrifice
+    /// button and carries the heal reminder copy.
+    var summonSacrifice: SummonSacrifice?
 
     var readySpells: [SheetSpell] { spells.filter(\.isReady) }
     var benchSpells: [SheetSpell] { spells.filter { !$0.isReady } }
@@ -134,12 +158,15 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
     var immunities: [ConditionKind] = []
     var capFromHints = 0
     var bonusUses: [String: Int] = [:]
+    var summonSacrifice: SummonSacrifice? = nil
     for hint in abilities.filter(\.isAvailable).flatMap({ $0.ability.effects }) {
         switch hint {
         case .maxHP(let d):                       bonusHP += d
         case .conditionImmunity(let k):           immunities.append(k)
         case .readySpellCap(let cap):             capFromHints = max(capFromHints, cap)
         case .extraUses(let abilityID, let n):    bonusUses[abilityID, default: 0] += n
+        case let .summonSacrifice(players, dice, addStat):
+            summonSacrifice = SummonSacrifice(players: players, dice: dice, addStat: addStat)
         default: break                            // runtime hints, not resting
         }
     }
@@ -174,7 +201,8 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
         readySpellCap: max(6, capFromHints),
         conditionImmunities: immunities,
         theme: path.themeOverride ?? cls.theme,
-        showsSignatureBox: path.signatureBox ?? false)
+        showsSignatureBox: path.signatureBox ?? false,
+        summonSacrifice: summonSacrifice)
 }
 
 // MARK: - Derived pet stats
