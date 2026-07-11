@@ -1,7 +1,8 @@
 //  HeroTile.swift
-//  Identity, no art required: each tile is themed from the character's ThemeToken
-//  (class theme, or path themeOverride). The circular initial badge is the portrait
-//  slot — when the gallery lands, swap the initial for the chosen image there.
+//  Identity, themed from the character's ThemeToken (class theme, or path
+//  themeOverride). The circular portrait slot now shows the character's CHOSEN
+//  portrait (character.portraitID, or their race×class default) cropped into the
+//  circle; it falls back to the initial badge when that art hasn't been drawn yet.
 
 import SwiftUI
 
@@ -68,13 +69,19 @@ struct HeroTile: View {
                     .foregroundStyle(ink.opacity(0.12))
                     .offset(x: 16, y: -6)
             }
-            // portrait slot (initial for now)
+            // portrait slot — chosen portrait cropped to the circle, else the initial
             .overlay(alignment: .topLeading) {
                 ZStack {
                     Circle().fill(panel)
-                    Circle().strokeBorder(accent, lineWidth: 2)
-                    // PORTRAIT: when character.portraitID + art exist, render the image here instead.
-                    Text(initial).font(.title2.weight(.bold)).foregroundStyle(ink)
+                    if let ui = UIImage(named: portraitName) {
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(Circle())
+                    } else {
+                        Text(initial).font(.title2.weight(.bold)).foregroundStyle(ink)
+                    }
+                    Circle().strokeBorder(accent, lineWidth: 2)   // ring on top, frames the art
                 }
                 .frame(width: 52, height: 52)
                 .padding(14)
@@ -90,6 +97,14 @@ struct HeroTile: View {
             .frame(height: 158)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
+    }
+
+    /// The chosen portrait (or the race×class default) as an asset name — same
+    /// resolution the character sheet uses, so tile and sheet stay in sync.
+    private var portraitName: String {
+        let combo = character.portraitID
+            ?? QuestArtKey.portraitCombo(race: character.raceID, klass: character.classID)
+        return QuestArtKey.portrait(combo: combo)
     }
 
     private var initial: String {

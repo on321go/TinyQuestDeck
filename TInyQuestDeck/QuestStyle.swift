@@ -216,11 +216,13 @@ enum QuestArtKey {
     /// shows only those that exist. "any" can't collide with a "<race>-<class>" combo.
     static func portraitMisc(_ slug: String) -> String { "any-\(slug)" }
     static let portraitMiscSlots = 40
-    static func race(_ id: String) -> String { "race-\(id)" }   // creation race cards / lineup
+    static func race(_ id: String) -> String { "race-\(id)" }              // race cards / kind tiles
+    static func raceLineup(_ id: String) -> String { "race-\(id)-lineup" } // KindDetail group banner
     static func klass(_ id: String) -> String { "class-\(id)" }
-    static func path(_ id: String) -> String { "path-\(id)" }
+    static func path(_ id: String) -> String { "path-\(id)" }              // path cards + path portrait
     static func emblem(_ id: String) -> String { "emblem-\(id)" }
     static func weapon(_ id: String) -> String { "weapon-\(id)" }
+    static let portal = "portal"    // one-off New Hero portal illustration
 }
 
 // MARK: - Per-race tile tints (the pastel card backdrops in the Pick-a-Kind grid)

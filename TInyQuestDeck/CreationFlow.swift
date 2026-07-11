@@ -7,6 +7,9 @@
 //  A draft accumulates choices as screens commit; nothing becomes a real
 //  CharacterChoices until the final Select. Back navigation is free browsing.
 //
+//  Art: every slot renders QuestArt at the locked ratio — real catalog asset if named,
+//  else the dashed placeholder. Portal key is the one-off "portal".
+//
 //  Integration (RosterView): replace the .sheet(isPresented: $building) block with
 //
 //      .fullScreenCover(isPresented: $building) {
@@ -164,11 +167,13 @@ struct NewHeroView: View {
 
                 // The portal — 3:4 one-off illustration (1536×2048). Later: layered
                 // transparent PNGs in a ZStack so the dragon/egg/swirl can animate.
-                PlaceholderArt(
+                QuestArt(
+                    name: QuestArtKey.portal,
                     ratio: QuestRatio.portal,
                     colors: [Color(hex: "58C7E8"), Color(hex: "2E7FD0"), Color(hex: "7B5FC0")],
                     symbol: "sparkles.rectangle.stack",
-                    caption: "portal art · 1536×2048")
+                    caption: "portal art · 1536×2048",
+                    framed: false)
                     .frame(maxWidth: 560)
             }
             .padding(20)

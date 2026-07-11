@@ -1,19 +1,74 @@
 //  CharacterBuilder.swift
 //  The MVP loop: roster -> "+" -> pick race/class/path/name -> create -> back to roster.
-//  In-memory only this pass (RosterStore). SwiftData persistence is step 4.
+//  Roster now PERSISTS via SwiftData (step 4): heroes survive quit. CharacterChoices
+//  stays a pure Codable struct — see Persistence.swift for the thin @Model wrapper.
+//
+//  Persistence rides on the `characters` didSet: EVERY mutation path (add, remove,
+//  and the update(_:)/remove(_:) extensions elsewhere) saves automatically, because
+//  they all mutate `characters`. Nothing outside this class and Persistence.swift is
+//  SwiftData-aware.
 //
 //  Make RosterView() your root: WindowGroup { RosterView() }
 
 import SwiftUI
+import SwiftData
 
-// MARK: - In-memory roster
+// MARK: - Persisted roster
 
 @MainActor
 @Observable
 final class RosterStore {
-    var characters: [CharacterChoices] = []
+    /// Observable source of truth for the UI. Mutating it (anywhere — including the
+    /// update(_:)/remove(_:) extensions) writes through to SwiftData via didSet.
+    var characters: [CharacterChoices] = [] {
+        didSet { if ready { persist() } }
+    }
+
+    @ObservationIgnored private let context: ModelContext
+    @ObservationIgnored private var ready = false     // gate: don't persist during initial load
+
+    init() {
+        context = ModelContext(PersistenceStore.container)
+        load()
+        ready = true
+    }
+
     func add(_ c: CharacterChoices) { characters.append(c) }
     func remove(at offsets: IndexSet) { characters.remove(atOffsets: offsets) }
+
+    // MARK: Persistence (private — the only SwiftData contact point)
+
+    /// Load saved heroes in roster order. Decode failures are skipped, not fatal, so
+    /// one corrupt blob can't take down the whole roster.
+    private func load() {
+        let descriptor = FetchDescriptor<StoredHero>(sortBy: [SortDescriptor(\.order)])
+        let stored = (try? context.fetch(descriptor)) ?? []
+        characters = stored.compactMap {
+            try? JSONDecoder().decode(CharacterChoices.self, from: $0.data)
+        }
+    }
+
+    /// Upsert by id + drop heroes no longer present. Upserting (rather than
+    /// delete-all-then-reinsert) avoids a unique-id conflict within one save and
+    /// keeps this cheap for a small roster.
+    private func persist() {
+        let stored = (try? context.fetch(FetchDescriptor<StoredHero>())) ?? []
+        var byID = Dictionary(stored.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        for (i, c) in characters.enumerated() {
+            guard let data = try? JSONEncoder().encode(c) else { continue }
+            if let hero = byID.removeValue(forKey: c.id) {
+                hero.data = data
+                hero.order = i
+            } else {
+                context.insert(StoredHero(id: c.id, order: i, data: data))
+            }
+        }
+        // Anything still in byID isn't in the roster anymore → delete it.
+        byID.values.forEach { context.delete($0) }
+
+        try? context.save()
+    }
 }
 
 // MARK: - Root

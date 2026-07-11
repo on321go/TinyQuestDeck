@@ -3,7 +3,10 @@
 //  sections), Path Detail (Build Info + tiered ability panels), Pick a Kind (card
 //  grid), Kind Detail (tilted card + lore + lineup banner).
 //
-//  All art is PlaceholderArt at the locked ratios; real images drop in unchanged.
+//  All art renders QuestArt at the locked ratios — real catalog asset if named, else
+//  the dashed placeholder, so screens stay complete as art is drawn in. Keys:
+//  path cards + path portrait -> path-<pathID>; kind tiles + tilted card ->
+//  race-<raceID>; lineup banner -> race-<raceID>-lineup.
 //  Depends on QuestStyle.swift, TapInfo.swift, and Color(hex:) from HeroTile.swift.
 //
 //  v2 changes: path cards are FIXED-WIDTH (a 2-path class renders identical cards
@@ -46,7 +49,8 @@ struct PickPathView: View {
                 ForEach(paths) { p in
                     Button { onSelect(p.id) } label: {
                         VStack(spacing: 6) {
-                            PlaceholderArt(
+                            QuestArt(
+                                name: QuestArtKey.path(p.id),
                                 ratio: QuestRatio.tall,
                                 colors: [Color(hex: (p.themeOverride ?? cls.theme).accent),
                                          Color(hex: (p.themeOverride ?? cls.theme).background)],
@@ -112,7 +116,8 @@ struct PathDetailView: View {
 
                 HStack(alignment: .top, spacing: 16) {
                     // Tall portrait — same asset as the class-select tile (1080×1920).
-                    PlaceholderArt(
+                    QuestArt(
+                        name: QuestArtKey.path(path.id),
                         ratio: QuestRatio.tall,
                         colors: [Color(hex: theme.accent), Color(hex: theme.background)],
                         symbol: emblemSymbol(theme.emblem),
@@ -231,7 +236,8 @@ struct PickKindView: View {
             Text(race.name.uppercased())
                 .font(questFont(18)).foregroundStyle(.black)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            PlaceholderArt(
+            QuestArt(
+                name: QuestArtKey.race(race.id),
                 ratio: QuestRatio.card,
                 colors: [raceTint(race.id), raceTint(race.id).opacity(0.55)],
                 symbol: "person.crop.square.badge.camera",
@@ -276,7 +282,8 @@ struct KindDetailView: View {
 
                 HStack(alignment: .top, spacing: -30) {
                     // The tilted hero card — same 5:7 asset as the grid tile.
-                    PlaceholderArt(
+                    QuestArt(
+                        name: QuestArtKey.race(race.id),
                         ratio: QuestRatio.card,
                         colors: [raceTint(race.id), raceTint(race.id).opacity(0.5)],
                         symbol: "person.crop.square.badge.camera",
@@ -320,7 +327,8 @@ struct KindDetailView: View {
                 }
 
                 // Group lineup banner — different looks + class combos (3:2, 2048×1365).
-                PlaceholderArt(
+                QuestArt(
+                    name: QuestArtKey.raceLineup(race.id),
                     ratio: QuestRatio.banner,
                     colors: [raceTint(race.id).opacity(0.9), Color(hex: "5B4A8A")],
                     symbol: "person.3.fill",
