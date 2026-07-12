@@ -42,6 +42,9 @@ public struct GearDefinition: Codable, Hashable, Sendable, Identifiable {
     public let category: GearCategory
     public let attack: AttackProfile?   // nil for armor/shield/clothes
     public let maxHP: Int               // default 0
+    public let cost: Int?        // nil = derive from Pricing(rarity); a value overrides
+    public let rarity: Rarity    // default .common
+    public let flavor: String?   // "same stats, cool look" text for customized gear
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -50,7 +53,11 @@ public struct GearDefinition: Codable, Hashable, Sendable, Identifiable {
         category = try c.decode(GearCategory.self, forKey: .category)
         attack = try c.decodeIfPresent(AttackProfile.self, forKey: .attack)
         maxHP = try c.decodeIfPresent(Int.self, forKey: .maxHP) ?? 0
-    }
+        cost   = try c.decodeIfPresent(Int.self, forKey: .cost)
+        rarity = try c.decodeIfPresent(Rarity.self, forKey: .rarity) ?? .common
+        flavor = try c.decodeIfPresent(String.self, forKey: .flavor)    }
+    
+    
 }
 
 // MARK: - Spells
@@ -73,6 +80,42 @@ public struct SpellDefinition: Codable, Hashable, Sendable, Identifiable {
         text = try c.decode(String.self, forKey: .text)
         attack = try c.decodeIfPresent(AttackProfile.self, forKey: .attack)
         effects = try c.decodeIfPresent([EffectHint].self, forKey: .effects) ?? []
+    }
+}
+
+// MARK: - Items (consumables & scrolls — the non-gear side of the shop)
+//
+// Gear is equippable and lives in GearDefinition. Items are things a hero HOLDS:
+// potions, scrolls, trinkets. `kind` decides where a purchase lands on the hero — the
+// shop's buy pipeline reads it, nothing else does. Scrolls carry the spellID they teach.
+// Mechanical effects are honor-system for v1 (text only); when you want structured
+// effects, this is where an `effects: [EffectHint]` would plug in.
+
+public enum ItemKind: String, Codable, Sendable {
+    case consumable        // potions, funny trinkets → the hero's Normal Items list
+    case magicConsumable   // magic / cursed one-shots  → the hero's Magic Items list
+    case scroll            // teaches a spell           → spellbook (caster) or carried (non-caster)
+}
+
+public struct ItemDefinition: Codable, Hashable, Sendable, Identifiable {
+    public let id: String
+    public let name: String
+    public let kind: ItemKind
+    public let cost: Int?
+    public let rarity: Rarity
+    public let text: String          // plain-language description for the detail screen
+    /// Scrolls only — the spell this scroll teaches / carries. Validated to resolve.
+    public let spellID: String?
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decode(ItemKind.self, forKey: .kind)
+        cost   = try c.decodeIfPresent(Int.self, forKey: .cost)
+        rarity = try c.decodeIfPresent(Rarity.self, forKey: .rarity) ?? .common
+        text = try c.decodeIfPresent(String.self, forKey: .text) ?? ""
+        spellID = try c.decodeIfPresent(String.self, forKey: .spellID)
     }
 }
 
@@ -240,6 +283,7 @@ public struct ContentBundle: Codable, Sendable {
     public let spells: [SpellDefinition]
     public let spellLists: [SpellListDefinition]
     public let gear: [GearDefinition]
+    public let items: [ItemDefinition]
     public let races: [RaceDefinition]
     public let companions: [CompanionDefinition]
 
@@ -251,6 +295,7 @@ public struct ContentBundle: Codable, Sendable {
         spells = try c.decode([SpellDefinition].self, forKey: .spells)
         spellLists = try c.decode([SpellListDefinition].self, forKey: .spellLists)
         gear = try c.decode([GearDefinition].self, forKey: .gear)
+        items = try c.decodeIfPresent([ItemDefinition].self, forKey: .items) ?? []
         races = try c.decode([RaceDefinition].self, forKey: .races)
         companions = try c.decodeIfPresent([CompanionDefinition].self, forKey: .companions) ?? []
     }

@@ -23,6 +23,7 @@ struct MainTabView: View {
     @State private var roster = RosterStore()
     @State private var combat = CombatStore()
     @State private var rulebookStore = RulebookStore()
+    @State private var shop = ShopStore()
     @State private var tab: MainTab = .heroes
     @State private var selectedHeroID: UUID? = nil
     @State private var building = false
@@ -73,8 +74,7 @@ struct MainTabView: View {
                               blurb: "Every spell, for quick reference mid-game.")
             }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
-                ComingSoonTab(title: "Dungeon Shop", symbol: "bag.fill",
-                              blurb: "Spend your gold, silver, and copper on new gear!")
+                ShopView(repo: repo, roster: roster, shop: shop, activeHeroID: selectedHeroID)
             }
         }
     }

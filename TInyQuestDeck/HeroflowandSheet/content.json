@@ -1690,7 +1690,275 @@
       "name": "Adventurer Clothes",
       "category": "advClothes",
       "maxHP": 0
-    }
+    },
+   
+        {
+          "id": "dragonborn-plate",
+          "name": "Dragonborn Plate",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "flavor": "Same sturdy protection as Plate Armor — but forged with a dragon's crest. Looks incredible."
+        },
+        {
+          "id": "spellblade-of-recall",
+          "name": "Spellblade of Recall",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "flavor": "Call it back to your hand from anywhere in the world.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+    
+          {
+            "id": "frostfang-dagger",
+            "name": "Frostfang Dagger",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage. On a hit, the target is Hurt (-1 to its next attack).",
+            "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "hammer-of-mornings",
+            "name": "Hammer of Mornings",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage. (Recharge) All enemies in the room are Stuck for 1 round.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "singing-sword",
+            "name": "Singing Sword",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage and +1 to hit. Loud — bad for sneaking.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "truestrike-bow",
+            "name": "Truestrike Bow",
+            "category": "rangedPhysical",
+            "rarity": "rare",
+            "flavor": "+1 damage. (Recharge) One arrow auto-hits for max damage.",
+            "attack": { "toHitStat": "speed", "damageDice": "d6", "damageStat": "speed", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "sunblade",
+            "name": "Sunblade",
+            "category": "lightMelee",
+            "rarity": "legendary",
+            "flavor": "+2 damage. Always glows. Double damage to undead and shadow.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "shieldwarden",
+            "name": "Shieldwarden",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "uncommon",
+            "flavor": "(Recharge) Take a hit meant for a friend next to you."
+          },
+          {
+            "id": "mages-robe",
+            "name": "Mage's Robe",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "rare",
+            "flavor": "(Recharge) Re-roll one failed Mind check or spell attack."
+          },
+          {
+            "id": "aegis-of-the-last-stand",
+            "name": "Aegis of the Last Stand",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "legendary",
+            "flavor": "Once per adventure, say \u201cNOT TODAY\u201d and ignore one damage source."
+          },
+          {
+            "id": "sword-of-constant-compliments",
+            "name": "Sword of Constant Compliments",
+            "category": "lightMelee",
+            "rarity": "common",
+            "cost": 75,
+            "flavor": "+1 damage. Talks constantly about how great it is.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          }
+        
+    
+  ],
+  "items": [
+    {
+      "id": "health-potion",
+      "name": "Health Potion",
+      "kind": "consumable",
+      "text": "Drink on your turn to heal. D6 health."
+    },
+    {
+      "id": "greater-health-potion",
+      "name": "Greater Health Potion",
+      "kind": "consumable",
+      "rarity": "uncommon",
+      "text": "A bigger, brighter potion. Heals a lot d6 +6 — great to save for when a friend is really hurt."
+    },
+    {
+      "id": "poison-vial",
+      "name": "Poison Vial",
+      "kind": "magicConsumable",
+      "text": "Coat a weapon or throw it. One or two enemies become Hurt."
+    },
+    {
+      "id": "frost-vial",
+      "name": "Frost Vial",
+      "kind": "magicConsumable",
+      "text": "Smash it at an enemy's feet. They freeze in place and become Stuck."
+    },
+    {
+      "id": "stink-bomb",
+      "name": "Stink Bomb",
+      "kind": "consumable",
+      "cost": 50,
+      "text": "A gross, giggly cloud. Everyone nearby coughs and covers their nose — a fun way to make a getaway."
+    },
+    {
+      "id": "lucky-coin",
+      "name": "Lucky Coin",
+      "kind": "magicConsumable",
+      "text": "Flip it before a roll for good luck — re-roll once and keep the better result. Then the shine wears off."
+    },
+      { "id": "boots-of-quiet", "name": "Boots of Quiet", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Sneaking auto-succeeds if nothing is watching." },
+      { "id": "cloak-of-last-chance", "name": "Cloak of Last Chance", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Once per adventure, when you would hit 0 Health, stay at 1 instead." },
+      { "id": "helm-of-brave-faces", "name": "Helm of Brave Faces", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Never Frightened. Brave words out loud can give +1 to your next roll." },
+      { "id": "ring-of-the-quick", "name": "Ring of the Quick", "kind": "magicConsumable", "rarity": "rare",
+        "text": "+1 to Speed rolls. Go first in every fight." },
+      { "id": "gauntlets-of-the-bear", "name": "Gauntlets of the Bear", "kind": "magicConsumable", "rarity": "rare",
+        "text": "+1 to Might rolls. Bend bars and carry twice your weight." },
+      { "id": "spectacles-of-truth", "name": "Spectacles of Truth", "kind": "magicConsumable", "rarity": "rare",
+        "text": "See through illusions, lies, and disguises. Once per scene, the GM tells you one true thing." },
+      { "id": "crown-of-the-forest", "name": "Crown of the Forest", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Animals are friendly and help politely. Free Animal Friend on any animal." },
+      { "id": "cloak-of-stars", "name": "Cloak of Stars", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Once per adventure, teleport up to 60 ft and become invisible for 1 round." },
+
+      { "id": "lantern-of-honest-light", "name": "Lantern of Honest Light", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Wide light. Creatures in the light cannot lie or use illusions while seen." },
+      { "id": "compass-of-lost-things", "name": "Compass of Lost Things", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Points toward a lost object you hold or describe. Objects only, not people." },
+      { "id": "bag-of-plenty", "name": "Bag of Plenty", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Once per scene, pull out one small useful item. Refills overnight." },
+      { "id": "whistle-of-warning", "name": "Whistle of Warning", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Friends in the same building or area hear it. One use per rest." },
+      { "id": "map-that-draws-itself", "name": "Map That Draws Itself", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Draws rooms and tunnels as you walk." },
+      { "id": "rope-of-climbing", "name": "Rope of Climbing", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Say \u201cclimb\u201d and the rope rises and anchors up to 30 ft. Climbing auto-succeeds." },
+      { "id": "mirror-of-memory", "name": "Mirror of Memory", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Once per rest, see what this place looked like a day, week, or month ago." },
+      { "id": "bell-of-the-sprite", "name": "Bell of the Sprite", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Once per adventure, summon a sprite to help with one task." },
+
+      { "id": "hat-of-hiccups", "name": "Hat of Hiccups", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "You hiccup loudly. -1 to Speed rolls. Easy to remove." },
+      { "id": "ring-of-truth", "name": "Ring of Truth", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "You cannot lie. Easy to remove. Great in social scenes." },
+      { "id": "boots-of-backwards", "name": "Boots of Backwards", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "You walk backward until you get used to it after 5 minutes." },
+      { "id": "cloak-of-itching", "name": "Cloak of Itching", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Constant itching. -1 to Mind rolls. Takes 10 minutes to remove." },
+      { "id": "goblet-of-honest-drinks", "name": "Goblet of Honest Drinks", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Everything tastes terrible. Reappears in your bag if you drop it." },
+      { "id": "mask-of-the-toad", "name": "Mask of the Toad", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Stuck on for 1 hour. You speak in ribbits. Animals love you." },
+      { "id": "book-of-naps", "name": "Book of Naps", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Reading it requires Mind 10+ or you fall Asleep for 10 minutes. Useful on guards." },
+      { "id": "pocket-rain-cloud", "name": "Pocket Rain Cloud", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "A tiny cloud rains only on you. -1 to sneaking, but you can walk through fire unharmed." },
+      { "id": "gloves-of-the-over-sharer", "name": "Gloves of the Over-Sharer", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "You loudly narrate everything you do. -2 to Hide. Comedy gold on a Scout." },
+      { "id": "boots-of-the-bouncy", "name": "Boots of the Bouncy", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "You bounce when you walk. Jump twice as high; -1 on tasks that need you to hold still." },
+      { "id": "helm-of-echoes", "name": "Helm of Echoes", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Your voice booms dramatically. +1 to Battle Cry and big moments; whispering is impossible." },
+      { "id": "everfull-snack-pouch", "name": "Everfull Snack Pouch", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Always holds one (mediocre) snack. Once per rest, a friend who eats one heals 1 Health and grins." },
+      { "id": "mood-cloak", "name": "Mood Cloak", "kind": "magicConsumable", "rarity": "common", "cost": 50,
+        "text": "Changes color with your feelings. You can't bluff — wonderful for an honest hero." },
+
+    
+      { "id": "scroll-zap", "name": "Scroll of Zap", "kind": "scroll", "rarity": "common", "spellID": "zap",
+        "text": "Zap one foe with lightning for d6 + Mind." },
+      { "id": "scroll-shield-bubble", "name": "Scroll of Shield Bubble", "kind": "scroll", "rarity": "common", "spellID": "shield-bubble",
+        "text": "Block all damage from one attack on you or a friend." },
+      { "id": "scroll-sleep-dust", "name": "Scroll of Sleep Dust", "kind": "scroll", "rarity": "common", "spellID": "sleep-dust",
+        "text": "Puts one small enemy to sleep. Big monsters resist." },
+      { "id": "scroll-light", "name": "Scroll of Light", "kind": "scroll", "rarity": "common", "spellID": "light",
+        "text": "Makes magical light, bright as a torch, for the whole scene." },
+      { "id": "scroll-heal", "name": "Scroll of Heal", "kind": "scroll", "rarity": "common", "spellID": "heal",
+        "text": "Restore d6 + Mind Health to yourself or an ally." },
+      { "id": "scroll-animal-friend", "name": "Scroll of Animal Friend", "kind": "scroll", "rarity": "common", "spellID": "animal-friend",
+        "text": "Chat with one beast for a minute — it stays kind and helpful." },
+      { "id": "scroll-bless", "name": "Scroll of Bless", "kind": "scroll", "rarity": "common", "spellID": "bless",
+        "text": "Give one ally +2 on their next d20 roll." },
+      { "id": "scroll-calm", "name": "Scroll of Calm", "kind": "scroll", "rarity": "common", "spellID": "calm",
+        "text": "Ends a monster's fear, rage, or fight for a minute." },
+
+      { "id": "scroll-spark", "name": "Scroll of Spark", "kind": "scroll", "rarity": "uncommon", "spellID": "spark",
+        "text": "Ranged lightning that hits 3 targets for d6 each." },
+      { "id": "scroll-mage-hand", "name": "Scroll of Mage Hand", "kind": "scroll", "rarity": "uncommon", "spellID": "mage-hand",
+        "text": "An invisible hand fetches, pushes, and unties for the scene." },
+      { "id": "scroll-detect-magic", "name": "Scroll of Detect Magic", "kind": "scroll", "rarity": "uncommon", "spellID": "detect-magic",
+        "text": "Magical things nearby glow blue for a minute." },
+      { "id": "scroll-featherfall", "name": "Scroll of Featherfall", "kind": "scroll", "rarity": "uncommon", "spellID": "featherfall",
+        "text": "You and friends fall slowly and safely from any height." },
+      { "id": "scroll-touch-of-death", "name": "Scroll of Touch of Death", "kind": "scroll", "rarity": "uncommon", "spellID": "touch-of-death",
+        "text": "Spirit hands strike a foe for d6 and leave them Hurt." },
+      { "id": "scroll-cure-sickness", "name": "Scroll of Cure Sickness", "kind": "scroll", "rarity": "uncommon", "spellID": "cure-sickness",
+        "text": "Touch a friend to remove Hurt, poison, sickness, or a curse." },
+      { "id": "scroll-speak-with-plants", "name": "Scroll of Speak with Plants", "kind": "scroll", "rarity": "uncommon", "spellID": "speak-with-plants",
+        "text": "Talk to plants for a minute — they notice what walkers miss." },
+      { "id": "scroll-sanctuary", "name": "Scroll of Sanctuary", "kind": "scroll", "rarity": "uncommon", "spellID": "sanctuary",
+        "text": "Pick a friend; enemies pick someone else until they attack." },
+      { "id": "scroll-glow-lantern", "name": "Scroll of Glow Lantern", "kind": "scroll", "rarity": "uncommon", "spellID": "glow-lantern",
+        "text": "Your holy symbol shines; undead in the light get -1 to hit." },
+
+      { "id": "scroll-frostbolt", "name": "Scroll of Frostbolt", "kind": "scroll", "rarity": "rare", "spellID": "frostbolt",
+        "text": "An ice shard: d6 + Mind, and the target is Stuck." },
+      { "id": "scroll-mirror-image", "name": "Scroll of Mirror Image", "kind": "scroll", "rarity": "rare", "spellID": "mirror-image",
+        "text": "Three copies appear; the next three attacks hit a copy." },
+      { "id": "scroll-invisibility", "name": "Scroll of Invisibility", "kind": "scroll", "rarity": "rare", "spellID": "invisibility",
+        "text": "You or a friend turns invisible until attacking or casting." },
+      { "id": "scroll-spider-climb", "name": "Scroll of Spider Climb", "kind": "scroll", "rarity": "rare", "spellID": "spider-climb",
+        "text": "Climb walls and ceilings for the scene, no roll needed." },
+      { "id": "scroll-holy-fire", "name": "Scroll of Holy Fire", "kind": "scroll", "rarity": "rare", "spellID": "holy-fire",
+        "text": "Burning light falls on enemies for d6 + Mind and Stuck." },
+      { "id": "scroll-group-heal", "name": "Scroll of Group Heal", "kind": "scroll", "rarity": "rare", "spellID": "group-heal",
+        "text": "All nearby friends, including you, regain d6 Health." },
+      { "id": "scroll-warding-word", "name": "Scroll of Warding Word", "kind": "scroll", "rarity": "rare", "spellID": "warding-word",
+        "text": "One friend takes -2 damage from hits for the whole fight." },
+      { "id": "scroll-talk-to-the-dead", "name": "Scroll of Talk to the Dead", "kind": "scroll", "rarity": "rare", "spellID": "talk-to-the-dead",
+        "text": "Ask a skull or dead creature up to 3 questions." },
+      { "id": "scroll-mend", "name": "Scroll of Mend", "kind": "scroll", "rarity": "rare", "spellID": "mend",
+        "text": "Repairs one broken normal thing (not magic items)." },
+
+      { "id": "scroll-fireball", "name": "Scroll of Fireball", "kind": "scroll", "rarity": "legendary", "spellID": "fireball",
+        "text": "A huge blast hitting up to 6 clustered foes for d6 + Mind each." },
+      { "id": "scroll-polymorph", "name": "Scroll of Polymorph", "kind": "scroll", "rarity": "legendary", "spellID": "polymorph",
+        "text": "Turn one creature into a harmless animal for the scene." },
+      { "id": "scroll-wall-of-stone", "name": "Scroll of Wall of Stone", "kind": "scroll", "rarity": "legendary", "spellID": "wall-of-stone",
+        "text": "Raise a stone wall that blocks enemies and attacks." },
+      { "id": "scroll-teleport", "name": "Scroll of Teleport", "kind": "scroll", "rarity": "legendary", "spellID": "teleport",
+        "text": "Once per adventure, move the party somewhere you've been." },
+      { "id": "scroll-revive", "name": "Scroll of Revive", "kind": "scroll", "rarity": "legendary", "spellID": "revive",
+        "text": "Bring an Asleep or 0-Health friend back to full Health." },
+      { "id": "scroll-summon-animal-friend", "name": "Scroll of Summon Animal Friend", "kind": "scroll", "rarity": "legendary", "spellID": "summon-animal-friend",
+        "text": "A wild animal helps for the rest of the scene." },
+      { "id": "scroll-dispel", "name": "Scroll of Dispel", "kind": "scroll", "rarity": "legendary", "spellID": "dispel",
+        "text": "End one magical effect you can see." },
+      { "id": "scroll-suns-embrace", "name": "Scroll of Sun's Embrace", "kind": "scroll", "rarity": "legendary", "spellID": "suns-embrace",
+        "text": "Once per adventure, friends regain all Health and lose Hurt and Stuck." }
+    
+    
   ],
   "races": [
     {

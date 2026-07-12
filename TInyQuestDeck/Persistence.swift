@@ -37,13 +37,31 @@ final class StoredCombat {
     }
 }
 
+/// The Dungeon Shop's shelf. A SINGLE shared row (one shelf for the whole roster —
+/// wallets and inventories are per-hero, the stock is not), keyed by a constant so
+/// upserts always hit the same record. `lastRestock` stays a queryable column (no
+/// decode needed to check the schedule); the blob is the encoded ShopStock (the flat
+/// list of stocked purchasable refs, grouped into cards at display time).
+@Model
+final class StoredShop {
+    @Attribute(.unique) var key: String    // singleton — always ShopStore.singletonKey
+    var lastRestock: Date
+    var data: Data                         // JSONEncoder().encode(ShopStock)
+
+    init(key: String, lastRestock: Date, data: Data) {
+        self.key = key
+        self.lastRestock = lastRestock
+        self.data = data
+    }
+}
+
 enum PersistenceStore {
     /// One shared container for all saved data. If the on-disk store can't open
     /// (most often a schema change during development), fall back to an in-memory
     /// store so the app KEEPS RUNNING — this session just won't persist. The console
     /// warning is the cue to delete & relaunch to reset the on-disk store.
     static let container: ModelContainer = {
-        let schema = Schema([StoredHero.self, StoredCombat.self])
+        let schema = Schema([StoredHero.self, StoredCombat.self, StoredShop.self])
         // Dedicated store file — NOT the default. The app's template container
         // (Schema([Item.self]) in the App file) uses the default store; sharing it
         // caused saves and loads to hit different backing stores (heroes saved fine

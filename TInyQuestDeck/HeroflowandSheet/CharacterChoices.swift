@@ -25,6 +25,10 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     var level: Int = 1
     var statBoosts: [String: Int] = [:]
     var equippedGearIDs: [String] = []          // Gear box; starts empty; cap 5 (UI rule)
+    /// Gear the hero OWNS but hasn't necessarily equipped (buy = own). Purchases land
+    /// here; the equip flow reads it later. Inert until equip-from-owned is wired — the
+    /// sheet's Add-gear menu still offers the full catalog for now.
+    var ownedGearIDs: [String] = []
     var pets: [PetChoice] = []
     var magicItems: [String] = []
     var normalItems: [String] = []
@@ -38,6 +42,38 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     /// every existing construction site AND every saved hero stays valid: no migration,
     /// no delete-and-relaunch.
     var gold: Int = 0
+}
+
+extension CharacterChoices {
+    // Migration-safe decode. Swift's SYNTHESIZED Decodable ignores property defaults for
+    // non-optional fields and throws keyNotFound on a missing key — so adding a stored
+    // field would invalidate every hero blob saved before that field existed. Decoding
+    // each field with `decodeIfPresent(...) ?? <default>` instead means a newly-added
+    // field simply reads as its default on old blobs, and nothing gets dropped.
+    //
+    // Kept in an EXTENSION so the automatic memberwise initializer (used by the creation
+    // flow) survives. CodingKeys and encode(to:) are still synthesized, so new fields
+    // round-trip automatically once added above — just add the matching line here.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id              = try c.decodeIfPresent(UUID.self,           forKey: .id) ?? UUID()
+        name            = try c.decodeIfPresent(String.self,         forKey: .name) ?? ""
+        raceID          = try c.decodeIfPresent(String.self,         forKey: .raceID) ?? ""
+        portraitID      = try c.decodeIfPresent(String.self,         forKey: .portraitID)
+        classID         = try c.decodeIfPresent(String.self,         forKey: .classID) ?? ""
+        pathID          = try c.decodeIfPresent(String.self,         forKey: .pathID) ?? ""
+        level           = try c.decodeIfPresent(Int.self,            forKey: .level) ?? 1
+        statBoosts      = try c.decodeIfPresent([String: Int].self,  forKey: .statBoosts) ?? [:]
+        equippedGearIDs = try c.decodeIfPresent([String].self,       forKey: .equippedGearIDs) ?? []
+        ownedGearIDs    = try c.decodeIfPresent([String].self,       forKey: .ownedGearIDs) ?? []
+        pets            = try c.decodeIfPresent([PetChoice].self,     forKey: .pets) ?? []
+        magicItems      = try c.decodeIfPresent([String].self,       forKey: .magicItems) ?? []
+        normalItems     = try c.decodeIfPresent([String].self,       forKey: .normalItems) ?? []
+        spellbookIDs    = try c.decodeIfPresent([String].self,       forKey: .spellbookIDs) ?? []
+        readySpellIDs   = try c.decodeIfPresent([String].self,       forKey: .readySpellIDs) ?? []
+        spiritImageID   = try c.decodeIfPresent(String.self,         forKey: .spiritImageID)
+        gold            = try c.decodeIfPresent(Int.self,            forKey: .gold) ?? 0
+    }
 }
 
 // Small convenience the repo protocol didn't ship (lookup a class by id).

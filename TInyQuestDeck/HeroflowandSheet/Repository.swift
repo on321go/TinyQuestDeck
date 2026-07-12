@@ -20,6 +20,9 @@ public protocol ContentRepository {
     /// Every gear item in the content — the sheet's Add picker and the future
     /// Dungeon Shop both need the full catalog, not just per-kit lookups.
     func allGear() -> [GearDefinition]
+    /// Non-gear shop stock: potions, scrolls, trinkets.
+    func item(_ id: String) -> ItemDefinition?
+    func items() -> [ItemDefinition]
     func companion(_ id: String) -> CompanionDefinition?
     func companions() -> [CompanionDefinition]
 }
@@ -58,6 +61,7 @@ public final class ValidatingContentRepository: ContentRepository {
         spellByID = Dictionary(uniqueKeysWithValues: bundle.spells.map { ($0.id, $0) })
         spellListByID = Dictionary(uniqueKeysWithValues: bundle.spellLists.map { ($0.id, $0) })
         gearByID = Dictionary(uniqueKeysWithValues: bundle.gear.map { ($0.id, $0) })
+        itemByID = Dictionary(uniqueKeysWithValues: bundle.items.map { ($0.id, $0) })
         raceByID = Dictionary(uniqueKeysWithValues: bundle.races.map { ($0.id, $0) })
         companionByID = Dictionary(uniqueKeysWithValues: bundle.companions.map { ($0.id, $0) })
 
@@ -78,6 +82,9 @@ public final class ValidatingContentRepository: ContentRepository {
     public func allGear() -> [GearDefinition] { bundle.gear.sorted { $0.name < $1.name } }
     public func companion(_ id: String) -> CompanionDefinition? { companionByID[id] }
     public func companions() -> [CompanionDefinition] { bundle.companions }
+    private let itemByID: [String: ItemDefinition]
+    public func item(_ id: String) -> ItemDefinition? { itemByID[id] }
+    public func items() -> [ItemDefinition] { bundle.items }
 
     // MARK: Validation
 
@@ -89,6 +96,8 @@ public final class ValidatingContentRepository: ContentRepository {
         spellByID: [String: SpellDefinition],
         spellListByID: [String: SpellListDefinition],
         gearByID: [String: GearDefinition]
+
+        
     ) -> [ContentIssue] {
         var issues: [ContentIssue] = []
         func need(_ ok: Bool, _ owner: String, _ problem: @autoclosure () -> String) {
@@ -150,6 +159,18 @@ public final class ValidatingContentRepository: ContentRepository {
                 default:
                     break
                 }
+            }
+        }
+        
+        // Shop items: scrolls must teach a real spell; prices non-negative; only scrolls carry a spellID.
+        for it in b.items {
+            let o = "item:\(it.id)"
+            if let cost = it.cost { need(cost >= 0, o, "cost must be >= 0") }
+            if it.kind == .scroll {
+                need(it.spellID != nil, o, "scroll must name a spellID")
+                if let sid = it.spellID { need(spellByID[sid] != nil, o, "scroll spellID '\(sid)' does not resolve") }
+            } else {
+                need(it.spellID == nil, o, "only scrolls may set spellID")
             }
         }
 
