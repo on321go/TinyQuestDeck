@@ -44,9 +44,15 @@ enum PersistenceStore {
     /// warning is the cue to delete & relaunch to reset the on-disk store.
     static let container: ModelContainer = {
         let schema = Schema([StoredHero.self, StoredCombat.self])
+        // Dedicated store file — NOT the default. The app's template container
+        // (Schema([Item.self]) in the App file) uses the default store; sharing it
+        // caused saves and loads to hit different backing stores (heroes saved fine
+        // but relaunch always loaded 0). A named URL keeps our data isolated.
+        let url = URL.applicationSupportDirectory.appending(path: "TinyQuest.store")
+        let config = ModelConfiguration(schema: schema, url: url)
         do {
-            let container = try ModelContainer(for: schema)
-            print("✅ Persistence: on-disk store ready")
+            let container = try ModelContainer(for: schema, configurations: config)
+            print("✅ Persistence: on-disk store ready at \(url.lastPathComponent)")
             return container
         } catch {
             print("⚠️ Persistent store unavailable (\(error)). Using in-memory store — this session won't be saved. Delete & relaunch to reset.")

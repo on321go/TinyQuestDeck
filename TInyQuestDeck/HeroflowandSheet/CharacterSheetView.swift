@@ -171,6 +171,7 @@ private struct SheetBody: View {
                         levelBadge
                         buffSlot
                     }
+                    goldTile
                 }
                 HStack(spacing: 12) {
                     statTile("MIGHT", .might)
@@ -285,6 +286,67 @@ private struct SheetBody: View {
             }
             .presentationDetents([.medium, .large])
         }
+    }
+    
+    // MARK: Gold wallet (header)
+    //
+    // The amount readout is permanent. The -/+ steppers are a TEMPORARY test affordance
+    // standing in for the real earning path (GM award / solo-adventure loot) — gated on
+    // `showGoldDevControls` so the whole adjust row lifts out in one edit when that lands.
+    private let showGoldDevControls = true
+
+    private var goldTile: some View {
+        VStack(spacing: 4) {
+            Text("Gold").font(questFont(16)).foregroundStyle(.black)
+            HStack(spacing: 6) {
+                coinIcon
+                Text("\(character.gold)")
+                    .font(.system(size: 40, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color(hex: "C79008"))
+                    .contentTransition(.numericText())
+            }
+            if showGoldDevControls {
+                HStack(spacing: 6) {
+                    goldButton("-10") { adjustGold(by: -10) }
+                    goldButton("-1")  { adjustGold(by: -1) }
+                    goldButton("+1")  { adjustGold(by: 1) }
+                    goldButton("+10") { adjustGold(by: 10) }
+                }
+            }
+        }
+        .padding(12)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+    }
+
+    /// A minted-coin glyph (gold fill + darker rim). No SF Symbol reads cleanly as a
+    /// coin, and the "Gold" label carries the meaning, so this stays purely decorative.
+    private var coinIcon: some View {
+        ZStack {
+            Circle().fill(Color(hex: "E8B923"))
+            Circle().strokeBorder(Color(hex: "B5860B"), lineWidth: 2).padding(2)
+        }
+        .frame(width: 24, height: 24)
+    }
+
+    private func goldButton(_ label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label).font(questFont(13))
+                .foregroundStyle(label.hasPrefix("-") ? .red : .green)
+                .frame(width: 36, height: 28)
+                .background(.white, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.black, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Plain `roster.update` (not `commitChoices`) — gold has no effect on derived Max HP,
+    /// so there's nothing to recompute. Clamped at 0 for test sanity; the shop will
+    /// enforce affordability at the real spend site.
+    private func adjustGold(by delta: Int) {
+        var c = character
+        c.gold = max(0, c.gold + delta)
+        roster.update(c)
     }
 
     /// Apply a point allocation across stats. The rulebook's "+2 to one stat" is

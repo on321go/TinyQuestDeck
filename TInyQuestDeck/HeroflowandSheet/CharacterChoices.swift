@@ -34,6 +34,10 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     /// "2" -> spirit-2). Persists across summons/Rests — a character trait, not
     /// live combat state. nil = default (spirit-1).
     var spiritImageID: String? = nil
+    /// Wallet — the hero's spendable gold (the shop's only currency). Defaults to 0 so
+    /// every existing construction site AND every saved hero stays valid: no migration,
+    /// no delete-and-relaunch.
+    var gold: Int = 0
 }
 
 // Small convenience the repo protocol didn't ship (lookup a class by id).

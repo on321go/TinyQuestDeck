@@ -44,11 +44,12 @@
 //     `.summon` hint carries the mechanical data; onUseChips stays dumb for it.
 
 import Foundation
+import SwiftData
 
 /// A live, temporary pet buff (Beast Mode). Its lifetime is the tracker chip with
 /// `modifierID` — when that chip goes away (tapped, retracted, or Rest), the
 /// transform ends and the pet's HP clamps back to its normal max.
-struct PetTransform: Hashable, Sendable {
+struct PetTransform: Codable, Hashable, Sendable {
     let maxHP: Int          // transformed max (already max()ed vs normal)
     let damage: Int         // transformed bite
     let normalMaxHP: Int    // derived max to clamp back to when it ends
@@ -59,7 +60,7 @@ struct PetTransform: Hashable, Sendable {
 /// PetChoice — never in stored choices, so Rest wipes it for free (state is rebuilt)
 /// and SwiftData never persists it. Its box shows HP + an end-of-round bite reminder
 /// (display only — the app never rolls or auto-attacks). One live at a time.
-struct Summon: Hashable, Sendable {
+struct Summon: Codable, Hashable, Sendable {
     var name: String
     let maxHP: Int
     var currentHP: Int
@@ -72,7 +73,7 @@ struct Summon: Hashable, Sendable {
 /// to actually summon (parallel to TransformTarget gating Beast Mode).
 struct SummonSpec: Hashable { let name: String }
 
-struct CombatState: Hashable {
+struct CombatState: Codable, Hashable {
     var currentHP: Int
     var conditions: Set<ConditionKind> = []
     var abilityUsesSpent: [String: Int] = [:] // abilityID -> uses spent
@@ -163,21 +164,33 @@ func onUseChips(for ability: AbilityDefinition) -> [Modifier] {
 final class CombatStore {
     var states: [UUID: CombatState] = [:]
 
-    /// Create resting state the first time a hero's sheet opens.
+    @ObservationIgnored private let context: ModelContext
+
+    init() {
+        context = ModelContext(PersistenceStore.container)
+    }
+
+    /// First time a hero's sheet opens: restore saved combat if present (an
+    /// interrupted fight survives quit), else start fresh at full HP.
     func seed(_ id: UUID, maxHP: Int) {
-        if states[id] == nil { states[id] = CombatState(currentHP: maxHP) }
+        guard states[id] == nil else { return }
+        if let saved = loadState(id) {
+            states[id] = saved
+        } else {
+            states[id] = CombatState(currentHP: maxHP)
+        }
     }
 
     func damage(_ id: UUID, _ amount: Int) {
         guard var s = states[id] else { return }
         s.currentHP = max(0, s.currentHP - amount)
-        states[id] = s
+        commit(id, s)
     }
 
     func heal(_ id: UUID, _ amount: Int, maxHP: Int) {
         guard var s = states[id] else { return }
         s.currentHP = min(maxHP, s.currentHP + amount)
-        states[id] = s
+        commit(id, s)
     }
 
     /// Gear or level changed Max HP: shift current by the same delta (equipping armor
@@ -185,13 +198,13 @@ final class CombatStore {
     func adjustMaxHP(_ id: UUID, delta: Int, newMaxHP: Int) {
         guard var s = states[id] else { return }
         s.currentHP = max(0, min(newMaxHP, s.currentHP + delta))
-        states[id] = s
+        commit(id, s)
     }
 
     func toggleCondition(_ id: UUID, _ k: ConditionKind) {
         guard var s = states[id] else { return }
         if s.conditions.contains(k) { s.conditions.remove(k) } else { s.conditions.insert(k) }
-        states[id] = s
+        commit(id, s)
     }
 
     // MARK: Ability uses
@@ -255,7 +268,7 @@ final class CombatStore {
                 s.summon = nil
             }
         }
-        states[id] = s
+        commit(id, s)
     }
 
     /// Spend/restore casts by tapping the boxes. Tapping box `index` fills up to it,
@@ -264,7 +277,7 @@ final class CombatStore {
         guard var s = states[id] else { return }
         let spent = s.spellUsesSpent[spellID] ?? 0
         s.spellUsesSpent[spellID] = (index < spent) ? index : min(total, index + 1)
-        states[id] = s
+        commit(id, s)
     }
 
     // MARK: Tracker chips
@@ -272,14 +285,14 @@ final class CombatStore {
     func addModifier(_ id: UUID, _ m: Modifier) {
         guard var s = states[id] else { return }
         s.modifiers.append(m)
-        states[id] = s
+        commit(id, s)
     }
 
     func removeModifier(_ id: UUID, modifierID: UUID) {
         guard var s = states[id] else { return }
         s.modifiers.removeAll { $0.id == modifierID }
         s.pruneOrphanedTransforms()   // tapping the Beast Mode chip ends the transform
-        states[id] = s
+        commit(id, s)
     }
 
     /// Apply a turn event and let RollRules expire the right chips.
@@ -287,7 +300,7 @@ final class CombatStore {
         guard var s = states[id] else { return }
         s.modifiers = RollRules.surviving(s.modifiers, after: event)
         s.pruneOrphanedTransforms()
-        states[id] = s
+        commit(id, s)
     }
 
     // MARK: Pets
@@ -295,13 +308,13 @@ final class CombatStore {
     func seedPet(_ id: UUID, petID: UUID, maxHP: Int = 5) {
         guard var s = states[id] else { return }
         if s.petHP[petID] == nil { s.petHP[petID] = maxHP }
-        states[id] = s
+        commit(id, s)
     }
 
     func adjustPetHP(_ id: UUID, petID: UUID, by delta: Int, maxHP: Int = 5) {
         guard var s = states[id] else { return }
         s.petHP[petID] = max(0, min(maxHP, (s.petHP[petID] ?? maxHP) + delta))
-        states[id] = s
+        commit(id, s)
     }
 
     // MARK: Summoned creatures (Voice of the Wild's Spirit Animal)
@@ -312,7 +325,7 @@ final class CombatStore {
         guard var s = states[id], var sm = s.summon else { return }
         let hp = max(0, min(sm.maxHP, sm.currentHP + delta))
         if hp <= 0 { s.summon = nil } else { sm.currentHP = hp; s.summon = sm }
-        states[id] = s
+        commit(id, s)
     }
 
     /// Sacrifice (Heart of the Grove): the view pushes the honor-system heal chip,
@@ -320,7 +333,7 @@ final class CombatStore {
     func clearSummon(_ id: UUID) {
         guard var s = states[id] else { return }
         s.summon = nil
-        states[id] = s
+        commit(id, s)
     }
 
     // MARK: Rest / Recharge
@@ -331,6 +344,7 @@ final class CombatStore {
     /// rebuilt from scratch.
     func rest(_ id: UUID, maxHP: Int) {
         states[id] = CombatState(currentHP: maxHP)
+        save(id)                     // persist the cleared state so the reset sticks
     }
 
     /// Recharge: the KID rolls the physical d6 and taps the result. On a 6, every
@@ -341,6 +355,49 @@ final class CombatStore {
         guard rolled == 6, var s = states[id] else { return }
         rechargeAbilityIDs.forEach { s.abilityUsesSpent[$0] = nil }
         rechargeSpellIDs.forEach { s.spellUsesSpent[$0] = nil }
+        commit(id, s)
+    }
+
+    // MARK: Persistence
+    //
+    // Every mutation routes through commit(), which assigns the new state AND saves it
+    // (one hero's CombatState per StoredCombat row, keyed by heroID). seed() restores
+    // on first sheet open; rest() saves the cleared state directly. Choices persist in
+    // RosterStore; this is the live-fight layer.
+
+    /// Assign the new state for a hero and persist it. The single write choke point.
+    private func commit(_ id: UUID, _ s: CombatState) {
         states[id] = s
+        save(id)
+    }
+
+    /// Encode one hero's combat state into its StoredCombat row (upsert by heroID).
+    private func save(_ id: UUID) {
+        guard let s = states[id], let data = try? JSONEncoder().encode(s) else { return }
+        let existing = try? context.fetch(
+            FetchDescriptor<StoredCombat>(predicate: #Predicate { $0.heroID == id }))
+        if let row = existing?.first {
+            row.data = data
+        } else {
+            context.insert(StoredCombat(heroID: id, data: data))
+        }
+        do {
+            try context.save()
+            print("💾 CombatStore: saved fight for \(id.uuidString.prefix(8))")
+        } catch {
+            print("❌ CombatStore: save failed — \(error)")
+        }
+    }
+
+    /// Decode a hero's saved combat state, or nil if none / undecodable. Orphan pet or
+    /// summon references decode harmlessly — the sheet only renders pets that still
+    /// exist, so a stale entry is inert rather than a crash.
+    private func loadState(_ id: UUID) -> CombatState? {
+        let stored = try? context.fetch(
+            FetchDescriptor<StoredCombat>(predicate: #Predicate { $0.heroID == id }))
+        guard let data = stored?.first?.data,
+              let s = try? JSONDecoder().decode(CombatState.self, from: data) else { return nil }
+        print("📂 CombatStore: restored fight for \(id.uuidString.prefix(8))")
+        return s
     }
 }

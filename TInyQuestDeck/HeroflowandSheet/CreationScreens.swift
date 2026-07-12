@@ -19,14 +19,18 @@ import SwiftUI
 
 struct PickPathView: View {
     let repo: ContentRepository
-    let draft: HeroDraft
+    var draft: HeroDraft? = nil          // nil = browse mode (from the rulebook)
     var onSelect: (String) -> Void   // pathID
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                QuestChip(text: draft.name.isEmpty ? "Name goes here" : draft.name)
-                QuestChip(text: "Pick a Class", size: 17)
+                if let draft {
+                    QuestChip(text: draft.name.isEmpty ? "Name goes here" : draft.name)
+                    QuestChip(text: "Pick a Class", size: 17)
+                } else {
+                    QuestChip(text: "Classes", size: 17)
+                }
 
                 ForEach(repo.classes()) { cls in
                     classSection(cls)
@@ -80,7 +84,7 @@ struct PickPathView: View {
 struct PathDetailView: View {
     let repo: ContentRepository
     let pathID: String
-    var onSelect: () -> Void
+    var onSelect: (() -> Void)? = nil    // nil = browse mode (no Select button)
 
     private var path: PathDefinition? { repo.path(pathID) }
     private var cls: ClassDefinition? { path.flatMap { repo.klass($0.classID) } }
@@ -111,7 +115,7 @@ struct PathDetailView: View {
                 HStack {
                     QuestChip(text: path.name, fill: Color(hex: theme.background))
                     Spacer()
-                    SelectButton(action: onSelect)
+                    if let onSelect { SelectButton(action: onSelect) }
                 }
 
                 HStack(alignment: .top, spacing: 16) {
@@ -201,7 +205,7 @@ struct PathDetailView: View {
 
 struct PickKindView: View {
     let repo: ContentRepository
-    let draft: HeroDraft
+    var draft: HeroDraft? = nil          // nil = browse mode
     var onSelect: (String) -> Void   // raceID
 
     private let columns = [GridItem(.adaptive(minimum: 210, maximum: 280), spacing: 16)]
@@ -209,13 +213,17 @@ struct PickKindView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                HStack(spacing: 12) {
-                    QuestChip(text: draft.name.isEmpty ? "Name goes here" : draft.name)
-                    if let pathID = draft.pathID, let p = repo.path(pathID) {
-                        QuestChip(text: p.name, size: 16)
+                if let draft {
+                    HStack(spacing: 12) {
+                        QuestChip(text: draft.name.isEmpty ? "Name goes here" : draft.name)
+                        if let pathID = draft.pathID, let p = repo.path(pathID) {
+                            QuestChip(text: p.name, size: 16)
+                        }
                     }
+                    QuestChip(text: "Pick a Kind", size: 17)
+                } else {
+                    QuestChip(text: "Kinds", size: 17)
                 }
-                QuestChip(text: "Pick a Kind", size: 17)
 
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(repo.races()) { race in
@@ -256,7 +264,7 @@ struct PickKindView: View {
 struct KindDetailView: View {
     let repo: ContentRepository
     let raceID: String
-    var onSelect: () -> Void
+    var onSelect: (() -> Void)? = nil    // nil = browse mode (no Select button)
 
     private var race: RaceDefinition? { repo.race(raceID) }
 
@@ -277,7 +285,7 @@ struct KindDetailView: View {
                 HStack {
                     QuestChip(text: race.name, fill: raceTint(race.id))
                     Spacer()
-                    SelectButton(action: onSelect)
+                    if let onSelect { SelectButton(action: onSelect) }
                 }
 
                 HStack(alignment: .top, spacing: -30) {

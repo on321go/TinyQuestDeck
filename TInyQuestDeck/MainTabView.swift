@@ -10,11 +10,11 @@
 import SwiftUI
 
 // RosterStore lives in CharacterBuilder.swift; the sheet needs in-place updates.
-extension RosterStore {
-    func update(_ c: CharacterChoices) {
-        if let i = characters.firstIndex(where: { $0.id == c.id }) { characters[i] = c }
-    }
-}
+//extension RosterStore {
+//    func update(_ c: CharacterChoices) {
+//        if let i = characters.firstIndex(where: { $0.id == c.id }) { characters[i] = c }
+//    }
+//}
 
 enum MainTab: Hashable { case sheet, heroes, books, spells, shop }
 
@@ -22,6 +22,7 @@ struct MainTabView: View {
     @State private var content = ContentStore()
     @State private var roster = RosterStore()
     @State private var combat = CombatStore()
+    @State private var rulebookStore = RulebookStore()
     @State private var tab: MainTab = .heroes
     @State private var selectedHeroID: UUID? = nil
     @State private var building = false
@@ -64,8 +65,8 @@ struct MainTabView: View {
                           onNew: { building = true })
             }
             Tab("Books", systemImage: "book.fill", value: .books) {
-                ComingSoonTab(title: "Books", symbol: "book.fill",
-                              blurb: "The whole rulebook, right here at the table.")
+                RulebookView(store: rulebookStore, repo: repo)
+            
             }
             Tab("Spells", systemImage: "sparkles", value: .spells) {
                 ComingSoonTab(title: "Spells", symbol: "sparkles",
@@ -140,9 +141,12 @@ struct HeroesTab: View {
         let bg = sheet?.theme.map { Color(hex: $0.background) } ?? .gray
         let accent = sheet?.theme.map { Color(hex: $0.accent) } ?? .blue
         return VStack(alignment: .leading, spacing: 8) {
-            PlaceholderArt(ratio: QuestRatio.card, colors: [accent, bg],
-                           symbol: emblemSymbol(sheet?.theme?.emblem),
-                           caption: nil)
+            QuestArt(name: portraitName(c),
+                                 ratio: QuestRatio.card,
+                                 colors: [accent, bg],
+                                 symbol: emblemSymbol(sheet?.theme?.emblem),
+                                 caption: nil,
+                                 framed: true)
             Text(c.name.uppercased())
                 .font(questFont(16)).foregroundStyle(.black)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -155,6 +159,14 @@ struct HeroesTab: View {
         .background(bg.opacity(0.5), in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
     }
+    
+    /// The hero's chosen portrait (or the race×class default) — same resolution the
+        /// character sheet uses, so card and sheet always match.
+        private func portraitName(_ c: CharacterChoices) -> String {
+            let combo = c.portraitID
+                ?? QuestArtKey.portraitCombo(race: c.raceID, klass: c.classID)
+            return QuestArtKey.portrait(combo: combo)
+        }
 }
 
 // MARK: - Styled stub for the three future tabs

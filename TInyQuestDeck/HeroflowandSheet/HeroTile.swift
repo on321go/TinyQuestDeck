@@ -42,9 +42,9 @@ func heroTheme(_ c: CharacterChoices, repo: ContentRepository) -> ThemeToken? {
 }
 
 // Grid context-menu delete helper.
-extension RosterStore {
-    func remove(_ c: CharacterChoices) { characters.removeAll { $0.id == c.id } }
-}
+//extension RosterStore {
+//    func remove(_ c: CharacterChoices) { characters.removeAll { $0.id == c.id } }
+//}
 
 // MARK: - Tile
 

@@ -8,7 +8,7 @@
 //  they all mutate `characters`. Nothing outside this class and Persistence.swift is
 //  SwiftData-aware.
 //
-//  Make RosterView() your root: WindowGroup { RosterView() }
+//  App root is MainTabView, which owns the single shared RosterStore + CombatStore.
 
 import SwiftUI
 import SwiftData
@@ -18,41 +18,51 @@ import SwiftData
 @MainActor
 @Observable
 final class RosterStore {
-    /// Observable source of truth for the UI. Mutating it (anywhere — including the
-    /// update(_:)/remove(_:) extensions) writes through to SwiftData via didSet.
-    var characters: [CharacterChoices] = [] {
-        didSet { if ready { persist() } }
-    }
+    /// Observable source of truth for the UI. Every mutation persists EXPLICITLY via
+    /// save() — no reliance on property observers (didSet does not fire reliably under
+    /// @Observable, which is why an earlier version silently didn't save).
+    var characters: [CharacterChoices] = []
 
     @ObservationIgnored private let context: ModelContext
-    @ObservationIgnored private var ready = false     // gate: don't persist during initial load
 
     init() {
         context = ModelContext(PersistenceStore.container)
-        load()
-        ready = true
-    }
-
-    func add(_ c: CharacterChoices) { characters.append(c) }
-    func remove(at offsets: IndexSet) { characters.remove(atOffsets: offsets) }
-
-    // MARK: Persistence (private — the only SwiftData contact point)
-
-    /// Load saved heroes in roster order. Decode failures are skipped, not fatal, so
-    /// one corrupt blob can't take down the whole roster.
-    private func load() {
         let descriptor = FetchDescriptor<StoredHero>(sortBy: [SortDescriptor(\.order)])
         let stored = (try? context.fetch(descriptor)) ?? []
         characters = stored.compactMap {
             try? JSONDecoder().decode(CharacterChoices.self, from: $0.data)
         }
+        print("📂 RosterStore: loaded \(characters.count) hero(es) from disk")
     }
 
-    /// Upsert by id + drop heroes no longer present. Upserting (rather than
-    /// delete-all-then-reinsert) avoids a unique-id conflict within one save and
-    /// keeps this cheap for a small roster.
-    private func persist() {
+    // All four mutation paths live here now and save explicitly. If your project has
+    // update(_:)/remove(_:) defined in an extension elsewhere (e.g. HeroTile.swift),
+    // DELETE those — the compiler will flag them as duplicate declarations and point
+    // you right at them.
+    func add(_ c: CharacterChoices) { characters.append(c); save() }
+    func remove(at offsets: IndexSet) { characters.remove(atOffsets: offsets); save(intentionalDeletion: true) }
+    func remove(_ c: CharacterChoices) { characters.removeAll { $0.id == c.id }; save(intentionalDeletion: true) }
+    func update(_ c: CharacterChoices) {
+        if let i = characters.firstIndex(where: { $0.id == c.id }) { characters[i] = c }
+        else { characters.append(c) }
+        save()
+    }
+
+    // MARK: Persistence
+
+    /// Upsert by id + drop heroes no longer present. `intentionalDeletion` is set only
+    /// by remove(); it's what makes an empty roster allowed to clear the store. Any
+    /// OTHER save() with an empty roster (a stray/duplicate instance, an add/update
+    /// that somehow ran on an empty list) refuses to wipe a non-empty store — so a
+    /// second instance can never nuke your heroes.
+    func save(intentionalDeletion: Bool = false) {
         let stored = (try? context.fetch(FetchDescriptor<StoredHero>())) ?? []
+
+        if characters.isEmpty && !stored.isEmpty && !intentionalDeletion {
+            print("⚠️ RosterStore: refused to wipe \(stored.count) stored hero(es) from an empty roster")
+            return
+        }
+
         var byID = Dictionary(stored.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
         for (i, c) in characters.enumerated() {
@@ -64,79 +74,14 @@ final class RosterStore {
                 context.insert(StoredHero(id: c.id, order: i, data: data))
             }
         }
-        // Anything still in byID isn't in the roster anymore → delete it.
         byID.values.forEach { context.delete($0) }
 
-        try? context.save()
-    }
-}
-
-// MARK: - Root
-
-struct RosterView: View {
-    @State private var content = ContentStore()      // reused from ContentBrowser.swift
-    @State private var roster = RosterStore()
-    @State private var combat = CombatStore()
-    @State private var building = false
-
-    var body: some View {
-        NavigationStack {
-            Group {
-                if let repo = content.repo {
-                    rosterList(repo)
-                } else if let error = content.error {
-                    ScrollView {
-                        Text(error).font(.callout.monospaced()).foregroundStyle(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading).padding()
-                    }
-                } else {
-                    ProgressView("Loading content…")
-                }
-            }
-            .navigationTitle("Heroes")
-            .toolbar {
-                if content.repo != nil {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button { building = true } label: { Label("New Hero", systemImage: "plus") }
-                    }
-                }
-            }
-            .navigationDestination(for: CharacterChoices.self) { c in
-                // TEMP: old play sheet deleted; new character sheet is next up
-                Text(c.name).font(.largeTitle)
-            }
-            .fullScreenCover(isPresented: $building) {
-                if let repo = content.repo {
-                    CreationFlowView(repo: repo) { newHero in
-                        roster.add(newHero)
-                        building = false
-                    }
-                }
-            }
+        do {
+            try context.save()
+            print("💾 RosterStore: saved \(characters.count) hero(es)")
+        } catch {
+            print("❌ RosterStore: save failed — \(error)")
         }
-        .onAppear { if content.repo == nil && content.error == nil { content.load() } }
-    }
-
-    @ViewBuilder
-    private func rosterList(_ repo: ContentRepository) -> some View {
-        if roster.characters.isEmpty {
-            ContentUnavailableView {
-                Label("No heroes yet", systemImage: "person.crop.circle.badge.plus")
-            } description: {
-                Text("Tap + to make your first hero.")
-            } actions: {
-                Button("New Hero") { building = true }.buttonStyle(.borderedProminent)
-            }
-        } else {
-            HeroGrid(characters: roster.characters, repo: repo) { roster.remove($0) }
-        }
-    }
-
-    private func subtitle(for c: CharacterChoices, repo: ContentRepository) -> String {
-        let race = repo.race(c.raceID)?.name ?? c.raceID
-        let cls = repo.klass(c.classID)?.name ?? c.classID
-        let path = repo.path(c.pathID)?.name ?? c.pathID
-        return "\(race) · \(cls) — \(path)"
     }
 }
 
@@ -252,4 +197,4 @@ struct StartingSummaryRows: View {
     }
 }
 
-#Preview { RosterView() }
+// (RosterView removed — MainTabView is the app root and owns the single RosterStore.)
