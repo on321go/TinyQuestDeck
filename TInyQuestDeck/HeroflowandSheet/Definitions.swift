@@ -95,6 +95,7 @@ public enum ItemKind: String, Codable, Sendable {
     case consumable        // potions, funny trinkets → the hero's Normal Items list
     case magicConsumable   // magic / cursed one-shots  → the hero's Magic Items list
     case scroll            // teaches a spell           → spellbook (caster) or carried (non-caster)
+    case curio            // funny / cursed novelties — land in Magic Items, own shop card
 }
 
 public struct ItemDefinition: Codable, Hashable, Sendable, Identifiable {

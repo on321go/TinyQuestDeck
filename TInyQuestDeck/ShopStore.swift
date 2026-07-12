@@ -66,7 +66,7 @@ struct ShopStock: Codable, Hashable {
 /// of its own).
 enum ShopCategory: String, Hashable, CaseIterable {
     case heavyWeapons, heavyOneHanders, finesse, rangedWeapons, smallRanged, magicWeapons
-    case armor, shields, potions, magicItems, scrolls
+    case armor, shields, potions, magicItems, scrolls, curios
 
     var isWeapon: Bool {
         switch self {
@@ -88,6 +88,7 @@ enum ShopCategory: String, Hashable, CaseIterable {
         case .potions:         "Potions"
         case .magicItems:      "Magic Items"
         case .scrolls:         "Scrolls"
+        case .curios:          "Curiosities"
         }
     }
 
@@ -108,6 +109,7 @@ enum ShopCategory: String, Hashable, CaseIterable {
             case .consumable:      return .potions
             case .magicConsumable: return .magicItems
             case .scroll:          return .scrolls
+            case .curio:           return .curios
             }
         }
     }
@@ -129,14 +131,24 @@ extension ShopStock {
     /// Build a fresh shelf: 3 distinct weapon families up top, 3 rotating non-weapon
     /// categories on the bottom, `perCard` items sampled from each — weighted by rarity
     /// so rare/legendary rarely surface.
-    static func restocked(from repo: ContentRepository, perCard: Int = 2) -> ShopStock {
+    static func restocked(from repo: ContentRepository) -> ShopStock {
         var refs: [PurchasableRef] = []
+
+        // How many items each category stocks. Weapons/armor run deep — lots of common
+        // gear the player should see often; everything else stays at 2.
+        func perCard(_ category: ShopCategory) -> Int {
+            switch category {
+            case .heavyWeapons, .heavyOneHanders, .finesse, .rangedWeapons, .smallRanged, .magicWeapons: 5
+            case .armor: 4
+            default: 2
+            }
+        }
 
         // Top row: 3 distinct weapon families.
         let weaponGear = repo.allGear().filter { ShopCategory.category(of: .gear($0)).isWeapon }
         let byFamily = Dictionary(grouping: weaponGear) { ShopCategory.category(of: .gear($0)) }
         for family in byFamily.keys.shuffled().prefix(3) {
-            let picks = weightedSample(byFamily[family] ?? [], count: perCard) { $0.rarity.weight }
+            let picks = weightedSample(byFamily[family] ?? [], count: perCard(family)) { $0.rarity.weight }
             refs += picks.map { .gear($0.id) }
         }
 
@@ -147,7 +159,7 @@ extension ShopStock {
         let bottomPool = nonWeaponGear + repo.items().map(Purchasable.item)
         let byCategory = Dictionary(grouping: bottomPool) { ShopCategory.category(of: $0) }
         for category in byCategory.keys.shuffled().prefix(3) {
-            let picks = weightedSample(byCategory[category] ?? [], count: perCard) { $0.rarity.weight }
+            let picks = weightedSample(byCategory[category] ?? [], count: perCard(category)) { $0.rarity.weight }
             refs += picks.map { p in
                 switch p {
                 case .gear(let g): PurchasableRef.gear(g.id)

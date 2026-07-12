@@ -72,7 +72,7 @@ public enum ShopRules {
             switch i.kind {
             case .consumable:
                 return .consumable(name: i.name, magic: false)
-            case .magicConsumable:
+            case .magicConsumable, .curio:
                 return .consumable(name: i.name, magic: true)
             case .scroll:
                 if isCaster(buyer, repo: repo), let sid = i.spellID {

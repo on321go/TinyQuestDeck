@@ -221,7 +221,7 @@ private struct ShopCardDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 120) {
                 if let c = shopper {
                     HStack {
                         Text(card.title).font(questFont(24)).foregroundStyle(.black)
@@ -262,9 +262,12 @@ private struct ShopCardDetailView: View {
 
     private func itemRow(_ p: Purchasable) -> some View {
         let short = shopper.flatMap { ShopRules.shortfall(buying: p, hero: $0) }
+        let artWidth: CGFloat  = 190
+        let artHeight: CGFloat = 380
+        let boxHeight: CGFloat = 260   // box height; art pokes above by roughly (artHeight − boxHeight)
+        let bottomInset: CGFloat = 24  // lift the art's bottom off the box floor so it lands by the gold
         return HStack(alignment: .top, spacing: 16) {
-            purchasableArt(p)
-                .frame(width: 190, height: 190)          // image, tripled, top-left
+            Color.clear.frame(width: artWidth, height: boxHeight)      // reserve the art column
             VStack(alignment: .leading, spacing: 8) {
                 infoLabel(p)
                 if case .item(let i) = p, i.kind == .scroll, let c = shopper {
@@ -281,11 +284,18 @@ private struct ShopCardDetailView: View {
                     buyButton(p, short: short)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 190, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: boxHeight, alignment: .topLeading)
         }
         .padding(18)
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
+        // Bottom-anchored: base near the gold, extra height pokes up above the box.
+        .overlay(alignment: .bottomLeading) {
+            purchasableArt(p)
+                .frame(width: artWidth, height: artHeight)
+                .offset(x: 18, y: -bottomInset)
+                .allowsHitTesting(false)
+        }
     }
 
     @ViewBuilder private func infoLabel(_ p: Purchasable) -> some View {
@@ -315,7 +325,7 @@ private struct ShopCardDetailView: View {
     private func purchasableArt(_ p: Purchasable) -> some View {
         let cat = ShopCategory.category(of: p)
         let name: String = { switch p { case .gear(let g): "gear-\(g.id)"; case .item(let i): "item-\(i.id)" } }()
-        return QuestArt(name: name, ratio: 1, colors: [cardTint(cat), .white],
+        return QuestArt(name: name, ratio: 0.5, colors: [cardTint(cat), .white],   // ← 0.5 = 190×380 tall, was 1 (square)
                         symbol: categorySymbol(cat), caption: nil, framed: false)
     }
 
@@ -376,6 +386,7 @@ private func cardTint(_ c: ShopCategory) -> Color {
     case .potions:         Color(hex: "CBE8DA")
     case .magicItems:      Color(hex: "CFE0EE")
     case .scrolls:         Color(hex: "F0E7CC")
+    case .curios: Color(hex: "EBD9C4")
     }
 }
 
@@ -393,6 +404,7 @@ private func categorySymbol(_ c: ShopCategory) -> String {
     case .potions:         "drop.fill"
     case .magicItems:      "sparkles"
     case .scrolls:         "scroll.fill"
+    case .curios:          "theatermasks.fill"
     }
 }
 

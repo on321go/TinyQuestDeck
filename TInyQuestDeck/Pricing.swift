@@ -29,7 +29,7 @@ public enum Rarity: String, Codable, Sendable, CaseIterable {
 
 public enum Pricing {
     /// Price bands. Row = the item's family, column = its rarity.
-    public enum Group: Hashable { case weapon, armor, potion, magic, scroll }
+    public enum Group: Hashable { case weapon, armor, potion, magic, scroll, curio }
 
     private static let matrix: [Group: [Rarity: Int]] = [
         .weapon: [.common: 50,  .uncommon: 100,  .rare: 250,  .legendary: 500],
@@ -37,6 +37,7 @@ public enum Pricing {
         .potion: [.common: 200, .uncommon: 350,  .rare: 700,  .legendary: 1500],
         .magic:  [.common: 500, .uncommon: 1000, .rare: 2500, .legendary: 6000],
         .scroll: [.common: 500, .uncommon: 1000, .rare: 2500, .legendary: 6000],
+        .curio:  [.common: 50, .uncommon: 100, .rare: 200, .legendary: 400],
     ]
 
     public static func base(_ group: Group, _ rarity: Rarity) -> Int {
@@ -57,6 +58,7 @@ public enum Pricing {
         case .consumable:      .potion
         case .magicConsumable: .magic
         case .scroll:          .scroll
+        case .curio:            .curio
         }
     }
 }

@@ -844,12 +844,27 @@ private struct SheetBody: View {
     private var gearAddMenu: some View {
         let kitIDs = repo.path(character.pathID)?.startingGearIDs ?? []
         let kit = kitIDs.compactMap { repo.gear($0) }
-        let others = repo.allGear().filter { !kitIDs.contains($0.id) }
+
+        // Free to equip: the BASIC (common) catalog only — rulebook's "any character can use
+        // any gear." Special gear (uncommon+) is shop-only; it must be owned to equip.
+        let basics = repo.allGear().filter { $0.rarity == .common && !kitIDs.contains($0.id) }
+
+        // Bought / earned specials: only what THIS hero owns (deduped; basics already free above).
+        let owned = Set(character.ownedGearIDs)
+            .compactMap { repo.gear($0) }
+            .filter { $0.rarity != .common }
+            .sorted { $0.name < $1.name }
+
         return Menu {
             Section("Starting Kit") {
                 ForEach(kit) { g in gearMenuButton(g) }
             }
-            ForEach(gearGroups(others)) { group in
+            if !owned.isEmpty {
+                Section("Owned") {
+                    ForEach(owned) { g in gearMenuButton(g) }
+                }
+            }
+            ForEach(gearGroups(basics)) { group in
                 Section(group.title) {
                     ForEach(group.items) { g in gearMenuButton(g) }
                 }
