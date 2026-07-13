@@ -293,6 +293,8 @@ private struct ShopCardDetailView: View {
         .overlay(alignment: .bottomLeading) {
             purchasableArt(p)
                 .frame(width: artWidth, height: artHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.black, lineWidth: 2))
                 .offset(x: 18, y: -bottomInset)
                 .allowsHitTesting(false)
         }
@@ -324,9 +326,21 @@ private struct ShopCardDetailView: View {
 
     private func purchasableArt(_ p: Purchasable) -> some View {
         let cat = ShopCategory.category(of: p)
-        let name: String = { switch p { case .gear(let g): "gear-\(g.id)"; case .item(let i): "item-\(i.id)" } }()
-        return QuestArt(name: name, ratio: 0.5, colors: [cardTint(cat), .white],   // ← 0.5 = 190×380 tall, was 1 (square)
+        return QuestArt(name: artName(for: p), ratio: 0.5, colors: [cardTint(cat), .white],
                         symbol: categorySymbol(cat), caption: nil, framed: false)
+    }
+
+    private func artName(for p: Purchasable) -> String {
+        switch p {
+        case .gear(let g):
+            return "gear-\(g.id)"
+        case .item(let i):
+            // Scrolls share ONE image per rarity — every scroll of a tier points at the same
+            // asset. A bespoke item-<id> still wins if you ever draw a one-off.
+            guard i.kind == .scroll else { return "item-\(i.id)" }
+            let bespoke = "item-\(i.id)"
+            return questAssetExists(bespoke) ? bespoke : "item-scroll-\(i.rarity.rawValue)"
+        }
     }
 
     private func buyButton(_ p: Purchasable, short: Int?) -> some View {

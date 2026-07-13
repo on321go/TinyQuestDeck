@@ -1777,11 +1777,187 @@
             "id": "sword-of-constant-compliments",
             "name": "Sword of Constant Compliments",
             "category": "lightMelee",
-            "rarity": "common",
+            "rarity": "uncommon",
             "cost": 75,
             "flavor": "+1 damage. Talks constantly about how great it is.",
             "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
-          }
+          },
+          {
+          "id": "glimmerbrand",
+          "name": "Glimmerbrand",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "A long sword whose blade glows soft as a nightlight. Friends can always find you in the dark, and it makes a great reading lamp on watch.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "whispering-rapier",
+          "name": "Whispering Rapier",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "It hums a low tune and always points a little toward the nearest door. You never get turned around indoors.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "the-butter-knife",
+          "name": "The Butter Knife",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 60,
+          "flavor": "Looks utterly, adorably harmless. Guards and grown-ups rarely take it seriously — handy when you'd rather not look dangerous.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "heirloom-mace",
+          "name": "Heirloom Mace",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 65,
+          "flavor": "Carved with the crest of your choosing. Town elders, guards, and shopkeepers treat the bearer with a little extra respect.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "thunderclap-greatsword",
+          "name": "Thunderclap Greatsword",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 85,
+          "flavor": "Every swing ends with a satisfying BOOM. Terrible for sneaking, incredible for dramatic entrances.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+        {
+          "id": "mossgrown-greataxe",
+          "name": "Mossgrown Greataxe",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 85,
+          "flavor": "Tiny flowers sprout along the haft when you're calm. Woodland critters find you trustworthy and tend to say hello.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+        {
+          "id": "bell-hammer",
+          "name": "Bell Hammer",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 100,
+          "flavor": "Rings like a great bell whenever it strikes. Give it three taps to signal friends anywhere in the building.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+
+        {
+          "id": "songbird-bow",
+          "name": "Songbird Bow",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 80,
+          "flavor": "Arrows whistle a cheerful little tune as they fly. Loose one high and a friend within earshot always hears your 'all clear.'",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "speed" }
+        },
+        {
+          "id": "confetti-crossbow",
+          "name": "Confetti Crossbow",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Any bolt that misses bursts into a harmless puff of confetti. Somehow this makes missing feel like winning. Great at parties.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "skipping-sling",
+          "name": "Skipping Sling",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 55,
+          "flavor": "Its stones bounce and skip in wild arcs. You're the undisputed champion of skipping rocks and pond-side party tricks.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "starlight-wand",
+          "name": "Starlight Wand",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Trails a ribbon of tiny sparkles. Give it a flick to put on a small, delightful light show — perfect for wowing kids or drawing an eye.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "grandpas-staff",
+          "name": "Grandpa's Staff",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 65,
+          "flavor": "A worn old staff that 'remembers' the way home. Hold it, ask 'which way back?', and you always know. Never gets you lost.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "chatterbox-orb",
+          "name": "Chatterbox Orb",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 95,
+          "flavor": "Mutters trivia to itself all day. Once per scene it blurts out a fact about where you are — sometimes useful, often nonsense, always funny.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "everclean-plate",
+          "name": "Everclean Plate",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 80,
+          "flavor": "Same protection as Plate Armor, and it never gets muddy, dented, or smelly. You always look sharp — even at royal feasts."
+        },
+        {
+          "id": "cozy-chainmail",
+          "name": "Cozy Chainmail",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 75,
+          "flavor": "Lined with the softest wool. Warm in the snow, cool in the desert. You're comfortable no matter the weather."
+        },
+        {
+          "id": "chameleon-leather",
+          "name": "Chameleon Leather",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 100,
+          "flavor": "Same protection as Leather Armor, but it shifts color to match your outfit — or your mood. Pick a favorite look and it stays."
+        },
+
+        {
+          "id": "mirror-shield",
+          "name": "Mirror Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Polished to a perfect mirror. Peek around corners without leaning out, flash sunlight to signal friends, and always fix your hair before a big entrance."
+        },
+        {
+          "id": "crest-shield",
+          "name": "Crest Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 60,
+          "flavor": "Displays the emblem of your choosing, bright and proud. A statement piece — heroes with a crest tend to get recognized (and remembered)."
+        },
+        {
+          "id": "turtle-shield",
+          "name": "Turtle Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 55,
+          "flavor": "Painted like a friendly turtle shell. Little kids adore it, and there's a snug pocket on the back just the right size for snacks."
+        }
         
     
   ],
@@ -1956,8 +2132,106 @@
       { "id": "scroll-dispel", "name": "Scroll of Dispel", "kind": "scroll", "rarity": "legendary", "spellID": "dispel",
         "text": "End one magical effect you can see." },
       { "id": "scroll-suns-embrace", "name": "Scroll of Sun's Embrace", "kind": "scroll", "rarity": "legendary", "spellID": "suns-embrace",
-        "text": "Once per adventure, friends regain all Health and lose Hurt and Stuck." }
+        "text": "Once per adventure, friends regain all Health and lose Hurt and Stuck." },
     
+    {
+          "id": "tanglevine-flask",
+          "name": "Tanglevine Flask",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Smash it at an enemy's feet. Vines burst up and grab hold — that enemy becomes Stuck."
+        },
+        {
+          "id": "dazzle-dust",
+          "name": "Dazzle Dust",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Toss a pinch in an enemy's eyes. Everything sparkles and swims — they become Frightened for a round."
+        },
+        {
+          "id": "drowsy-draught",
+          "name": "Drowsy Draught",
+          "kind": "magicConsumable",
+          "rarity": "uncommon",
+          "cost": 60,
+          "text": "A sweet-smelling mist. One small enemy falls Asleep. Big monsters shrug it off (Mind 13+ to resist)."
+        },
+        {
+          "id": "pepperbomb",
+          "name": "Pepperbomb",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "A spicy cloud of pepper and sneeze. One or two enemies start coughing and become Hurt."
+        },
+
+        {
+          "id": "marker-moss",
+          "name": "Marker Moss",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Splat a blob of glowing moss on one enemy. The next friend to hit that enemy deals +2 damage. Teamwork!"
+        },
+        {
+          "id": "rally-horn",
+          "name": "Rally Horn",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Give it one big blast. A friend within sight gets +2 to their next attack roll. Then the horn goes quiet."
+        },
+        {
+          "id": "spark-powder",
+          "name": "Spark Powder",
+          "kind": "magicConsumable",
+          "rarity": "uncommon",
+          "cost": 60,
+          "text": "Sprinkle it on a friend's weapon. Their next hit on a Stuck or Hurt enemy deals +3 damage — the perfect finisher."
+        },
+
+        {
+          "id": "smoke-pellet",
+          "name": "Smoke Pellet",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Drop it and vanish in a puff of gray smoke. You and one friend can slip away or reposition — a clean getaway."
+        },
+        {
+          "id": "grease-flask",
+          "name": "Grease Flask",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Pour it across the floor. Any enemy crossing the slick must roll Speed 10+ or slip and become Stuck for a turn."
+        },
+        {
+          "id": "featherpuff",
+          "name": "Featherpuff",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Pop the puffball and float. You (and a friend you're holding) drift down safely from any height, like a dandelion seed."
+        },
+        {
+          "id": "glimmer-flare",
+          "name": "Glimmer Flare",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Fire a dazzling star into the sky. It lights up the whole area for the scene and signals friends who are far away."
+        },
+        {
+          "id": "fizzy-fun-potion",
+          "name": "Fizzy Fun Potion",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Drink it and float an inch off the ground, burping happy little bubbles. Pure silliness — and jumping is a breeze for the scene."
+        }
     
   ],
   "races": [
