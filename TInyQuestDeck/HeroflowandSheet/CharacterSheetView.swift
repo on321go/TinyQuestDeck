@@ -64,8 +64,10 @@ private enum SheetMetrics {
     static let row1Height: CGFloat = 290
     static let row2Height: CGFloat = 230
     static let trackerHeight: CGFloat = 140
-    static let gearCap = 5
+    static let gearCap = 10
+    static let gearMinSlots = 5
     static let bookBoxSize = 6      // spells per Spellbook box
+    static let showcaseCap = 3
 }
 
 struct CharacterSheetView: View {
@@ -120,6 +122,7 @@ private struct SheetBody: View {
     @State private var pickingPortrait = false
     @State private var pickingPetArtFor: PetChoice? = nil
     @State private var pickingSpiritArt = false
+    @State private var showcaseInfoItem: ItemDefinition? = nil
 
     private struct PendingTransform {
         let ability: AbilityDefinition
@@ -457,6 +460,8 @@ private struct SheetBody: View {
                     if benchChunks.isEmpty { spellbookBox([], index: 0) }
                 } else {
                     gearBox
+                    showcaseGearBox        // ← non-casters show off in the top row
+                    showcaseItemsBox
                 }
             }
             // Voice of the Wild's mode picker rides on row 1 (where its ability box
@@ -485,6 +490,8 @@ private struct SheetBody: View {
                 if let summon = state.summon { summonBox(summon) }
                 if character.pets.isEmpty { addPetBox }
                 if sheet.isCaster { gearBox }
+                showcaseGearBox
+                showcaseItemsBox
                 itemsBox(title: "Normal Items", items: character.normalItems,
                          adding: $addingNormalItem) { commitItems(normal: $0) }
                 itemsBox(title: "Magic Items", items: character.magicItems,
@@ -539,6 +546,15 @@ private struct SheetBody: View {
                     roster.update(c)
                 }
             }
+        }
+        .popover(item: $showcaseInfoItem) { item in
+            VStack(alignment: .leading, spacing: 8) {
+                Text(item.name).font(questFont(20)).foregroundStyle(.black)
+                Text(item.text).font(questFontLight(15)).foregroundStyle(.black.opacity(0.75))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(18).frame(maxWidth: 320)
+            .presentationCompactAdaptation(.popover)
         }
     }
 
@@ -603,6 +619,87 @@ private struct SheetBody: View {
                 }
             }
         }
+    }
+    // MARK: Showcase boxes (owned gear / items the kid shows off — image only, tap for info)
+
+    private var showcaseGearBox: some View {
+        let picks = character.showcaseGearIDs.compactMap { repo.gear($0) }.map(Purchasable.gear)
+        let have = Set(character.equippedGearIDs + character.ownedGearIDs)
+        let candidates = have.compactMap { repo.gear($0) }
+            .filter { !character.showcaseGearIDs.contains($0.id) }
+            .sorted { $0.name < $1.name }.map(Purchasable.gear)
+        return showcaseBox(title: "Show-off Gear", picks: picks, candidates: candidates,
+            onAdd:    { if case .gear(let g) = $0 { mutate { $0.showcaseGearIDs.append(g.id) } } },
+            onRemove: { if case .gear(let g) = $0 { mutate { $0.showcaseGearIDs.removeAll { $0 == g.id } } } })
+    }
+
+    private var showcaseItemsBox: some View {
+        let picks = character.showcaseItemIDs.compactMap { repo.item($0) }.map(Purchasable.item)
+        let ownedNames = Set(character.normalItems + character.magicItems)
+        let candidates = repo.items()
+            .filter { ownedNames.contains($0.name) && !character.showcaseItemIDs.contains($0.id) }
+            .sorted { $0.name < $1.name }.map(Purchasable.item)
+        return showcaseBox(title: "Show-off Items", picks: picks, candidates: candidates,
+            onAdd:    { if case .item(let i) = $0 { mutate { $0.showcaseItemIDs.append(i.id) } } },
+            onRemove: { if case .item(let i) = $0 { mutate { $0.showcaseItemIDs.removeAll { $0 == i.id } } } })
+    }
+
+    private func showcaseBox(title: String, picks: [Purchasable], candidates: [Purchasable],
+                             onAdd: @escaping (Purchasable) -> Void,
+                             onRemove: @escaping (Purchasable) -> Void) -> some View {
+        // Non-casters live in row 1 (taller); casters in row 2.
+        sheetBox(title, height: sheet.isCaster ? SheetMetrics.row2Height : SheetMetrics.row1Height) {
+               VStack {                                  // ← pin content to the top
+                   HStack(alignment: .top, spacing: 8) {
+                       ForEach(picks) { p in showcaseArt(p, onRemove: onRemove) }
+                       if picks.count < SheetMetrics.showcaseCap {
+                           showcaseAddSlot(candidates: candidates, onAdd: onAdd)
+                       }
+                       Spacer(minLength: 0)
+                   }
+                   Spacer(minLength: 0)                  // ← push the empty space to the bottom
+               }
+           }
+    }
+
+    @ViewBuilder private func showcaseArt(_ p: Purchasable, onRemove: @escaping (Purchasable) -> Void) -> some View {
+        let art = QuestArt(name: questArtName(for: p), ratio: 0.52, colors: [accent, bg],
+                           symbol: categorySymbol(ShopCategory.category(of: p)), caption: nil, framed: false)
+            .frame(width: 92, height: 176)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.black, lineWidth: 2))
+        
+        Group {
+            switch p {
+            case .gear(let g): TapInfo(payload: .init(gear: g, tint: accent)) { art }
+            case .item:        Button { if case .item(let i) = p { showcaseInfoItem = i } } label: { art }
+                                   .buttonStyle(.plain)
+            }
+        }
+        .contextMenu { Button("Remove", role: .destructive) { onRemove(p) } }
+    }
+
+    private func showcaseAddSlot(candidates: [Purchasable], onAdd: @escaping (Purchasable) -> Void) -> some View {
+        Menu {
+            if candidates.isEmpty {
+                Text("Buy or equip something to show off!")
+            } else {
+                ForEach(candidates) { p in Button(p.name) { onAdd(p) } }
+            }
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "plus.circle.fill").font(.title).foregroundStyle(accent.opacity(0.6))
+                Text("Add").font(questFontLight(12)).foregroundStyle(.black.opacity(0.4))
+            }
+            .frame(width: 104, height: 176)
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(.black.opacity(0.2), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func mutate(_ f: (inout CharacterChoices) -> Void) {
+        var c = character; f(&c); roster.update(c)
     }
 
     private func tierColor(_ s: AbilitySource) -> Color {
@@ -728,17 +825,20 @@ private struct SheetBody: View {
     private var gearBox: some View {
         sheetBox("Gear", height: sheet.isCaster ? SheetMetrics.row2Height : SheetMetrics.row1Height) {
             ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(0..<SheetMetrics.gearCap, id: \.self) { slot in
-                    if slot < sheet.gear.count {
-                        gearRow(sheet.gear[slot], index: slot)
-                    } else if slot == sheet.gear.count {
-                        gearAddMenu
-                    } else {
-                        emptySlot()
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(sheet.gear.enumerated()), id: \.offset) { index, g in
+                        gearRow(g, index: index)
+                    }
+                    gearAddMenu
+                    // Pad with dashed empties so the box always LOOKS full (≥ gearMinSlots
+                    // rows). Past that it just scrolls — the box height never changes.
+                    let shown = sheet.gear.count + 1        // gear rows + the Add menu
+                    if shown < SheetMetrics.gearMinSlots {
+                        ForEach(0..<(SheetMetrics.gearMinSlots - shown), id: \.self) { _ in
+                            emptySlot()
+                        }
                     }
                 }
-            }
             }
         }
     }
@@ -845,14 +945,11 @@ private struct SheetBody: View {
         let kitIDs = repo.path(character.pathID)?.startingGearIDs ?? []
         let kit = kitIDs.compactMap { repo.gear($0) }
 
-        // Free to equip: the BASIC (common) catalog only — rulebook's "any character can use
-        // any gear." Special gear (uncommon+) is shop-only; it must be owned to equip.
-        let basics = repo.allGear().filter { $0.rarity == .common && !kitIDs.contains($0.id) }
-
-        // Bought / earned specials: only what THIS hero owns (deduped; basics already free above).
+        // Model B: the ONLY free gear is the path's starting kit. Everything else is bought
+        // (buy → ownedGearIDs → here). This is the "earn to diversify" limit.
         let owned = Set(character.ownedGearIDs)
             .compactMap { repo.gear($0) }
-            .filter { $0.rarity != .common }
+            .filter { !kitIDs.contains($0.id) }
             .sorted { $0.name < $1.name }
 
         return Menu {
@@ -862,11 +959,6 @@ private struct SheetBody: View {
             if !owned.isEmpty {
                 Section("Owned") {
                     ForEach(owned) { g in gearMenuButton(g) }
-                }
-            }
-            ForEach(gearGroups(basics)) { group in
-                Section(group.title) {
-                    ForEach(group.items) { g in gearMenuButton(g) }
                 }
             }
         } label: {

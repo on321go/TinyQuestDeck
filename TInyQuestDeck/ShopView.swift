@@ -404,8 +404,19 @@ private func cardTint(_ c: ShopCategory) -> Color {
     }
 }
 
+// was: private func artName(for:) inside ShopCardDetailView — move to file scope, rename:
+func questArtName(for p: Purchasable) -> String {
+    switch p {
+    case .gear(let g): return "gear-\(g.id)"
+    case .item(let i):
+        guard i.kind == .scroll else { return "item-\(i.id)" }
+        let bespoke = "item-\(i.id)"
+        return questAssetExists(bespoke) ? bespoke : "item-scroll-\(i.rarity.rawValue)"
+    }
+}
+
 /// SF Symbol fallback shown until `shop-<category>` art is drawn.
-private func categorySymbol(_ c: ShopCategory) -> String {
+func categorySymbol(_ c: ShopCategory) -> String {
     switch c {
     case .heavyWeapons:    "hammer.fill"
     case .heavyOneHanders: "hammer.fill"

@@ -41,7 +41,9 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     /// Wallet — the hero's spendable gold (the shop's only currency). Defaults to 0 so
     /// every existing construction site AND every saved hero stays valid: no migration,
     /// no delete-and-relaunch.
-    var gold: Int = 0
+    var gold: Int = 100      // starting budget to customize; earn more to diversify
+    var showcaseGearIDs: [String] = []   // up to 3 gear pieces the kid shows off
+    var showcaseItemIDs: [String] = []   // up to 3 items the kid shows off
 }
 
 extension CharacterChoices {
@@ -72,7 +74,9 @@ extension CharacterChoices {
         spellbookIDs    = try c.decodeIfPresent([String].self,       forKey: .spellbookIDs) ?? []
         readySpellIDs   = try c.decodeIfPresent([String].self,       forKey: .readySpellIDs) ?? []
         spiritImageID   = try c.decodeIfPresent(String.self,         forKey: .spiritImageID)
-        gold            = try c.decodeIfPresent(Int.self,            forKey: .gold) ?? 0
+        gold            = try c.decodeIfPresent(Int.self,            forKey: .gold) ?? 100
+        showcaseGearIDs = try c.decodeIfPresent([String].self, forKey: .showcaseGearIDs) ?? []
+        showcaseItemIDs = try c.decodeIfPresent([String].self, forKey: .showcaseItemIDs) ?? []
     }
 }
 
