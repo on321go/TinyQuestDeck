@@ -65,7 +65,7 @@ private enum SheetMetrics {
     static let row2Height: CGFloat = 230
     static let trackerHeight: CGFloat = 140
     static let gearCap = 10
-    static let gearMinSlots = 5
+    static let gearMinSlots = 4
     static let bookBoxSize = 6      // spells per Spellbook box
     static let showcaseCap = 3
 }
@@ -490,12 +490,15 @@ private struct SheetBody: View {
                 if let summon = state.summon { summonBox(summon) }
                 if character.pets.isEmpty { addPetBox }
                 if sheet.isCaster { gearBox }
-                showcaseGearBox
-                showcaseItemsBox
+     
                 itemsBox(title: "Normal Items", items: character.normalItems,
                          adding: $addingNormalItem) { commitItems(normal: $0) }
                 itemsBox(title: "Magic Items", items: character.magicItems,
                          adding: $addingMagicItem) { commitItems(magic: $0) }
+                if sheet.isCaster {
+                    showcaseGearBox
+                    showcaseItemsBox
+                }
             }
 
             trackerPanel

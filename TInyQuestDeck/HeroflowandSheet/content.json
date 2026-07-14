@@ -165,7 +165,12 @@
       "blurb": "Hard hitter.",
       "startingGearIDs": [
         "great-sword",
+        "great-axe",
         "long-sword",
+        "battle-axe",
+        "short-sword",
+        "dagger",
+        "bow",
         "plate-armor"
       ],
       "pathPowerIDs": [
@@ -183,7 +188,13 @@
       "name": "Guardian",
       "blurb": "Defender.",
       "startingGearIDs": [
-        "long-sword",
+          "great-sword",
+          "great-axe",
+          "long-sword",
+          "battle-axe",
+          "short-sword",
+          "dagger",
+          "bow",
         "iron-shield",
         "plate-armor"
       ],
@@ -202,7 +213,13 @@
       "name": "Warlord",
       "blurb": "Team leader.",
       "startingGearIDs": [
-        "great-axe",
+          "great-sword",
+          "great-axe",
+          "long-sword",
+          "battle-axe",
+          "short-sword",
+          "dagger",
+          "bow",
         "adv-clothes"
       ],
       "pathPowerIDs": [
@@ -220,6 +237,7 @@
       "name": "Shadow",
       "blurb": "Stealthy ninja.",
       "startingGearIDs": [
+          "short-sword",
         "dagger",
         "bow",
         "adv-clothes"
@@ -242,6 +260,8 @@
       "name": "Hunter",
       "blurb": "Sniper.",
       "startingGearIDs": [
+          "short-sword",
+        "dagger",
         "bow",
         "leather-armor"
       ],
@@ -259,7 +279,9 @@
       "name": "Wild",
       "blurb": "Beast tamer.",
       "startingGearIDs": [
+          "short-sword",
         "dagger",
+        "bow",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -286,6 +308,12 @@
       "blurb": "Battle-ready melee healer.",
       "startingGearIDs": [
         "mace",
+        "war-hammer",
+        "long-sword",
+        "battle-axe",
+        "short-sword",
+        "dagger",
+        "bow",
         "chain-armor",
         "wooden-shield"
       ],
@@ -311,8 +339,12 @@
       "name": "Druid",
       "blurb": "Forest mage of animals and elements.",
       "startingGearIDs": [
+          "staff",
         "club",
         "sling",
+        "short-sword",
+        "dagger",
+        "bow",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -339,6 +371,12 @@
       "blurb": "Tarot-touched reactive caster.",
       "startingGearIDs": [
         "floating-dagger",
+        "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
         "adv-clothes"
       ],
       "coreAbilityIDs": [
@@ -389,6 +427,12 @@
       "blurb": "Fire-magic warrior with sword, armor, and spells.",
       "startingGearIDs": [
         "spellblade",
+        "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
         "plate-armor",
         "iron-shield"
       ],
@@ -414,6 +458,11 @@
       "blurb": "Knows a little of everything.",
       "startingGearIDs": [
         "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
         "adv-clothes"
       ],
       "pathPowerIDs": [
