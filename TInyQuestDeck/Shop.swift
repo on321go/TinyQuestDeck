@@ -121,3 +121,40 @@ public enum GrantSource: Hashable, Sendable {
     case purchase, foundLoot, adventure
     case gmToken(String)
 }
+
+extension Purchasable {
+    /// What the shop pays: half, rounded down. The loss is the point — a buy/sell loop
+    /// is always net negative, so there's nothing to exploit.
+    var sellPrice: Int { cost / 2 }
+}
+
+extension ShopRules {
+    /// What a hero can sell: OWNED gear only. The starting kit isn't in ownedGearIDs
+    /// (you can't sell your kit), and items are free-text names — homebrew/unofficial
+    /// stuff a shop wouldn't buy. Duplicates list once per copy; each row sells one.
+    static func sellable(for hero: CharacterChoices, repo: ContentRepository) -> [Purchasable] {
+        hero.ownedGearIDs
+            .compactMap { repo.gear($0) }
+            .map(Purchasable.gear)
+            .sorted { $0.name < $1.name }
+    }
+}
+
+extension CharacterChoices {
+    /// THE way things leave a hero — the mirror of `acquire`. Sweeps every array that can
+    /// reference the gear, because equipped/showcase resolve from the repo (not from
+    /// ownedGearIDs), so a sold sword would otherwise stay equipped and stay on the shelf.
+    /// Only strips those if the hero no longer owns a copy AND it isn't kit gear — selling
+    /// a spare long sword must never unequip the free one the path grants.
+    mutating func release(_ p: Purchasable, source: GrantSource, repo: ContentRepository) {
+        gold += p.sellPrice
+        guard case .gear(let g) = p else { return }   // items aren't sellable
+        if let i = ownedGearIDs.firstIndex(of: g.id) { ownedGearIDs.remove(at: i) }
+        let kitIDs = Set(repo.path(pathID)?.startingGearIDs ?? [])
+        if !ownedGearIDs.contains(g.id) && !kitIDs.contains(g.id) {
+            equippedGearIDs.removeAll { $0 == g.id }
+            showcaseGearIDs.removeAll { $0 == g.id }
+        }
+        // later: ledger.append(GrantEntry(item: p.id, source: source, at: .now))
+    }
+}

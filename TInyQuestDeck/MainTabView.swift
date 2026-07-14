@@ -74,7 +74,7 @@ struct MainTabView: View {
                               blurb: "Every spell, for quick reference mid-game.")
             }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
-                ShopView(repo: repo, roster: roster, shop: shop, activeHeroID: selectedHeroID)
+                ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
             }
         }
     }

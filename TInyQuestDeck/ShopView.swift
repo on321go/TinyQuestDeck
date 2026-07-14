@@ -26,15 +26,17 @@ struct ShopView: View {
     let repo: ContentRepository
     let roster: RosterStore
     let shop: ShopStore
+    let combat: CombatStore
 
     @State private var shopperID: UUID?
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 24), count: 3)
 
-    init(repo: ContentRepository, roster: RosterStore, shop: ShopStore, activeHeroID: UUID?) {
+    init(repo: ContentRepository, roster: RosterStore, shop: ShopStore, combat: CombatStore, activeHeroID: UUID?) {
         self.repo = repo
         self.roster = roster
         self.shop = shop
+        self.combat = combat
         _shopperID = State(initialValue: activeHeroID)
     }
 
@@ -123,6 +125,18 @@ struct ShopView: View {
                 }
                 .buttonStyle(.plain)
             }
+            Spacer()
+            NavigationLink {
+                SellView(repo: repo, roster: roster, combat: combat, shopperID: shopperID)
+            } label: {
+                Label("Sell", systemImage: "tag.fill")
+                    .font(questFont(14)).foregroundStyle(.black)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.black, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            if showRestockDevControl { /* …existing Restock button… */ }
         }
     }
 
@@ -324,12 +338,6 @@ private struct ShopCardDetailView: View {
         }
     }
 
-    private func purchasableArt(_ p: Purchasable) -> some View {
-        let cat = ShopCategory.category(of: p)
-        return QuestArt(name: artName(for: p), ratio: 0.5, colors: [cardTint(cat), .white],
-                        symbol: categorySymbol(cat), caption: nil, framed: false)
-    }
-
     private func artName(for p: Purchasable) -> String {
         switch p {
         case .gear(let g):
@@ -414,6 +422,13 @@ func questArtName(for p: Purchasable) -> String {
     }
 }
 
+/// Art for a purchasable — shared by the shop detail and the sell screen.
+func purchasableArt(_ p: Purchasable) -> some View {
+    let cat = ShopCategory.category(of: p)
+    return QuestArt(name: questArtName(for: p), ratio: 0.5, colors: [cardTint(cat), .white],
+                    symbol: categorySymbol(cat), caption: nil, framed: false)
+}
+
 /// SF Symbol fallback shown until `shop-<category>` art is drawn.
 func categorySymbol(_ c: ShopCategory) -> String {
     switch c {
@@ -446,4 +461,128 @@ private func gearLine(_ g: GearDefinition) -> String? {
     let dice = atk.damageDice.count == 1 ? "d\(atk.damageDice.faces)" : "\(atk.damageDice.count)d\(atk.damageDice.faces)"
     let dmgStat = atk.damageStat.map { " + \(statWord($0))" } ?? ""
     return "\(hit) · \(dice)\(dmgStat)"
+}
+
+
+// MARK: - Sell (owned gear back at half price)
+
+private struct SellView: View {
+    let repo: ContentRepository
+    let roster: RosterStore
+    let combat: CombatStore
+    let shopperID: UUID?
+
+    @State private var pendingSale: Purchasable?
+    @State private var toast: String?
+    private let accent = Color(hex: "6B4E8E")
+
+    private var shopper: CharacterChoices? {
+        roster.characters.first { $0.id == shopperID } ?? roster.characters.first
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if let c = shopper {
+                    HStack {
+                        Text("Sell").font(questFont(24)).foregroundStyle(.black)
+                        Spacer()
+                        goldLabel(c.gold, size: 16)
+                    }
+                    let stock = ShopRules.sellable(for: c, repo: repo)
+                    if stock.isEmpty {
+                        ContentUnavailableView("Nothing to sell", systemImage: "tag",
+                            description: Text("Gear you buy or find sells back for half price. Your starting kit stays with you."))
+                            .padding(.top, 40)
+                    } else {
+                        ForEach(Array(stock.enumerated()), id: \.offset) { _, p in sellRow(p) }
+                    }
+                }
+            }
+            .padding(20).frame(maxWidth: 720).frame(maxWidth: .infinity)
+        }
+        .background(Color.white)
+        .navigationTitle("Sell").navigationBarTitleDisplayMode(.inline)
+        .overlay(alignment: .bottom) { toastView }
+        // Selling is irreversible — always confirm. Kids tap fast.
+        .confirmationDialog("Sell this?",
+                            isPresented: Binding(get: { pendingSale != nil },
+                                                 set: { if !$0 { pendingSale = nil } }),
+                            titleVisibility: .visible, presenting: pendingSale) { p in
+            Button("Sell for \(p.sellPrice) gold", role: .destructive) { sell(p) }
+            Button("Keep it", role: .cancel) {}
+        } message: { p in
+            Text("\(p.name) is gone for good — but you get \(p.sellPrice) gold.")
+        }
+    }
+
+    private func sellRow(_ p: Purchasable) -> some View {
+        let equipped = shopper.map { c in
+            if case .gear(let g) = p { return c.equippedGearIDs.contains(g.id) } else { return false }
+        } ?? false
+        return HStack(alignment: .center, spacing: 14) {
+            purchasableArt(p)
+                .frame(width: 92, height: 176)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(.black, lineWidth: 2))
+            if case .gear(let g) = p {
+                TapInfo(payload: .init(gear: g, tint: accent)) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(g.name).font(questFont(18)).foregroundStyle(.black)
+                        if let line = gearLine(g) {
+                            Text(line).font(.caption.monospaced()).foregroundStyle(.black.opacity(0.55))
+                        }
+                        if equipped {
+                            Text("Equipped — selling takes it off")
+                                .font(questFontLight(12)).foregroundStyle(.red.opacity(0.8))
+                        }
+                    }
+                }
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 8) {
+                goldLabel(p.sellPrice, size: 16)
+                Button { pendingSale = p } label: {
+                    Text("Sell").font(questFont(15)).foregroundStyle(.black)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.black, lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
+    }
+
+    /// Mirrors the sheet's commitChoices: sell, persist, then shift Max HP by the delta
+    /// (selling worn armor/shield lowers it).
+    private func sell(_ p: Purchasable) {
+        guard var c = shopper else { return }
+        let oldMax = deriveSheet(from: c, using: repo)?.maxHP ?? 0
+        c.release(p, source: .purchase, repo: repo)
+        roster.update(c)
+        if let newSheet = deriveSheet(from: c, using: repo) {
+            combat.adjustMaxHP(c.id, delta: newSheet.maxHP - oldMax, newMaxHP: newSheet.maxHP)
+        }
+        withAnimation { toast = "Sold \(p.name) for \(p.sellPrice) gold!" }
+    }
+
+    @ViewBuilder private var toastView: some View {
+        if let toast {
+            Text(toast)
+                .font(questFont(16)).foregroundStyle(.black)
+                .padding(.horizontal, 18).padding(.vertical, 12)
+                .background(TierColor.selectPeach, in: Capsule())
+                .overlay(Capsule().strokeBorder(.black, lineWidth: 2))
+                .padding(.bottom, 24)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .task(id: toast) {
+                    try? await Task.sleep(for: .seconds(1.6))
+                    withAnimation { self.toast = nil }
+                }
+        }
+    }
 }
