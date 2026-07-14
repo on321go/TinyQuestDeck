@@ -220,7 +220,8 @@
           "short-sword",
           "dagger",
           "bow",
-        "adv-clothes"
+        "adv-clothes",
+        "leather-armor"
       ],
       "pathPowerIDs": [
         "battle-cry"

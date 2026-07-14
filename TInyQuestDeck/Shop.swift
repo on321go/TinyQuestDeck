@@ -107,4 +107,17 @@ extension CharacterChoices {
             if !spellbookIDs.contains(spellID) { spellbookIDs.append(spellID) }
         }
     }
+    /// THE choke point — every acquisition (purchase, loot, GM token, adventure reward)
+      /// goes through here. Gating later = an auth check in this one function; the ledger
+      /// hangs here too.
+      mutating func acquire(_ p: Purchasable, source: GrantSource, repo: ContentRepository) {
+          receive(ShopRules.grant(for: p, buyer: self, repo: repo))
+          // later: ledger.append(GrantEntry(item: p.id, source: source, at: .now))
+      }
+}
+
+/// Where an acquisition came from. The tag every future gate + audit log reads.
+public enum GrantSource: Hashable, Sendable {
+    case purchase, foundLoot, adventure
+    case gmToken(String)
 }

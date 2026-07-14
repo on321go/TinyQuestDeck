@@ -79,6 +79,7 @@ struct CharacterSheetView: View {
     private var character: CharacterChoices? {
         roster.characters.first { $0.id == characterID }
     }
+    
 
     var body: some View {
         Group {
@@ -123,6 +124,9 @@ private struct SheetBody: View {
     @State private var pickingPetArtFor: PetChoice? = nil
     @State private var pickingSpiritArt = false
     @State private var showcaseInfoItem: ItemDefinition? = nil
+    // Temporary: lets the table hand out story loot before the GM Portal exists. Flip off
+    // when GM tokens (QR) land — then loot arrives authorized, not free-added.
+    private let showGearGrantDevControl = true
 
     private struct PendingTransform {
         let ability: AbilityDefinition
@@ -962,6 +966,19 @@ private struct SheetBody: View {
             if !owned.isEmpty {
                 Section("Owned") {
                     ForEach(owned) { g in gearMenuButton(g) }
+                }
+            }
+            if showGearGrantDevControl {
+                Section("Found on an Adventure") {
+                    Menu("Add treasure…") {
+                        ForEach(gearGroups(repo.allGear().filter { !character.ownedGearIDs.contains($0.id) })) { group in
+                            Section(group.title) {
+                                ForEach(group.items) { g in
+                                    Button(g.name) { mutate { $0.acquire(.gear(g), source: .foundLoot, repo: repo) } }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } label: {

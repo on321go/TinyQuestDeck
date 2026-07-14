@@ -60,6 +60,17 @@ public struct GearDefinition: Codable, Hashable, Sendable, Identifiable {
     
 }
 
+extension Sequence where Element == GearDefinition {
+    /// HP a hero gains from equipped gear. One item per category counts — you wear one
+    /// armor, carry one shield — so a duplicate armor/shield never stacks: the BEST
+    /// maxHP in each category is taken, then summed across categories.
+    var equippedBonusHP: Int {
+        Dictionary(grouping: self, by: \.category)
+            .values
+            .reduce(0) { $0 + ($1.map(\.maxHP).max() ?? 0) }
+    }
+}
+
 // MARK: - Spells
 
 public enum SpellTier: String, Codable, Sendable { case core, t1, t2, t3 }

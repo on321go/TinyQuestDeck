@@ -180,7 +180,7 @@ func deriveSheet(from c: CharacterChoices, using repo: ContentRepository) -> Cha
                             totalUses: trackable ? 1 + (bonusUses[a.id] ?? 0) : 0)
     }
 
-    let maxHP = cls.hpByLevel[level - 1] + gear.reduce(0) { $0 + $1.maxHP } + bonusHP
+    let maxHP = cls.hpByLevel[level - 1] + gear.equippedBonusHP + bonusHP
 
     // Spells. Cast counts come from starting grants (loot counts arrive with the
     // loot model; unknown -> 1).

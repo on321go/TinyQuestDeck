@@ -183,7 +183,7 @@ public final class ValidatingContentRepository: ContentRepository {
                     problem: "expectedStartingHP references a path that does not resolve"))
                 continue
             }
-            let total = (c.hpByLevel.first ?? 0) + p.startingGearIDs.compactMap { gearByID[$0]?.maxHP }.reduce(0, +)
+            let total = (c.hpByLevel.first ?? 0) + p.startingGearIDs.compactMap { gearByID[$0] }.equippedBonusHP
             need(total == expected, "path:\(pathID)", "derived L1 HP \(total) != rulebook total \(expected)")
         }
         return issues
@@ -191,7 +191,7 @@ public final class ValidatingContentRepository: ContentRepository {
 
     /// Rulebook "Total HP" at Level 1, per path — the number on the page.
     static let expectedStartingHP: [String: Int] = [
-        "champion": 17, "guardian": 18, "warlord": 15,
+        "champion": 17, "guardian": 18, "warlord": 17,
         "shadow": 12, "hunter": 14, "wild": 12,
         "cleric": 15, "druid": 12, "mystic": 12,
         "dragon-guard": 13, "archmage": 10,

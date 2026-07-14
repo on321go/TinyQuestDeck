@@ -362,10 +362,9 @@ private struct ShopCardDetailView: View {
     /// caster-ness), deduct, land it, persist through the roster's single write path.
     private func buy(_ p: Purchasable) {
         guard var c = shopper, ShopRules.shortfall(buying: p, hero: c) == nil else { return }
-        let grant = ShopRules.grant(for: p, buyer: c, repo: repo)
-        c.gold -= p.cost
-        c.receive(grant)
-        roster.update(c)
+          c.gold -= p.cost
+          c.acquire(p, source: .purchase, repo: repo)     // ← was: let grant = …; c.receive(grant)
+          roster.update(c)
         withAnimation { toast = "\(c.name) bought \(p.name)!" }
     }
 }

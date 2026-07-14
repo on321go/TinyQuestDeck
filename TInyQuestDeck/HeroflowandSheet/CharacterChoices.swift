@@ -128,3 +128,4 @@ func startingSummary(for c: CharacterChoices, using repo: ContentRepository) -> 
         might: stat(.might), mind: stat(.mind), speed: stat(.speed),
         hp: hp, gearNames: kit.map(\.name), spells: spells)
 }
+
