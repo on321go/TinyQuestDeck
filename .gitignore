@@ -1,0 +1,43 @@
+# OS X
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+# ========================
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Architecture workspaces layout
+# ========================
+~*
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.xcuserdata/
+
+# Swift Package Manager
+# ========================
+.build/
+Packages/
+Package.pins
+Package.resolved
+# Note: Commit Package.resolved if you want to lock dependency versions for your team.
+
+# CocoaPods
+# ========================
+# Uncomment the next line if you do NOT want to commit your Pods directory
+# Pods/
+
+# Fastlane
+# ========================
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output

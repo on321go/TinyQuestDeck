@@ -1,0 +1,2793 @@
+{
+  "classes": [
+    {
+      "id": "knight",
+      "name": "Knight",
+      "role": "Brave front-line protector.",
+      "baseStats": {
+        "might": 2,
+        "mind": 1,
+        "speed": 1
+      },
+      "hpByLevel": [
+        15,
+        20,
+        25
+      ],
+      "coreAbilityIDs": [
+        "brave-heart",
+        "shield"
+      ],
+      "pathIDs": [
+        "champion",
+        "guardian",
+        "warlord"
+      ],
+      "spellListID": null,
+      "baseSpells": [],
+      "theme": {
+        "background": "#AEB8C7",
+        "panel": "#FBF6D8",
+        "accent": "#5E6B7E",
+        "ink": "#23262B",
+        "emblem": "shield"
+      }
+    },
+    {
+      "id": "scout",
+      "name": "Scout",
+      "role": "Quick, sneaky, precise.",
+      "baseStats": {
+        "might": 1,
+        "mind": 1,
+        "speed": 2
+      },
+      "hpByLevel": [
+        12,
+        15,
+        17
+      ],
+      "coreAbilityIDs": [
+        "sharp-eyes",
+        "sneak-attack",
+        "hide"
+      ],
+      "pathIDs": [
+        "shadow",
+        "hunter",
+        "wild"
+      ],
+      "spellListID": null,
+      "baseSpells": [],
+      "theme": {
+        "background": "#D8C6B5",
+        "panel": "#FBF6D8",
+        "accent": "#7A5C3E",
+        "ink": "#2B241C",
+        "emblem": "bow"
+      }
+    },
+    {
+      "id": "healer",
+      "name": "Healer",
+      "role": "Kind, wise team helper. Uses divine or nature magic.",
+      "baseStats": {
+        "might": 1,
+        "mind": 2,
+        "speed": 1
+      },
+      "hpByLevel": [
+        12,
+        15,
+        17
+      ],
+      "coreAbilityIDs": [],
+      "pathIDs": [
+        "cleric",
+        "druid",
+        "mystic"
+      ],
+      "spellListID": "healer",
+      "baseSpells": [
+        {
+          "spellID": "heal",
+          "readyUses": 2
+        },
+        {
+          "spellID": "animal-friend"
+        },
+        {
+          "spellID": "calm"
+        },
+        {
+          "spellID": "bless",
+          "readyUses": 2
+        }
+      ],
+      "theme": {
+        "background": "#C9DEC0",
+        "panel": "#FBF6D8",
+        "accent": "#4E7A4E",
+        "ink": "#22301F",
+        "emblem": "sun"
+      }
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard",
+      "role": "Smart ranged spellcaster with big magical moments.",
+      "baseStats": {
+        "might": 1,
+        "mind": 2,
+        "speed": 1
+      },
+      "hpByLevel": [
+        10,
+        12,
+        15
+      ],
+      "coreAbilityIDs": [],
+      "pathIDs": [
+        "dragon-guard",
+        "archmage"
+      ],
+      "spellListID": "wizard",
+      "baseSpells": [
+        {
+          "spellID": "zap",
+          "readyUses": 2
+        },
+        {
+          "spellID": "shield-bubble",
+          "readyUses": 2
+        },
+        {
+          "spellID": "sleep-dust"
+        },
+        {
+          "spellID": "light"
+        }
+      ],
+      "theme": {
+        "background": "#C9B6DA",
+        "panel": "#FBF6D8",
+        "accent": "#6B4E8E",
+        "ink": "#241C2E",
+        "emblem": "spellbook-orb"
+      }
+    }
+  ],
+  "paths": [
+    {
+      "id": "champion",
+      "classID": "knight",
+      "name": "Champion",
+      "blurb": "Hard hitter.",
+      "startingGearIDs": [
+        "great-sword",
+        "great-axe",
+        "long-sword",
+        "battle-axe",
+        "short-sword",
+        "dagger",
+        "bow",
+        "plate-armor"
+      ],
+      "pathPowerIDs": [
+        "finishing-blow"
+      ],
+      "signaturePowerIDs": [
+        "champions-strike",
+        "executioner"
+      ],
+      "specialSpells": []
+    },
+    {
+      "id": "guardian",
+      "classID": "knight",
+      "name": "Guardian",
+      "blurb": "Defender.",
+      "startingGearIDs": [
+          "great-sword",
+          "great-axe",
+          "long-sword",
+          "battle-axe",
+          "short-sword",
+          "dagger",
+          "bow",
+        "iron-shield",
+        "plate-armor"
+      ],
+      "pathPowerIDs": [
+        "i-take-it"
+      ],
+      "signaturePowerIDs": [
+        "unbreakable",
+        "last-stand"
+      ],
+      "specialSpells": []
+    },
+    {
+      "id": "warlord",
+      "classID": "knight",
+      "name": "Warlord",
+      "blurb": "Team leader.",
+      "startingGearIDs": [
+          "great-sword",
+          "great-axe",
+          "long-sword",
+          "battle-axe",
+          "short-sword",
+          "dagger",
+          "bow",
+        "adv-clothes",
+        "leather-armor"
+      ],
+      "pathPowerIDs": [
+        "battle-cry"
+      ],
+      "signaturePowerIDs": [
+        "banner-bearer",
+        "warlords-eye"
+      ],
+      "specialSpells": []
+    },
+    {
+      "id": "shadow",
+      "classID": "scout",
+      "name": "Shadow",
+      "blurb": "Stealthy ninja.",
+      "startingGearIDs": [
+          "short-sword",
+        "dagger",
+        "bow",
+        "adv-clothes"
+      ],
+      "coreAbilityIDs": [
+        "silent-hide"
+      ],
+      "pathPowerIDs": [
+        "vanish"
+      ],
+      "signaturePowerIDs": [
+        "ghost-strike",
+        "shadowstep"
+      ],
+      "specialSpells": []
+    },
+    {
+      "id": "hunter",
+      "classID": "scout",
+      "name": "Hunter",
+      "blurb": "Sniper.",
+      "startingGearIDs": [
+          "short-sword",
+        "dagger",
+        "bow",
+        "leather-armor"
+      ],
+      "pathPowerIDs": [
+        "perfect-shot"
+      ],
+      "signaturePowerIDs": [
+        "hawk-eye"
+      ],
+      "specialSpells": []
+    },
+    {
+      "id": "wild",
+      "classID": "scout",
+      "name": "Wild",
+      "blurb": "Beast tamer.",
+      "startingGearIDs": [
+          "short-sword",
+        "dagger",
+        "bow",
+        "adv-clothes"
+      ],
+      "coreAbilityIDs": [
+        "cosmetic-pet"
+      ],
+      "pathPowerIDs": [
+        "bonded-companion"
+      ],
+      "signaturePowerIDs": [
+        "pack-tactics",
+        "focused-attack",
+        "wild-eyes",
+        "split",
+        "swap",
+        "beast-mode"
+      ],
+      "specialSpells": [],
+      "signatureBox": true
+    },
+    {
+      "id": "cleric",
+      "classID": "healer",
+      "name": "Cleric",
+      "blurb": "Battle-ready melee healer.",
+      "startingGearIDs": [
+        "mace",
+        "war-hammer",
+        "long-sword",
+        "battle-axe",
+        "short-sword",
+        "dagger",
+        "bow",
+        "chain-armor",
+        "wooden-shield"
+      ],
+      "pathPowerIDs": [
+        "blessed-hands"
+      ],
+      "signaturePowerIDs": [
+        "radiant-healer",
+        "great-blessing"
+      ],
+      "specialSpells": [
+        "cure-sickness",
+        "sanctuary",
+        "warding-word",
+        "glow-lantern",
+        "group-heal",
+        "revive"
+      ]
+    },
+    {
+      "id": "druid",
+      "classID": "healer",
+      "name": "Druid",
+      "blurb": "Forest mage of animals and elements.",
+      "startingGearIDs": [
+          "staff",
+        "club",
+        "sling",
+        "short-sword",
+        "dagger",
+        "bow",
+        "adv-clothes"
+      ],
+      "coreAbilityIDs": [
+        "quick-cast",
+        "animal-shape"
+      ],
+      "pathPowerIDs": [
+        "voice-of-the-wild"
+      ],
+      "signaturePowerIDs": [
+        "wild-storm",
+        "heart-of-the-grove"
+      ],
+      "specialSpells": [
+        "speak-with-plants",
+        "mend",
+        "summon-animal-friend"
+      ]
+    },
+    {
+      "id": "mystic",
+      "classID": "healer",
+      "name": "Mystic",
+      "blurb": "Tarot-touched reactive caster.",
+      "startingGearIDs": [
+        "floating-dagger",
+        "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
+        "adv-clothes"
+      ],
+      "coreAbilityIDs": [
+        "reactive-caster"
+      ],
+      "pathPowerIDs": [
+        "reverse-card",
+        "minds-eye-card"
+      ],
+      "signaturePowerIDs": [
+        "undo-card",
+        "mirror-card",
+        "voice-of-truth"
+      ],
+      "specialSpells": [
+        "talk-to-the-dead",
+        "dispel",
+        "detect-magic"
+      ],
+      "startingLoadoutOverride": [
+        {
+          "spellID": "heal",
+          "readyUses": 2
+        },
+        {
+          "spellID": "dispel",
+          "readyUses": 2
+        },
+        {
+          "spellID": "calm"
+        },
+        {
+          "spellID": "bless"
+        }
+      ],
+      "themeOverride": {
+        "background": "#A793B5",
+        "panel": "#FBF6D8",
+        "accent": "#6B4E8E",
+        "ink": "#241C2E",
+        "emblem": "tarot"
+      }
+    },
+    {
+      "id": "dragon-guard",
+      "classID": "wizard",
+      "name": "Dragon Guard",
+      "blurb": "Fire-magic warrior with sword, armor, and spells.",
+      "startingGearIDs": [
+        "spellblade",
+        "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
+        "plate-armor",
+        "iron-shield"
+      ],
+      "pathPowerIDs": [
+        "fire-explosion",
+        "fire-armor"
+      ],
+      "signaturePowerIDs": [
+        "storm-caller",
+        "elemental-teleport"
+      ],
+      "specialSpells": [
+        "zap",
+        "spark",
+        "frostbolt",
+        "fireball"
+      ]
+    },
+    {
+      "id": "archmage",
+      "classID": "wizard",
+      "name": "Archmage",
+      "blurb": "Knows a little of everything.",
+      "startingGearIDs": [
+        "staff",
+      "club",
+      "sling",
+      "short-sword",
+      "dagger",
+      "bow",
+        "adv-clothes"
+      ],
+      "pathPowerIDs": [
+        "arcane-insight",
+        "overcharge"
+      ],
+      "signaturePowerIDs": [
+        "knowing-eye",
+        "spell-master"
+      ],
+      "specialSpells": [
+        "detect-magic",
+        "mage-hand",
+        "featherfall",
+        "spider-climb"
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "brave-heart",
+      "name": "Brave Heart",
+      "text": "Never affected by fear.",
+      "actionCost": "passive",
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "conditionImmunity",
+          "condition": "frightened"
+        }
+      ]
+    },
+    {
+      "id": "shield",
+      "name": "Shield",
+      "text": "Block all damage from one attack on you or a friend next to you.",
+      "actionCost": "reaction",
+      "reset": "oncePerFight",
+      "requiresGearCategory": "shield"
+    },
+    {
+      "id": "finishing-blow",
+      "name": "Finishing Blow",
+      "text": "Hit a Hurt, Stuck, or Frightened monster for +3 damage. Once per fight, this also works on a monster below half HP.",
+      "actionCost": "free",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "modifier",
+          "value": 3,
+          "target": "damage",
+          "scope": "nextAttack",
+          "requires": [
+            "hurt",
+            "stuck",
+            "frightened"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "champions-strike",
+      "name": "Champion's Strike",
+      "text": "Once per fight, your hit deals max weapon damage + Might. Add Finishing Blow if it applies.",
+      "actionCost": "free",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "maxDamage",
+          "addStat": "might"
+        }
+      ]
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "text": "Enemies at half HP or less take +5 from Finishing Blow. Once per fight, dropping a monster to 0 HP gives a free sword swing at another nearby monster.",
+      "actionCost": "free",
+      "reset": "recharge"
+    },
+    {
+      "id": "i-take-it",
+      "name": "I Take It",
+      "text": "When a friend next to you is hit, take the hit instead for half damage.",
+      "actionCost": "reaction",
+      "reset": "atWill",
+      "affects": "oneAlly"
+    },
+    {
+      "id": "unbreakable",
+      "name": "Unbreakable",
+      "text": "Shield works twice per fight. I Take It now also heals the protected friend or yourself 2 HP.",
+      "actionCost": "passive",
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "extraUses",
+          "abilityID": "shield",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "last-stand",
+      "name": "Last Stand",
+      "text": "Once per adventure, when you would drop to 0 HP, stay at 1 HP. Your next attack auto-hits and deals double damage. If it drops the enemy, a friend or you heal d6 HP.",
+      "actionCost": "reaction",
+      "reset": "oncePerAdventure"
+    },
+    {
+      "id": "battle-cry",
+      "name": "Battle Cry",
+      "text": "Once per fight, shout your battle cry as a free action. Friends within sight get +2 to their next attack roll and +2 damage.",
+      "actionCost": "free",
+      "reset": "recharge",
+      "affects": "alliesInSight",
+      "effects": [
+        {
+          "kind": "modifier",
+          "value": 2,
+          "target": "toHit",
+          "scope": "nextAttack"
+        },
+        {
+          "kind": "modifier",
+          "value": 2,
+          "target": "damage",
+          "scope": "nextAttack"
+        }
+      ]
+    },
+    {
+      "id": "banner-bearer",
+      "name": "Banner Bearer",
+      "text": "Once per adventure, plant your sword. Friends within sight heal d6 + Might HP and lose Hurt, Stuck, and Frightened. Battle Cry resets and you choose an enemy to Frighten.",
+      "actionCost": "action",
+      "reset": "oncePerAdventure",
+      "affects": "alliesInSight",
+      "effects": [
+        {
+          "kind": "resetAbility",
+          "abilityID": "battle-cry"
+        }
+      ]
+    },
+    {
+      "id": "warlords-eye",
+      "name": "Warlord's Eye",
+      "text": "Once per fight, add +5 to hit for any ally rolling (even if the roll failed) plus max damage.",
+      "actionCost": "reaction",
+      "reset": "recharge",
+      "affects": "oneAlly",
+      "effects": [
+        {
+          "kind": "modifier",
+          "value": 5,
+          "target": "toHit",
+          "scope": "nextAttack"
+        },
+        {
+          "kind": "maxDamage"
+        }
+      ]
+    },
+    {
+      "id": "sharp-eyes",
+      "name": "Sharp Eyes",
+      "text": "+2 Mind when searching.",
+      "actionCost": "passive",
+      "reset": "atWill"
+    },
+    {
+      "id": "sneak-attack",
+      "name": "Sneak Attack",
+      "text": "+1 damage from hiding.",
+      "actionCost": "passive",
+      "reset": "atWill"
+    },
+    {
+      "id": "hide",
+      "name": "Hide",
+      "text": "Roll d20 + Speed, beat 13 to become Hidden.",
+      "actionCost": "action",
+      "reset": "atWill"
+    },
+    {
+      "id": "silent-hide",
+      "name": "Silent Step",
+      "text": "Your Hide only needs 10 or more instead of 13 — easier than other Scouts.",
+      "actionCost": "passive",
+      "reset": "atWill"
+    },
+    {
+      "id": "vanish",
+      "name": "Vanish",
+      "text": "Once per fight, become Hidden as a free action. Hidden gets +2 extra damage (+3 total). After attacking, roll d20 + Speed; 10+ means you stay Hidden.",
+      "actionCost": "free",
+      "reset": "recharge"
+    },
+    {
+      "id": "ghost-strike",
+      "name": "Ghost Strike",
+      "text": "If not hidden, you Vanish. Ghost Strike keeps you Hidden with no roll needed. Hidden attack bonus becomes +4.",
+      "actionCost": "free",
+      "reset": "recharge"
+    },
+    {
+      "id": "shadowstep",
+      "name": "Shadowstep",
+      "text": "Once per fight, vanish and reappear anywhere within sight.",
+      "actionCost": "action",
+      "reset": "recharge"
+    },
+    {
+      "id": "perfect-shot",
+      "name": "Perfect Shot",
+      "text": "Once per fight, auto-hit with no roll needed. +2 damage plus Stuck or Hurt (you choose).",
+      "actionCost": "free",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "modifier",
+          "value": 2,
+          "target": "damage",
+          "scope": "nextAttack"
+        }
+      ]
+    },
+    {
+      "id": "hawk-eye",
+      "name": "Hawk Eye",
+      "text": "Once per fight, fire three shots. Roll once for all of them; each hit deals d6 + Speed. Perfect Shot can be used together with Hawk Eye if it's available.",
+      "actionCost": "action",
+      "reset": "recharge",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "damageStat": "speed",
+        "targets": {
+          "kind": "multiple",
+          "count": 3
+        }
+      }
+    },
+    {
+      "id": "cosmetic-pet",
+      "name": "Small Friend",
+      "text": "You start with a small cosmetic pet (3 HP max). It keeps you company but does not fight.",
+      "actionCost": "passive",
+      "reset": "atWill"
+    },
+    {
+      "id": "bonded-companion",
+      "name": "Bonded Companion",
+      "text": "You have a second small animal friend — name it. The pet has 5 HP. At the end of each round it deals 2 damage to one enemy. At 0 HP it runs away and returns after the next rest.",
+      "actionCost": "passive",
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "companion",
+          "companion": {
+            "id": "bonded-friend",
+            "name": "Bonded Friend",
+            "maxHP": 5,
+            "trick": {
+              "id": "pack-bite",
+              "name": "Pack Bite",
+              "text": "At the end of each round, your pet bites one enemy for 2 damage. At 0 HP it runs away and returns after the next rest.",
+              "actionCost": "free",
+              "reset": "atWill"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pack-tactics",
+      "name": "Pack Tactics",
+      "text": "Pet HP becomes 8 and its bite becomes 3 damage.",
+      "actionCost": "passive",
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "companionUpgrade",
+          "maxHP": 8,
+          "damage": 3
+        }
+      ]
+    },
+    {
+      "id": "focused-attack",
+      "name": "Focused Attack",
+      "text": "Command your pet with your action: it bites for d6 damage, or grabs to make an enemy Stuck.",
+      "actionCost": "action",
+      "reset": "recharge"
+    },
+    {
+      "id": "wild-eyes",
+      "name": "Wild Eyes",
+      "text": "See through your pet's eyes, wherever it goes.",
+      "actionCost": "free",
+      "reset": "atWill"
+    },
+    {
+      "id": "split",
+      "name": "Split",
+      "text": "When you take damage, split it with your pet — half to you, half to your friend.",
+      "actionCost": "reaction",
+      "reset": "atWill"
+    },
+    {
+      "id": "swap",
+      "name": "Swap",
+      "text": "You and your pet magically swap places in a flash of light.",
+      "actionCost": "free",
+      "reset": "rest"
+    },
+    {
+      "id": "beast-mode",
+      "name": "Beast Mode",
+      "text": "One of your pets grows HUGE for one fight — 10 HP and a 4-damage bite! When the fight ends, tap the Beast Mode chip in your tracker to shrink them back.",
+      "actionCost": "free",
+      "reset": "rest",
+      "effects": [
+        {
+          "kind": "petTransform",
+          "maxHP": 10,
+          "damage": 4
+        }
+      ]
+    },
+    {
+      "id": "blessed-hands",
+      "name": "Blessed Hands",
+      "text": "All spells add 2 HP to yourself or a touched ally. Say “Blessed Hands” out loud after each spell cast for the +2 heal.",
+      "actionCost": "passive",
+      "reset": "atWill"
+    },
+    {
+      "id": "radiant-healer",
+      "name": "Radiant Healer",
+      "text": "All healing now works at range. Once per fight, Heal is a free action.",
+      "actionCost": "free",
+      "reset": "recharge"
+    },
+    {
+      "id": "great-blessing",
+      "name": "Great Blessing",
+      "text": "Grant a player +2 heals for 3 turns, once per fight.",
+      "actionCost": "action",
+      "reset": "recharge",
+      "affects": "oneAlly"
+    },
+    {
+      "id": "quick-cast",
+      "name": "Quick Cast",
+      "text": "Once per fight, cast a special spell as a Free Action.",
+      "actionCost": "free",
+      "reset": "oncePerFight"
+    },
+    {
+      "id": "animal-shape",
+      "name": "Animal Shape",
+      "text": "Transform into an animal of your choice (no flying). Free action.",
+      "actionCost": "free",
+      "reset": "atWill"
+    },
+    {
+      "id": "voice-of-the-wild",
+      "name": "Voice of the Wild",
+      "text": "Roots — two enemies are Stuck. Bloom — flowers bloom and poison the air, two enemies Hurt. Or call an animal spirit (HP 5, attacks for 2 at the end of the round).",
+      "actionCost": "free",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "summon",
+          "maxHP": 5,
+          "damage": 2
+        }
+      ]
+    },
+    {
+      "id": "wild-storm",
+      "name": "Wild Storm",
+      "text": "Call a lightning storm — d6 to 3 enemies + Stuck. Healing rain heals 3 players d6. Roll Mind 13+ to keep the storm going another round.",
+      "actionCost": "action",
+      "reset": "rest",
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "multiple",
+          "count": 3
+        }
+      }
+    },
+    {
+      "id": "heart-of-the-grove",
+      "name": "Heart of the Grove",
+      "text": "Voice of the Wild works twice per fight. Animal Shape can now use flying animals. Sacrifice your spirit animal to heal 3 players d6 + Mind.",
+      "actionCost": "passive",
+      "reset": "atWill",
+      "effects": [
+        {
+          "kind": "extraUses",
+          "abilityID": "voice-of-the-wild",
+          "count": 1
+        },
+        {
+          "kind": "summonSacrifice",
+          "players": 3,
+          "dice": "d6",
+          "addStat": "mind"
+        }
+      ]
+    },
+    {
+      "id": "reactive-caster",
+      "name": "Reactive Caster",
+      "text": "Cast Dispel or Calm as a Reaction during an enemy turn to stop magic or mind-control.",
+      "actionCost": "reaction",
+      "reset": "atWill"
+    },
+    {
+      "id": "reverse-card",
+      "name": "Reverse Card",
+      "text": "Reverse an enemy spell or attack to another target, including back to the attacker.",
+      "actionCost": "reaction",
+      "reset": "recharge"
+    },
+    {
+      "id": "minds-eye-card",
+      "name": "Mind's Eye Card",
+      "text": "Tell if someone is telling the truth.",
+      "actionCost": "free",
+      "reset": "recharge"
+    },
+    {
+      "id": "undo-card",
+      "name": "Undo Card",
+      "text": "Reverse a catastrophic attack or moment.",
+      "actionCost": "reaction",
+      "reset": "rest"
+    },
+    {
+      "id": "mirror-card",
+      "name": "Mirror Card",
+      "text": "Change location with another — self, ally, or enemy.",
+      "actionCost": "reaction",
+      "reset": "rest"
+    },
+    {
+      "id": "voice-of-truth",
+      "name": "Voice of Truth",
+      "text": "Truth Card — once per adventure, speak one small true fact. If the GM agrees it is possible, it becomes true.",
+      "actionCost": "free",
+      "reset": "oncePerAdventure"
+    },
+    {
+      "id": "fire-explosion",
+      "name": "Fire Explosion",
+      "text": "Hit all enemies around you for d6 fire damage.",
+      "actionCost": "action",
+      "reset": "recharge",
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "area"
+        }
+      }
+    },
+    {
+      "id": "fire-armor",
+      "name": "Fire Armor",
+      "text": "For the fight, enemies roll d20 to hit you with -2, and enemy melee attacks deal 2 damage back to the attacker.",
+      "actionCost": "action",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "noteChip",
+          "label": "Fire Armor: foes -2 to hit",
+          "scope": "thisFight"
+        }
+      ]
+    },
+    {
+      "id": "storm-caller",
+      "name": "Storm Caller",
+      "text": "Charge your weapon with elemental energy. Hold it to the sky and say “I have the power!” Weapon attacks become ranged and hit 3 enemies — the first takes full dice damage, the rest take d6 + Mind.",
+      "actionCost": "action",
+      "reset": "oncePerAdventure"
+    },
+    {
+      "id": "elemental-teleport",
+      "name": "Elemental Teleport",
+      "text": "Teleport to a spot in line of sight. This activates Fire Explosion even if it's on cooldown.",
+      "actionCost": "action",
+      "reset": "oncePerAdventure",
+      "effects": [
+        {
+          "kind": "resetAbility",
+          "abilityID": "fire-explosion"
+        }
+      ]
+    },
+    {
+      "id": "arcane-insight",
+      "name": "Arcane Insight",
+      "text": "Ask the GM one true question about an object, creature, place, or person.",
+      "actionCost": "action",
+      "reset": "recharge"
+    },
+    {
+      "id": "overcharge",
+      "name": "Overcharge",
+      "text": "Once per fight, before you roll, shout “Overcharge!” The next spell deals max damage on a hit.",
+      "actionCost": "free",
+      "reset": "recharge",
+      "effects": [
+        {
+          "kind": "maxDamage"
+        }
+      ]
+    },
+    {
+      "id": "knowing-eye",
+      "name": "Knowing Eye",
+      "text": "You always know enemy info — HP, shields, weaknesses, and strengths.",
+      "actionCost": "free",
+      "reset": "atWill"
+    },
+    {
+      "id": "spell-master",
+      "name": "Spell Master",
+      "text": "Have up to 8 Ready Spells instead of 6. Once per adventure, recharge your spells.",
+      "actionCost": "reaction",
+      "reset": "rest",
+      "effects": [
+        {
+          "kind": "readySpellCap",
+          "cap": 8
+        },
+        {
+          "kind": "rechargeSpells"
+        }
+      ]
+    }
+  ],
+  "spells": [
+    {
+      "id": "zap",
+      "name": "Zap",
+      "tier": "core",
+      "text": "Roll d20 + Mind against one foe. Deal d6 + Mind damage.",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "damageStat": "mind",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "shield-bubble",
+      "name": "Shield Bubble",
+      "tier": "core",
+      "text": "Block all damage from one attack on yourself or a friend."
+    },
+    {
+      "id": "sleep-dust",
+      "name": "Sleep Dust",
+      "tier": "core",
+      "text": "One small enemy falls Asleep. Big monsters resist (13+).",
+      "effects": [
+        {
+          "kind": "applyCondition",
+          "condition": "asleep",
+          "toSelf": false
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "tier": "core",
+      "text": "Make magical light, bright as a torch. Lasts the whole scene."
+    },
+    {
+      "id": "spark",
+      "name": "Spark",
+      "tier": "t1",
+      "text": "Ranged lightning. d20 + Mind to hit. Damage d6. Hits 3 targets.",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "multiple",
+          "count": 3
+        }
+      }
+    },
+    {
+      "id": "mage-hand",
+      "name": "Mage Hand",
+      "tier": "t1",
+      "text": "An invisible hand grabs small things, pushes buttons, unties knots, or fetches items. Lasts the scene."
+    },
+    {
+      "id": "detect-magic",
+      "name": "Detect Magic",
+      "tier": "t1",
+      "text": "For one minute, magical things nearby glow blue to you."
+    },
+    {
+      "id": "featherfall",
+      "name": "Featherfall",
+      "tier": "t1",
+      "text": "You and friends fall slowly and safely from any height."
+    },
+    {
+      "id": "frostbolt",
+      "name": "Frostbolt",
+      "tier": "t2",
+      "text": "Ice shard. d20 + Mind to hit. Damage d6 + Mind. Target is Stuck.",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "damageStat": "mind",
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "effects": [
+        {
+          "kind": "applyCondition",
+          "condition": "stuck",
+          "toSelf": false
+        }
+      ]
+    },
+    {
+      "id": "mirror-image",
+      "name": "Mirror Image",
+      "tier": "t2",
+      "text": "Three copies appear. The next three attacks against you hit a copy instead."
+    },
+    {
+      "id": "invisibility",
+      "name": "Invisibility",
+      "tier": "t2",
+      "text": "You or a friend you touch becomes invisible until attacking or casting."
+    },
+    {
+      "id": "spider-climb",
+      "name": "Spider Climb",
+      "tier": "t2",
+      "text": "You or a friend climbs walls and ceilings for the scene. No Speed roll needed."
+    },
+    {
+      "id": "fireball",
+      "name": "Fireball",
+      "tier": "t3",
+      "text": "Hits up to 6 clustered enemies in a wide explosion. d20 + Mind. d6 + Mind to each. Careful near friends.",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "damageStat": "mind",
+        "targets": {
+          "kind": "cluster",
+          "max": 6
+        }
+      }
+    },
+    {
+      "id": "polymorph",
+      "name": "Polymorph",
+      "tier": "t3",
+      "text": "Turn one creature into a harmless animal for the scene. Big bosses resist with Might 13+."
+    },
+    {
+      "id": "wall-of-stone",
+      "name": "Wall of Stone",
+      "tier": "t3",
+      "text": "Create a 10 ft long, 6 ft tall stone wall. Blocks enemies and attacks. Lasts the scene."
+    },
+    {
+      "id": "teleport",
+      "name": "Teleport",
+      "tier": "t3",
+      "text": "Once per adventure, move the party somewhere you have been before."
+    },
+    {
+      "id": "heal",
+      "name": "Heal",
+      "tier": "core",
+      "text": "Target yourself or an ally. Restore d6 + Mind HP."
+    },
+    {
+      "id": "animal-friend",
+      "name": "Animal Friend",
+      "tier": "core",
+      "text": "Chat with one beast for a minute. It stays kind and helpful."
+    },
+    {
+      "id": "bless",
+      "name": "Bless",
+      "tier": "core",
+      "text": "One ally gains +2 to their next d20 roll.",
+      "effects": [
+        {
+          "kind": "modifier",
+          "value": 2,
+          "target": "any",
+          "scope": "nextAttack"
+        }
+      ]
+    },
+    {
+      "id": "calm",
+      "name": "Calm",
+      "tier": "core",
+      "text": "Target one monster. Ends Frightened, rage, or combat for a minute."
+    },
+    {
+      "id": "touch-of-death",
+      "name": "Touch of Death",
+      "tier": "t1",
+      "text": "Spirit hands from the dead attack. d20 + Mind to hit, d6 damage + Hurt.",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "effects": [
+        {
+          "kind": "applyCondition",
+          "condition": "hurt",
+          "toSelf": false
+        }
+      ]
+    },
+    {
+      "id": "cure-sickness",
+      "name": "Cure Sickness",
+      "tier": "t1",
+      "text": "Touch a friend. Remove Hurt, poison, sickness, or curse."
+    },
+    {
+      "id": "speak-with-plants",
+      "name": "Speak with Plants",
+      "tier": "t1",
+      "text": "Talk to plants and trees for a minute. They notice things walkers miss."
+    },
+    {
+      "id": "sanctuary",
+      "name": "Sanctuary",
+      "tier": "t1",
+      "text": "Pick a friend. Until they attack, enemies choose someone else if possible."
+    },
+    {
+      "id": "glow-lantern",
+      "name": "Glow Lantern",
+      "tier": "t1",
+      "text": "Holy symbol shines like a lantern. Undead in the light get -1 to attack rolls."
+    },
+    {
+      "id": "holy-fire",
+      "name": "Holy Fire",
+      "tier": "t2",
+      "text": "Burning light falls from the sky on enemies. d6 + Mind damage + Stuck.",
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": "mind",
+        "targets": {
+          "kind": "area"
+        }
+      },
+      "effects": [
+        {
+          "kind": "applyCondition",
+          "condition": "stuck",
+          "toSelf": false
+        }
+      ]
+    },
+    {
+      "id": "group-heal",
+      "name": "Group Heal",
+      "tier": "t2",
+      "text": "All nearby friends, including you, regain d6 HP."
+    },
+    {
+      "id": "warding-word",
+      "name": "Warding Word",
+      "tier": "t2",
+      "text": "One friend you can see takes -2 damage from hits for the fight."
+    },
+    {
+      "id": "talk-to-the-dead",
+      "name": "Talk to the Dead",
+      "tier": "t2",
+      "text": "Ask a dead creature or skull up to 3 questions. Honest but maybe confused."
+    },
+    {
+      "id": "mend",
+      "name": "Mend",
+      "tier": "t2",
+      "text": "Touch a broken normal thing. It repairs itself. Not magic items."
+    },
+    {
+      "id": "revive",
+      "name": "Revive",
+      "tier": "t3",
+      "text": "Once per adventure, an Asleep / 0 HP friend returns to full HP."
+    },
+    {
+      "id": "summon-animal-friend",
+      "name": "Summon Animal Friend",
+      "tier": "t3",
+      "text": "A wild animal helps for the rest of the scene. Normal threat level."
+    },
+    {
+      "id": "dispel",
+      "name": "Dispel",
+      "tier": "t3",
+      "text": "End one magical effect you can see: curse, illusion, spell, or magical lock."
+    },
+    {
+      "id": "suns-embrace",
+      "name": "Sun's Embrace",
+      "tier": "t3",
+      "text": "Once per adventure, friends regain all HP and lose Hurt and Stuck."
+    }
+  ],
+  "spellLists": [
+    {
+      "id": "wizard",
+      "name": "Wizard Spells",
+      "spellIDs": [
+        "zap",
+        "shield-bubble",
+        "sleep-dust",
+        "light",
+        "spark",
+        "mage-hand",
+        "detect-magic",
+        "featherfall",
+        "frostbolt",
+        "mirror-image",
+        "invisibility",
+        "spider-climb",
+        "fireball",
+        "polymorph",
+        "wall-of-stone",
+        "teleport"
+      ]
+    },
+    {
+      "id": "healer",
+      "name": "Healer Spells",
+      "spellIDs": [
+        "heal",
+        "animal-friend",
+        "bless",
+        "calm",
+        "touch-of-death",
+        "cure-sickness",
+        "speak-with-plants",
+        "sanctuary",
+        "glow-lantern",
+        "holy-fire",
+        "group-heal",
+        "warding-word",
+        "talk-to-the-dead",
+        "mend",
+        "detect-magic",
+        "revive",
+        "summon-animal-friend",
+        "dispel",
+        "suns-embrace"
+      ]
+    }
+  ],
+  "gear": [
+    {
+      "id": "great-sword",
+      "name": "Great Sword",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "great-axe",
+      "name": "Great Axe",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "great-hammer",
+      "name": "Great Hammer",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "polearm",
+      "name": "Polearm",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "halberd",
+      "name": "Halberd",
+      "category": "heavyMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "might"
+      }
+    },
+    {
+      "id": "long-sword",
+      "name": "Long Sword",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "short-sword",
+      "name": "Short Sword",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "rapier",
+      "name": "Rapier",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "dagger",
+      "name": "Dagger",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "battle-axe",
+      "name": "Battle Axe",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "war-hammer",
+      "name": "War Hammer",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "mace",
+      "name": "Mace",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "club",
+      "name": "Club",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "bat",
+      "name": "Bat",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "flail",
+      "name": "Flail",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "ball-and-chain",
+      "name": "Ball & Chain",
+      "category": "lightMelee",
+      "attack": {
+        "toHitStat": "might",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "bow",
+      "name": "Bow",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "throwing-axe",
+      "name": "Throwing Axe",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "rifle",
+      "name": "Rifle",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        },
+        "damageStat": "speed"
+      }
+    },
+    {
+      "id": "hand-crossbow",
+      "name": "Hand Crossbow",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "throwing-dagger",
+      "name": "Throwing Dagger",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "sling",
+      "name": "Sling",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "hand-gun",
+      "name": "Hand Gun",
+      "category": "rangedPhysical",
+      "attack": {
+        "toHitStat": "speed",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "wand",
+      "name": "Wand",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "staff",
+      "name": "Staff",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "orb",
+      "name": "Orb",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "spellblade",
+      "name": "Spellblade",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "floating-dagger",
+      "name": "Floating Dagger",
+      "category": "magicMental",
+      "attack": {
+        "toHitStat": "mind",
+        "damageDice": "d6",
+        "targets": {
+          "kind": "single"
+        }
+      }
+    },
+    {
+      "id": "leather-armor",
+      "name": "Leather Armor",
+      "category": "armor",
+      "maxHP": 2
+    },
+    {
+      "id": "chain-armor",
+      "name": "Chain Armor",
+      "category": "armor",
+      "maxHP": 2
+    },
+    {
+      "id": "plate-armor",
+      "name": "Plate Armor",
+      "category": "armor",
+      "maxHP": 2
+    },
+    {
+      "id": "wooden-shield",
+      "name": "Wooden Shield",
+      "category": "shield",
+      "maxHP": 1
+    },
+    {
+      "id": "iron-shield",
+      "name": "Iron Shield",
+      "category": "shield",
+      "maxHP": 1
+    },
+    {
+      "id": "tower-shield",
+      "name": "Tower Shield",
+      "category": "shield",
+      "maxHP": 1
+    },
+    {
+      "id": "adv-clothes",
+      "name": "Adventurer Clothes",
+      "category": "advClothes",
+      "maxHP": 0
+    },
+   
+        {
+          "id": "dragonborn-plate",
+          "name": "Dragonborn Plate",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "flavor": "Same sturdy protection as Plate Armor — but forged with a dragon's crest. Looks incredible."
+        },
+        {
+          "id": "spellblade-of-recall",
+          "name": "Spellblade of Recall",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "flavor": "Call it back to your hand from anywhere in the world.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+    
+          {
+            "id": "frostfang-dagger",
+            "name": "Frostfang Dagger",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage. On a hit, the target is Hurt (-1 to its next attack).",
+            "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "hammer-of-mornings",
+            "name": "Hammer of Mornings",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage. (Recharge) All enemies in the room are Stuck for 1 round.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "singing-sword",
+            "name": "Singing Sword",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "flavor": "+1 damage and +1 to hit. Loud — bad for sneaking.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "truestrike-bow",
+            "name": "Truestrike Bow",
+            "category": "rangedPhysical",
+            "rarity": "rare",
+            "flavor": "+1 damage. (Recharge) One arrow auto-hits for max damage.",
+            "attack": { "toHitStat": "speed", "damageDice": "d6", "damageStat": "speed", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "sunblade",
+            "name": "Sunblade",
+            "category": "lightMelee",
+            "rarity": "legendary",
+            "flavor": "+2 damage. Always glows. Double damage to undead and shadow.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+            "id": "shieldwarden",
+            "name": "Shieldwarden",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "uncommon",
+            "flavor": "(Recharge) Take a hit meant for a friend next to you."
+          },
+          {
+            "id": "mages-robe",
+            "name": "Mage's Robe",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "rare",
+            "flavor": "(Recharge) Re-roll one failed Mind check or spell attack."
+          },
+          {
+            "id": "aegis-of-the-last-stand",
+            "name": "Aegis of the Last Stand",
+            "category": "armor",
+            "maxHP": 2,
+            "rarity": "legendary",
+            "flavor": "Once per adventure, say \u201cNOT TODAY\u201d and ignore one damage source."
+          },
+          {
+            "id": "sword-of-constant-compliments",
+            "name": "Sword of Constant Compliments",
+            "category": "lightMelee",
+            "rarity": "uncommon",
+            "cost": 75,
+            "flavor": "+1 damage. Talks constantly about how great it is.",
+            "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+          },
+          {
+          "id": "glimmerbrand",
+          "name": "Glimmerbrand",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "A long sword whose blade glows soft as a nightlight. Friends can always find you in the dark, and it makes a great reading lamp on watch.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "whispering-rapier",
+          "name": "Whispering Rapier",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "It hums a low tune and always points a little toward the nearest door. You never get turned around indoors.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "the-butter-knife",
+          "name": "The Butter Knife",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 60,
+          "flavor": "Looks utterly, adorably harmless. Guards and grown-ups rarely take it seriously — handy when you'd rather not look dangerous.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "heirloom-mace",
+          "name": "Heirloom Mace",
+          "category": "lightMelee",
+          "rarity": "uncommon",
+          "cost": 65,
+          "flavor": "Carved with the crest of your choosing. Town elders, guards, and shopkeepers treat the bearer with a little extra respect.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "thunderclap-greatsword",
+          "name": "Thunderclap Greatsword",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 85,
+          "flavor": "Every swing ends with a satisfying BOOM. Terrible for sneaking, incredible for dramatic entrances.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+        {
+          "id": "mossgrown-greataxe",
+          "name": "Mossgrown Greataxe",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 85,
+          "flavor": "Tiny flowers sprout along the haft when you're calm. Woodland critters find you trustworthy and tend to say hello.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+        {
+          "id": "bell-hammer",
+          "name": "Bell Hammer",
+          "category": "heavyMelee",
+          "rarity": "uncommon",
+          "cost": 100,
+          "flavor": "Rings like a great bell whenever it strikes. Give it three taps to signal friends anywhere in the building.",
+          "attack": { "toHitStat": "might", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "might" }
+        },
+
+        {
+          "id": "songbird-bow",
+          "name": "Songbird Bow",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 80,
+          "flavor": "Arrows whistle a cheerful little tune as they fly. Loose one high and a friend within earshot always hears your 'all clear.'",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" }, "damageStat": "speed" }
+        },
+        {
+          "id": "confetti-crossbow",
+          "name": "Confetti Crossbow",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Any bolt that misses bursts into a harmless puff of confetti. Somehow this makes missing feel like winning. Great at parties.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "skipping-sling",
+          "name": "Skipping Sling",
+          "category": "rangedPhysical",
+          "rarity": "uncommon",
+          "cost": 55,
+          "flavor": "Its stones bounce and skip in wild arcs. You're the undisputed champion of skipping rocks and pond-side party tricks.",
+          "attack": { "toHitStat": "speed", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "starlight-wand",
+          "name": "Starlight Wand",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Trails a ribbon of tiny sparkles. Give it a flick to put on a small, delightful light show — perfect for wowing kids or drawing an eye.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "grandpas-staff",
+          "name": "Grandpa's Staff",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 65,
+          "flavor": "A worn old staff that 'remembers' the way home. Hold it, ask 'which way back?', and you always know. Never gets you lost.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+        {
+          "id": "chatterbox-orb",
+          "name": "Chatterbox Orb",
+          "category": "magicMental",
+          "rarity": "uncommon",
+          "cost": 95,
+          "flavor": "Mutters trivia to itself all day. Once per scene it blurts out a fact about where you are — sometimes useful, often nonsense, always funny.",
+          "attack": { "toHitStat": "mind", "damageDice": "d6", "targets": { "kind": "single" } }
+        },
+
+        {
+          "id": "everclean-plate",
+          "name": "Everclean Plate",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 80,
+          "flavor": "Same protection as Plate Armor, and it never gets muddy, dented, or smelly. You always look sharp — even at royal feasts."
+        },
+        {
+          "id": "cozy-chainmail",
+          "name": "Cozy Chainmail",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 75,
+          "flavor": "Lined with the softest wool. Warm in the snow, cool in the desert. You're comfortable no matter the weather."
+        },
+        {
+          "id": "chameleon-leather",
+          "name": "Chameleon Leather",
+          "category": "armor",
+          "maxHP": 2,
+          "rarity": "uncommon",
+          "cost": 100,
+          "flavor": "Same protection as Leather Armor, but it shifts color to match your outfit — or your mood. Pick a favorite look and it stays."
+        },
+
+        {
+          "id": "mirror-shield",
+          "name": "Mirror Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 70,
+          "flavor": "Polished to a perfect mirror. Peek around corners without leaning out, flash sunlight to signal friends, and always fix your hair before a big entrance."
+        },
+        {
+          "id": "crest-shield",
+          "name": "Crest Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 60,
+          "flavor": "Displays the emblem of your choosing, bright and proud. A statement piece — heroes with a crest tend to get recognized (and remembered)."
+        },
+        {
+          "id": "turtle-shield",
+          "name": "Turtle Shield",
+          "category": "shield",
+          "maxHP": 1,
+          "rarity": "uncommon",
+          "cost": 55,
+          "flavor": "Painted like a friendly turtle shell. Little kids adore it, and there's a snug pocket on the back just the right size for snacks."
+        }
+        
+    
+  ],
+  "items": [
+    {
+      "id": "health-potion",
+      "name": "Health Potion",
+      "kind": "consumable",
+      "text": "Drink on your turn to heal. D6 health."
+    },
+    {
+      "id": "greater-health-potion",
+      "name": "Greater Health Potion",
+      "kind": "consumable",
+      "rarity": "uncommon",
+      "text": "A bigger, brighter potion. Heals a lot d6 +6 — great to save for when a friend is really hurt."
+    },
+    {
+      "id": "poison-vial",
+      "name": "Poison Vial",
+      "kind": "magicConsumable",
+      "text": "Coat a weapon or throw it. One or two enemies become Hurt."
+    },
+    {
+      "id": "frost-vial",
+      "name": "Frost Vial",
+      "kind": "magicConsumable",
+      "text": "Smash it at an enemy's feet. They freeze in place and become Stuck."
+    },
+    {
+      "id": "stink-bomb",
+      "name": "Stink Bomb",
+      "kind": "consumable",
+      "cost": 50,
+      "text": "A gross, giggly cloud. Everyone nearby coughs and covers their nose — a fun way to make a getaway."
+    },
+    {
+      "id": "lucky-coin",
+      "name": "Lucky Coin",
+      "kind": "magicConsumable",
+      "text": "Flip it before a roll for good luck — re-roll once and keep the better result. Then the shine wears off."
+    },
+      { "id": "boots-of-quiet", "name": "Boots of Quiet", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Sneaking auto-succeeds if nothing is watching." },
+      { "id": "cloak-of-last-chance", "name": "Cloak of Last Chance", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Once per adventure, when you would hit 0 Health, stay at 1 instead." },
+      { "id": "helm-of-brave-faces", "name": "Helm of Brave Faces", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Never Frightened. Brave words out loud can give +1 to your next roll." },
+      { "id": "ring-of-the-quick", "name": "Ring of the Quick", "kind": "magicConsumable", "rarity": "rare",
+        "text": "+1 to Speed rolls. Go first in every fight." },
+      { "id": "gauntlets-of-the-bear", "name": "Gauntlets of the Bear", "kind": "magicConsumable", "rarity": "rare",
+        "text": "+1 to Might rolls. Bend bars and carry twice your weight." },
+      { "id": "spectacles-of-truth", "name": "Spectacles of Truth", "kind": "magicConsumable", "rarity": "rare",
+        "text": "See through illusions, lies, and disguises. Once per scene, the GM tells you one true thing." },
+      { "id": "crown-of-the-forest", "name": "Crown of the Forest", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Animals are friendly and help politely. Free Animal Friend on any animal." },
+      { "id": "cloak-of-stars", "name": "Cloak of Stars", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Once per adventure, teleport up to 60 ft and become invisible for 1 round." },
+
+      { "id": "lantern-of-honest-light", "name": "Lantern of Honest Light", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Wide light. Creatures in the light cannot lie or use illusions while seen." },
+      { "id": "compass-of-lost-things", "name": "Compass of Lost Things", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Points toward a lost object you hold or describe. Objects only, not people." },
+      { "id": "bag-of-plenty", "name": "Bag of Plenty", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Once per scene, pull out one small useful item. Refills overnight." },
+      { "id": "whistle-of-warning", "name": "Whistle of Warning", "kind": "magicConsumable", "rarity": "uncommon",
+        "text": "Friends in the same building or area hear it. One use per rest." },
+      { "id": "map-that-draws-itself", "name": "Map That Draws Itself", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Draws rooms and tunnels as you walk." },
+      { "id": "rope-of-climbing", "name": "Rope of Climbing", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Say \u201cclimb\u201d and the rope rises and anchors up to 30 ft. Climbing auto-succeeds." },
+      { "id": "mirror-of-memory", "name": "Mirror of Memory", "kind": "magicConsumable", "rarity": "rare",
+        "text": "Once per rest, see what this place looked like a day, week, or month ago." },
+      { "id": "bell-of-the-sprite", "name": "Bell of the Sprite", "kind": "magicConsumable", "rarity": "legendary",
+        "text": "Once per adventure, summon a sprite to help with one task." },
+
+      { "id": "hat-of-hiccups", "name": "Hat of Hiccups", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "You hiccup loudly. -1 to Speed rolls. Easy to remove." },
+      { "id": "ring-of-truth", "name": "Ring of Truth", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "You cannot lie. Easy to remove. Great in social scenes." },
+      { "id": "boots-of-backwards", "name": "Boots of Backwards", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "You walk backward until you get used to it after 5 minutes." },
+      { "id": "cloak-of-itching", "name": "Cloak of Itching", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Constant itching. -1 to Mind rolls. Takes 10 minutes to remove." },
+      { "id": "goblet-of-honest-drinks", "name": "Goblet of Honest Drinks", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Everything tastes terrible. Reappears in your bag if you drop it." },
+      { "id": "mask-of-the-toad", "name": "Mask of the Toad", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Stuck on for 1 hour. You speak in ribbits. Animals love you." },
+      { "id": "book-of-naps", "name": "Book of Naps", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Reading it requires Mind 10+ or you fall Asleep for 10 minutes. Useful on guards." },
+      { "id": "pocket-rain-cloud", "name": "Pocket Rain Cloud", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "A tiny cloud rains only on you. -1 to sneaking, but you can walk through fire unharmed." },
+      { "id": "gloves-of-the-over-sharer", "name": "Gloves of the Over-Sharer", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "You loudly narrate everything you do. -2 to Hide. Comedy gold on a Scout." },
+      { "id": "boots-of-the-bouncy", "name": "Boots of the Bouncy", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "You bounce when you walk. Jump twice as high; -1 on tasks that need you to hold still." },
+      { "id": "helm-of-echoes", "name": "Helm of Echoes", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Your voice booms dramatically. +1 to Battle Cry and big moments; whispering is impossible." },
+      { "id": "everfull-snack-pouch", "name": "Everfull Snack Pouch", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Always holds one (mediocre) snack. Once per rest, a friend who eats one heals 1 Health and grins." },
+      { "id": "mood-cloak", "name": "Mood Cloak", "kind": "curio", "rarity": "common", "cost": 50,
+        "text": "Changes color with your feelings. You can't bluff — wonderful for an honest hero." },
+
+    
+      { "id": "scroll-zap", "name": "Scroll of Zap", "kind": "scroll", "rarity": "common", "spellID": "zap",
+        "text": "Zap one foe with lightning for d6 + Mind." },
+      { "id": "scroll-shield-bubble", "name": "Scroll of Shield Bubble", "kind": "scroll", "rarity": "common", "spellID": "shield-bubble",
+        "text": "Block all damage from one attack on you or a friend." },
+      { "id": "scroll-sleep-dust", "name": "Scroll of Sleep Dust", "kind": "scroll", "rarity": "common", "spellID": "sleep-dust",
+        "text": "Puts one small enemy to sleep. Big monsters resist." },
+      { "id": "scroll-light", "name": "Scroll of Light", "kind": "scroll", "rarity": "common", "spellID": "light",
+        "text": "Makes magical light, bright as a torch, for the whole scene." },
+      { "id": "scroll-heal", "name": "Scroll of Heal", "kind": "scroll", "rarity": "common", "spellID": "heal",
+        "text": "Restore d6 + Mind Health to yourself or an ally." },
+      { "id": "scroll-animal-friend", "name": "Scroll of Animal Friend", "kind": "scroll", "rarity": "common", "spellID": "animal-friend",
+        "text": "Chat with one beast for a minute — it stays kind and helpful." },
+      { "id": "scroll-bless", "name": "Scroll of Bless", "kind": "scroll", "rarity": "common", "spellID": "bless",
+        "text": "Give one ally +2 on their next d20 roll." },
+      { "id": "scroll-calm", "name": "Scroll of Calm", "kind": "scroll", "rarity": "common", "spellID": "calm",
+        "text": "Ends a monster's fear, rage, or fight for a minute." },
+
+      { "id": "scroll-spark", "name": "Scroll of Spark", "kind": "scroll", "rarity": "uncommon", "spellID": "spark",
+        "text": "Ranged lightning that hits 3 targets for d6 each." },
+      { "id": "scroll-mage-hand", "name": "Scroll of Mage Hand", "kind": "scroll", "rarity": "uncommon", "spellID": "mage-hand",
+        "text": "An invisible hand fetches, pushes, and unties for the scene." },
+      { "id": "scroll-detect-magic", "name": "Scroll of Detect Magic", "kind": "scroll", "rarity": "uncommon", "spellID": "detect-magic",
+        "text": "Magical things nearby glow blue for a minute." },
+      { "id": "scroll-featherfall", "name": "Scroll of Featherfall", "kind": "scroll", "rarity": "uncommon", "spellID": "featherfall",
+        "text": "You and friends fall slowly and safely from any height." },
+      { "id": "scroll-touch-of-death", "name": "Scroll of Touch of Death", "kind": "scroll", "rarity": "uncommon", "spellID": "touch-of-death",
+        "text": "Spirit hands strike a foe for d6 and leave them Hurt." },
+      { "id": "scroll-cure-sickness", "name": "Scroll of Cure Sickness", "kind": "scroll", "rarity": "uncommon", "spellID": "cure-sickness",
+        "text": "Touch a friend to remove Hurt, poison, sickness, or a curse." },
+      { "id": "scroll-speak-with-plants", "name": "Scroll of Speak with Plants", "kind": "scroll", "rarity": "uncommon", "spellID": "speak-with-plants",
+        "text": "Talk to plants for a minute — they notice what walkers miss." },
+      { "id": "scroll-sanctuary", "name": "Scroll of Sanctuary", "kind": "scroll", "rarity": "uncommon", "spellID": "sanctuary",
+        "text": "Pick a friend; enemies pick someone else until they attack." },
+      { "id": "scroll-glow-lantern", "name": "Scroll of Glow Lantern", "kind": "scroll", "rarity": "uncommon", "spellID": "glow-lantern",
+        "text": "Your holy symbol shines; undead in the light get -1 to hit." },
+
+      { "id": "scroll-frostbolt", "name": "Scroll of Frostbolt", "kind": "scroll", "rarity": "rare", "spellID": "frostbolt",
+        "text": "An ice shard: d6 + Mind, and the target is Stuck." },
+      { "id": "scroll-mirror-image", "name": "Scroll of Mirror Image", "kind": "scroll", "rarity": "rare", "spellID": "mirror-image",
+        "text": "Three copies appear; the next three attacks hit a copy." },
+      { "id": "scroll-invisibility", "name": "Scroll of Invisibility", "kind": "scroll", "rarity": "rare", "spellID": "invisibility",
+        "text": "You or a friend turns invisible until attacking or casting." },
+      { "id": "scroll-spider-climb", "name": "Scroll of Spider Climb", "kind": "scroll", "rarity": "rare", "spellID": "spider-climb",
+        "text": "Climb walls and ceilings for the scene, no roll needed." },
+      { "id": "scroll-holy-fire", "name": "Scroll of Holy Fire", "kind": "scroll", "rarity": "rare", "spellID": "holy-fire",
+        "text": "Burning light falls on enemies for d6 + Mind and Stuck." },
+      { "id": "scroll-group-heal", "name": "Scroll of Group Heal", "kind": "scroll", "rarity": "rare", "spellID": "group-heal",
+        "text": "All nearby friends, including you, regain d6 Health." },
+      { "id": "scroll-warding-word", "name": "Scroll of Warding Word", "kind": "scroll", "rarity": "rare", "spellID": "warding-word",
+        "text": "One friend takes -2 damage from hits for the whole fight." },
+      { "id": "scroll-talk-to-the-dead", "name": "Scroll of Talk to the Dead", "kind": "scroll", "rarity": "rare", "spellID": "talk-to-the-dead",
+        "text": "Ask a skull or dead creature up to 3 questions." },
+      { "id": "scroll-mend", "name": "Scroll of Mend", "kind": "scroll", "rarity": "rare", "spellID": "mend",
+        "text": "Repairs one broken normal thing (not magic items)." },
+
+      { "id": "scroll-fireball", "name": "Scroll of Fireball", "kind": "scroll", "rarity": "legendary", "spellID": "fireball",
+        "text": "A huge blast hitting up to 6 clustered foes for d6 + Mind each." },
+      { "id": "scroll-polymorph", "name": "Scroll of Polymorph", "kind": "scroll", "rarity": "legendary", "spellID": "polymorph",
+        "text": "Turn one creature into a harmless animal for the scene." },
+      { "id": "scroll-wall-of-stone", "name": "Scroll of Wall of Stone", "kind": "scroll", "rarity": "legendary", "spellID": "wall-of-stone",
+        "text": "Raise a stone wall that blocks enemies and attacks." },
+      { "id": "scroll-teleport", "name": "Scroll of Teleport", "kind": "scroll", "rarity": "legendary", "spellID": "teleport",
+        "text": "Once per adventure, move the party somewhere you've been." },
+      { "id": "scroll-revive", "name": "Scroll of Revive", "kind": "scroll", "rarity": "legendary", "spellID": "revive",
+        "text": "Bring an Asleep or 0-Health friend back to full Health." },
+      { "id": "scroll-summon-animal-friend", "name": "Scroll of Summon Animal Friend", "kind": "scroll", "rarity": "legendary", "spellID": "summon-animal-friend",
+        "text": "A wild animal helps for the rest of the scene." },
+      { "id": "scroll-dispel", "name": "Scroll of Dispel", "kind": "scroll", "rarity": "legendary", "spellID": "dispel",
+        "text": "End one magical effect you can see." },
+      { "id": "scroll-suns-embrace", "name": "Scroll of Sun's Embrace", "kind": "scroll", "rarity": "legendary", "spellID": "suns-embrace",
+        "text": "Once per adventure, friends regain all Health and lose Hurt and Stuck." },
+    
+    {
+          "id": "tanglevine-flask",
+          "name": "Tanglevine Flask",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Smash it at an enemy's feet. Vines burst up and grab hold — that enemy becomes Stuck."
+        },
+        {
+          "id": "dazzle-dust",
+          "name": "Dazzle Dust",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Toss a pinch in an enemy's eyes. Everything sparkles and swims — they become Frightened for a round."
+        },
+        {
+          "id": "drowsy-draught",
+          "name": "Drowsy Draught",
+          "kind": "magicConsumable",
+          "rarity": "uncommon",
+          "cost": 60,
+          "text": "A sweet-smelling mist. One small enemy falls Asleep. Big monsters shrug it off (Mind 13+ to resist)."
+        },
+        {
+          "id": "pepperbomb",
+          "name": "Pepperbomb",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "A spicy cloud of pepper and sneeze. One or two enemies start coughing and become Hurt."
+        },
+
+        {
+          "id": "marker-moss",
+          "name": "Marker Moss",
+          "kind": "magicConsumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Splat a blob of glowing moss on one enemy. The next friend to hit that enemy deals +2 damage. Teamwork!"
+        },
+        {
+          "id": "rally-horn",
+          "name": "Rally Horn",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Give it one big blast. A friend within sight gets +2 to their next attack roll. Then the horn goes quiet."
+        },
+        {
+          "id": "spark-powder",
+          "name": "Spark Powder",
+          "kind": "magicConsumable",
+          "rarity": "uncommon",
+          "cost": 60,
+          "text": "Sprinkle it on a friend's weapon. Their next hit on a Stuck or Hurt enemy deals +3 damage — the perfect finisher."
+        },
+
+        {
+          "id": "smoke-pellet",
+          "name": "Smoke Pellet",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Drop it and vanish in a puff of gray smoke. You and one friend can slip away or reposition — a clean getaway."
+        },
+        {
+          "id": "grease-flask",
+          "name": "Grease Flask",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Pour it across the floor. Any enemy crossing the slick must roll Speed 10+ or slip and become Stuck for a turn."
+        },
+        {
+          "id": "featherpuff",
+          "name": "Featherpuff",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Pop the puffball and float. You (and a friend you're holding) drift down safely from any height, like a dandelion seed."
+        },
+        {
+          "id": "glimmer-flare",
+          "name": "Glimmer Flare",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Fire a dazzling star into the sky. It lights up the whole area for the scene and signals friends who are far away."
+        },
+        {
+          "id": "fizzy-fun-potion",
+          "name": "Fizzy Fun Potion",
+          "kind": "consumable",
+          "rarity": "common",
+          "cost": 50,
+          "text": "Drink it and float an inch off the ground, burping happy little bubbles. Pure silliness — and jumping is a breeze for the scene."
+        }
+    
+  ],
+  "races": [
+    {
+      "id": "human",
+      "name": "Human",
+      "tagline": "Curious, adaptable, found everywhere.",
+      "lore": "The most common folk in the world. What they lack in pointed ears or magical heritage they make up for in pure stubborn grit. A Human will try anything once — and twice if the first time was funny.",
+      "appearance": [
+        "Average size for a person",
+        "Every shade of skin, hair, and eyes"
+      ],
+      "nameIdeas": [
+        "Tom",
+        "Lila",
+        "Mei",
+        "Owen",
+        "Kestrel",
+        "Rowan",
+        "Hazel",
+        "Marko",
+        "Anya",
+        "Iris",
+        "Theo"
+      ],
+      "ability": {
+        "id": "try-anything-once",
+        "name": "Try Anything Once",
+        "text": "Once per rest, when you fail a d20 roll, re-roll the same thing and keep whichever result is better. Pick your moment.",
+        "actionCost": "reaction",
+        "reset": "rest",
+        "effects": [
+          {
+            "kind": "reroll",
+            "target": "any",
+            "keep": "better"
+          }
+        ]
+      }
+    },
+    {
+      "id": "forest-elf",
+      "name": "Forest Elf",
+      "tagline": "Quiet, ancient, friend to the green world.",
+      "lore": "Forest Elves grow up in the deep woods and learn to walk between leaves without snapping a twig. They live far longer than humans and speak slowly, because they have plenty of time.",
+      "appearance": [
+        "Tall and slim, pointed ears",
+        "Skin in bark, leaf, or moonlight tones",
+        "Far-away eyes"
+      ],
+      "nameIdeas": [
+        "Alaeris",
+        "Fenwyn",
+        "Lirien",
+        "Saelis",
+        "Thorondir",
+        "Aelwyn",
+        "Maelis",
+        "Vendril",
+        "Soren",
+        "Yvri"
+      ],
+      "ability": {
+        "id": "forests-friend",
+        "name": "Forest's Friend",
+        "text": "You always move quietly through any natural place — woods, fields, rivers, gardens — with no roll needed to sneak outdoors. Animals tend to trust you.",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "stoneling",
+      "name": "Stoneling",
+      "tagline": "Short, sturdy, born of mountain hearths.",
+      "lore": "Stonelings live in mountain halls carved into living rock. About the size of a 9-year-old but built like a small barrel, they love to build things, eat hearty stews, and tell stories around a fire.",
+      "appearance": [
+        "Can vary from 4 feet tall and broad to 8 feet tall and muscular",
+        "Earthy skin, copper, iron, or stone hair",
+        "Often carrying a small tool"
+      ],
+      "nameIdeas": [
+        "Brundir",
+        "Hilda",
+        "Korvac",
+        "Tora",
+        "Murn",
+        "Vesna",
+        "Brokk",
+        "Thora",
+        "Durgin",
+        "Yeva"
+      ],
+      "ability": {
+        "id": "stone-sense",
+        "name": "Stone Sense",
+        "text": "You see in the dark as well as you see in dim light (the world looks gray, but you see fine). Underground or near stone, touch a wall to sense which way is “out.”",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "catfolk",
+      "name": "Catfolk",
+      "tagline": "Curious, clever, always landing on their feet.",
+      "lore": "People with the heads, tails, and senses of cats. They walk on two legs with a cat's grace and a cat's curiosity, investigate anything that makes a noise, purr when happy, and have very strong opinions about birds.",
+      "appearance": [
+        "Cat ears, eyes, whiskers, and a long balancing tail",
+        "Soft fur",
+        "Hands with retractable claws"
+      ],
+      "nameIdeas": [
+        "Mittens",
+        "Tabbi",
+        "Asha",
+        "Jin",
+        "Mira",
+        "Sable",
+        "Pip",
+        "Calix",
+        "Velvet"
+      ],
+      "ability": {
+        "id": "always-land-on-your-feet",
+        "name": "Always Land on Your Feet",
+        "text": "You never take damage from falling, no matter how high. +1 to Speed rolls for balance, climbing, or jumping. You see in dim light as well as anyone sees in bright light.",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "sprite",
+      "name": "Sprite",
+      "tagline": "Tiny, magical, full of mischief and light.",
+      "lore": "About a foot tall — small enough to ride on a dog, big enough to talk back. Sprites think fast and talk faster, love sweets, jokes, and shiny things, and will swap your spoon for a flower and think it's the funniest thing ever.",
+      "appearance": [
+        "Around 12 inches tall",
+        "Translucent dragonfly or moth wings",
+        "Skin and hair that shimmer in unusual colors"
+      ],
+      "nameIdeas": [
+        "Pip",
+        "Twig",
+        "Mote",
+        "Glim",
+        "Thistle",
+        "Sparrow",
+        "Fizz",
+        "Whim",
+        "Dewdrop",
+        "Ember"
+      ],
+      "ability": {
+        "id": "fly-and-flicker",
+        "name": "Fly and Flicker",
+        "text": "You can fly short distances (about as far as you could walk in a turn) and you glow enough to see by in the dark. For person-sized tasks, ride a friend's shoulder or fly close.",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "lizardfolk",
+      "name": "Lizardfolk",
+      "tagline": "Calm, ancient, scaled and wise.",
+      "lore": "From the warm marshes and river deltas, Lizardfolk have scaled skin, sharp teeth, and a steady, patient nature. They consider, then act — good friends to have when everyone else is panicking. They love sunshine, warm rocks, and fish.",
+      "appearance": [
+        "Scaled skin in green, brown, gold, or blue",
+        "Sharp teeth, small claws",
+        "A long balancing tail"
+      ],
+      "nameIdeas": [
+        "Sssalvar",
+        "Kresh",
+        "Vipra",
+        "Tezka",
+        "Thrik",
+        "Sysera",
+        "Jaza",
+        "Korrok",
+        "Shath"
+      ],
+      "ability": {
+        "id": "cold-blood",
+        "name": "Cold Blood",
+        "text": "You can hold your breath a really long time (10 minutes) and swim as fast as you run. Hot and cold places don't bother you. Bonus: heal 1 extra HP whenever you Rest in the sun.",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "cloudkin",
+      "name": "Cloudkin",
+      "tagline": "Sky-born, light as breath, dreamers all.",
+      "lore": "From floating islands high above the world. Cloudkin are lighter than they look, their hair drifting in unfelt breezes. They are dreamers and musicians who tell stories about clouds and stars — and a little forgetful, because their thoughts drift.",
+      "appearance": [
+        "Slim and tall",
+        "Pale cloud-toned skin",
+        "Hair that moves with no wind",
+        "Weather-colored eyes"
+      ],
+      "nameIdeas": [
+        "Sylas",
+        "Aerin",
+        "Nimbus",
+        "Zephyr",
+        "Lirae",
+        "Calliope",
+        "Thane",
+        "Echo",
+        "Soren",
+        "Wisp"
+      ],
+      "ability": {
+        "id": "winds-child",
+        "name": "Wind's Child",
+        "text": "When you fall, you fall slowly like a leaf and always land safely. You jump twice as far as normal, and once per Rest you can briefly walk on the wind for one round (across a gap, up a wall).",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "foxfolk",
+      "name": "Foxfolk",
+      "tagline": "Sly, charming, born storytellers.",
+      "lore": "People with fox-like features who live by their wits. Every Foxfolk's grandparent is (supposedly) a famous trickster who outwitted a king. They love riddles, music, and a good deal. If a Foxfolk says they're being honest, they probably are — and probably about to do something clever.",
+      "appearance": [
+        "Fox ears peeking through their hair and a fluffy tail",
+        "Sharp smiling eyes",
+        "Cream-to-auburn skin and a fox-like face"
+      ],
+      "nameIdeas": [
+        "Reyn",
+        "Vixie",
+        "Tobias",
+        "Saoirse",
+        "Kit",
+        "Sable",
+        "Ronan",
+        "Fennek",
+        "Tama"
+      ],
+      "ability": {
+        "id": "silver-tongue",
+        "name": "Silver Tongue",
+        "text": "Once per rest, when talking to a non-monster creature, you may ask one question they will answer truthfully — even if they didn't want to. (Not in combat, and not on creatures that hate you.)",
+        "actionCost": "action",
+        "reset": "rest"
+      }
+    }
+  ],
+  "companions": [
+    {
+      "id": "barrelback",
+      "name": "Barrelback the Bear",
+      "maxHP": 10,
+      "hitBonus": 2,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "get-behind-me",
+        "name": "Get Behind Me",
+        "text": "Take a hit meant for a friend next to you. Big, grumpy, food-motivated, fiercely loyal.",
+        "actionCost": "reaction",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "dash",
+      "name": "Dash the Cheetah",
+      "maxHP": 5,
+      "hitBonus": 3,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "takedown",
+        "name": "Takedown",
+        "text": "Pounce one enemy — it is Stuck until the end of its next turn. Can't sit still; sprints, then naps hard.",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "ember",
+      "name": "Ember the Whelpling",
+      "maxHP": 4,
+      "hitBonus": 2,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "ember-breath",
+        "name": "Ember Breath",
+        "text": "Up to 2 close enemies take d4 and are Hurt. Tiny, vain, hoards shiny coins. Grows over the campaign!",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "bloop",
+      "name": "Bloop the Floating Fish",
+      "maxHP": 3,
+      "hitBonus": 1,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "shimmer-bubble",
+        "name": "Shimmer Bubble",
+        "text": "Give a friend a bubble that blocks the next hit. Passive: magical things glow softly nearby.",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "echo",
+      "name": "Echo the Bat",
+      "maxHP": 3,
+      "hitBonus": 3,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "screech",
+        "name": "Screech",
+        "text": "One enemy is Frightened. Echo Sight (passive): the party can't be ambushed in darkness.",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "pip-hedgehog",
+      "name": "Pip the Hedgehog",
+      "maxHP": 4,
+      "hitBonus": 1,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "curl-up",
+        "name": "Curl Up",
+        "text": "Block one hit meant for its hero. Always Watching (passive): the party can't be surprised.",
+        "actionCost": "reaction",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "whisker",
+      "name": "Whisker the Cat",
+      "maxHP": 3,
+      "hitBonus": 2,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "curious-paws",
+        "name": "Curious Paws",
+        "text": "Find one hidden item, path, or switch.",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "hoot",
+      "name": "Hoot the Owl",
+      "maxHP": 3,
+      "hitBonus": 2,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "night-eyes",
+        "name": "Night Eyes",
+        "text": "See in the dark through Hoot (passive). Hoot carries a message round-trip in one rest.",
+        "actionCost": "passive",
+        "reset": "atWill"
+      }
+    },
+    {
+      "id": "tumble",
+      "name": "Tumble the Pup Griffin",
+      "maxHP": 8,
+      "hitBonus": 3,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d6",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "sky-lift",
+        "name": "Sky Lift",
+        "text": "Once per adventure, fly a hero somewhere in sight. Dive Tackle (Recharge): swoop and make one enemy Stuck.",
+        "actionCost": "action",
+        "reset": "oncePerAdventure"
+      }
+    },
+    {
+      "id": "bramble",
+      "name": "Bramble the Fox",
+      "maxHP": 5,
+      "hitBonus": 3,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "distract",
+        "name": "Distract",
+        "text": "One enemy's next attack misses. Clever Paws (passive): auto-opens small locks and ropes.",
+        "actionCost": "action",
+        "reset": "recharge"
+      }
+    },
+    {
+      "id": "old-mossback",
+      "name": "Old Mossback the Tortoise",
+      "maxHP": 12,
+      "hitBonus": 1,
+      "attack": {
+        "toHitStat": null,
+        "damageDice": "d4",
+        "damageStat": null,
+        "targets": {
+          "kind": "single"
+        }
+      },
+      "trick": {
+        "id": "shell-wall",
+        "name": "Shell Wall",
+        "text": "Block a hit for a friend. Living Library (once per adventure): one true answer about history or magic.",
+        "actionCost": "reaction",
+        "reset": "recharge"
+      }
+    }
+  ],
+  "monsters": [
+    { "id": "goblin", "name": "Goblin", "hp": 4, "toHit": 2, "damageDice": "d6",
+      "quirk": "Cowardly. Runs if half its friends fall." },
+    { "id": "wolf", "name": "Wolf", "hp": 6, "toHit": 3, "damageDice": "d6", "damageBonus": 1,
+      "quirk": "Hunts in pairs. Gives one bite, then circles." },
+    { "id": "skeleton", "name": "Skeleton", "hp": 5, "toHit": 2, "damageDice": "d6",
+      "quirk": "Falls apart on a natural 20 against it." },
+    { "id": "slime", "name": "Slime", "hp": 8, "toHit": 1, "damageDice": "d6", "damageNote": "sticky",
+      "quirk": "Hit hero is Stuck until they roll Might 10+." },
+    { "id": "bandit", "name": "Bandit", "hp": 7, "toHit": 3, "damageDice": "d6", "damageBonus": 1,
+      "quirk": "Will surrender if outnumbered or scared." },
+    { "id": "giant-spider", "name": "Giant Spider", "hp": 9, "toHit": 3, "damageDice": "d6", "damageNote": "poison",
+      "quirk": "On hit, hero is Hurt for 2 rounds." },
+    { "id": "ghost", "name": "Ghost", "hp": 10, "toHit": 3, "damageDice": "d6", "damageNote": "chilling",
+      "quirk": "Only Mind-based attacks hurt it." },
+    { "id": "ogre", "name": "Ogre", "hp": 16, "toHit": 4, "damageDice": "d6", "damageBonus": 3,
+      "quirk": "Slow. Heroes go first. Loves to brag." },
+    { "id": "sneezing-dragon", "name": "Sneezing Dragon", "hp": 20, "toHit": 5, "damageDice": "d6", "damageBonus": 2, "damageNote": "fire",
+      "quirk": "Sneezes (everyone in front: d6 fire) on a 1." },
+    { "id": "mischief-sprite", "name": "Mischief Sprite", "hp": 3, "toHit": 4, "damageDice": "d4", "damageNote": "prank",
+    "quirk": "Steals one item. Leaves a flower in its place." },
+    { "id": "young-griffin", "name": "Young Griffin", "hp": 14, "toHit": 3, "damageDice": "d6", "damageBonus": 2,
+    "quirk": "More curious than dangerous. Wants its prize back — can be befriended, calmed, or scared off with clever light." },
+    { "id": "haunted-knight", "name": "Haunted Knight", "hp": 12, "toHit": 3, "damageDice": "d6", "damageBonus": 2,
+    "quirk": "A ghost in armor — only Mind-based attacks hurt it. Swords pass RIGHT THROUGH. Calm + kind words send it to rest." }
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "adventures": [
+    {
+      "id": "missing-baker",
+      "title": "The Missing Baker",
+      "tone": "Mystery — gentle, with funny moments",
+      "length": "30–45 minutes",
+      "hook": "In the village of Honeyfield, the baker Old Tom has gone missing. His shop is locked from the outside, but smoke is rising from the chimney — and the bread smells like it's burning. The mayor asks you to find Tom and get the bread out before the whole shop catches fire!",
+      "secret": "A clever Mischief Sprite snuck in last night looking for sweets and accidentally locked itself in. Old Tom is fine — he's at his sister's house in the next village. The sprite has been baking (badly) all morning, trying to cover its mistake.",
+      "scenes": [
+        {
+          "id": "locked-bakery",
+          "title": "The Locked Bakery",
+          "readAloud": "You arrive at the bakery. The door is locked — from the OUTSIDE. The chimney is smoking, and the smell of burnt bread fills the street. For just a second, a small face peeks out from a window… then ducks away.",
+          "gmNotes": "The sprite watches from inside. If the heroes get in by any route, go to Scene 2.",
+          "options": [
+            { "label": "Look around", "check": "Mind 10+", "outcome": "Tiny green footprints lead from the bakery to the woods AND back. One sprite, came in last night." },
+            { "label": "Climb to the roof", "check": "Speed 10+", "outcome": "They can drop down the chimney into the kitchen." },
+            { "label": "Force the door", "check": "Might 13+", "outcome": "The door breaks open. The mayor mentions they'll have to pay for it later — funny, not punishing." },
+            { "label": "Talk through the window", "check": "Mind 10+", "outcome": "The sprite pretends to be the baker in a high voice: \"Yes, I am Tom! Go away!\"" }
+          ]
+        },
+        {
+          "id": "smoky-kitchen",
+          "title": "The Smoky Kitchen",
+          "readAloud": "Inside, smoke fills the kitchen. Five loaves are burning in the oven. On the counter stands a Mischief Sprite, wearing Old Tom's apron and trying very hard to look bigger than it is.",
+          "gmNotes": "The bread: if nobody pulls it out within two rounds, the kitchen catches fire — everyone takes 1 damage per round until they leave or put it out. The sprite tries to ESCAPE, not fight: it hides, throws flour to make Speed rolls harder, and aims for a window. If cornered, it cries and confesses.",
+          "options": [
+            { "label": "Talk it down", "check": "Mind 10+", "outcome": "The sprite admits it locked itself in and will help if the heroes promise not to tell the mayor. The Healer's Calm spell auto-succeeds here." }
+          ],
+          "encounter": {
+            "id": "baker-smoky-kitchen",
+            "title": "The Smoky Kitchen",
+            "places": [
+              { "name": "Outside the door" },
+              { "name": "The smoky kitchen" },
+              { "name": "The rooftop", "lock": "Speed 10 to climb", "parent": "Outside the door" }
+            ],
+            "monsters": [
+              { "monster": "mischief-sprite", "place": "The smoky kitchen" }
+            ]
+          }
+        },
+        {
+          "id": "where-is-tom",
+          "title": "Where Is Tom?",
+          "readAloud": "With the fire out and the sprite dealt with, you search the shop. On the counter, fallen behind a flour sack, is a note in messy handwriting: \"Gone to see my sister Marigold in Riverbend. Back tomorrow. — Tom.\" The mayor never saw it. When you bring him the truth, he laughs out loud.",
+          "gmNotes": "The mayor pays 20 gold and hands over a loaf of (slightly burnt) bread. If the heroes were kind to the sprite, it leaves a tiny silver bell — ringing it summons the sprite once for help.",
+          "rewards": [
+            { "label": "20 gold from the mayor", "gold": 20 },
+            { "label": "A loaf of slightly burnt bread (homebrew)" },
+            { "label": "Tiny Silver Bell — only if they were kind to the sprite (homebrew, magic)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sheep-in-the-tree",
+      "title": "The Sheep in the Tree",
+      "tone": "Rescue — silly setup, real danger",
+      "length": "30–45 minutes",
+      "hook": "A farmer named Beatrice runs up, out of breath. \"My sheep — Cloudy — she's STUCK in a tree! And there's something circling. Please, help!\"",
+      "secret": "A young griffin (more curious than dangerous) picked up the sheep, flew off, and dropped her into a tall oak when she wriggled. The sheep is fine but stuck. The griffin circles, trying to get its prize back. A small group of goblins hides nearby, hoping to grab the sheep for dinner.",
+      "scenes": [
+        {
+          "id": "big-oak-tree",
+          "title": "The Big Oak Tree",
+          "readAloud": "A very confused sheep bleats from a high branch, about thirty feet up. Above the tree, a young griffin circles in slow, curious loops. It hasn't attacked — yet.",
+          "gmNotes": "If the heroes ignore the griffin, it gets impatient and dives at one hero on round 3.",
+          "options": [
+            { "label": "Climb the oak", "check": "Speed 13+", "outcome": "Climb safely. On a fail: slip and try again — no damage, just funny. Heavy armor gives −1." },
+            { "label": "Healer's Animal Friend", "check": null, "outcome": "Calms either the sheep OR the griffin. The griffin can be talked into helping: \"Lower us down? Rrr. Okay.\"" },
+            { "label": "Wizard's Light, used cleverly", "check": null, "outcome": "Can scare the griffin off. Reward clever spell use." }
+          ],
+          "encounter": {
+            "id": "sheep-big-oak",
+            "title": "The Big Oak Tree",
+            "places": [
+              { "name": "Under the oak" },
+              { "name": "The sky above" },
+              { "name": "The high branches", "lock": "Speed 13 to climb", "parent": "Under the oak" }
+            ],
+            "monsters": [
+              { "monster": "young-griffin", "place": "The sky above" }
+            ]
+          }
+        },
+        {
+          "id": "goblin-ambush",
+          "title": "The Goblin Ambush",
+          "readAloud": "Just as you start helping the sheep, three goblins burst from the bushes. \"GIVE US THE SHEEP! WE NEED DINNER!\"",
+          "gmNotes": "Standard combat. Goblins are cowardly — when half are down, the rest run.",
+          "options": [
+            { "label": "Scout spots them in advance", "check": "Speed 13+", "outcome": "On arrival — sets up a Sneak Attack before the ambush springs." },
+            { "label": "Talk instead of fight", "check": "Mind 13+", "outcome": "Convince the goblins to trade for food instead of stealing. A valid solution with a small reward." }
+          ],
+          "encounter": {
+            "id": "sheep-goblin-ambush",
+            "title": "The Goblin Ambush",
+            "places": [
+              { "name": "The tree line" },
+              { "name": "Under the oak" },
+              { "name": "The bushes" }
+            ],
+            "monsters": [
+              { "monster": "goblin", "place": "The bushes", "count": 3 }
+            ]
+          }
+        },
+        {
+          "id": "cloudy-comes-home",
+          "title": "Cloudy Comes Home",
+          "readAloud": "Beatrice meets you on the road with a basket of fresh bread and cheese, hugging Cloudy so hard the sheep squeaks.",
+          "gmNotes": "If the heroes befriended the griffin, it shows up sometimes to help — once per adventure, it will carry one hero somewhere. Bonus: if they fed the goblins instead of fighting, the goblins won't rob travelers on this road again. Word gets around.",
+          "rewards": [
+            { "label": "20 gold from Beatrice", "gold": 20 },
+            { "label": "Griffin friendship — once per adventure, it carries one hero (story reward)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sleepy-dragons-hoard",
+      "title": "The Sleepy Dragon's Hoard",
+      "tone": "Dungeon crawl — real adventure, classic loot",
+      "length": "45–60 minutes",
+      "hook": "An old map turns up at the village market, showing a cave under Whisper Hill. \"Dragon's hoard inside. Dragon sleeps for 100 years. The 100 years end NEXT WEEK.\" If you hurry, you can grab the treasure before the dragon wakes!",
+      "secret": "The map is real. The dragon is real. But the cave is full of OTHER things that moved in over 100 years — a goblin family, cave slimes, and a haunted suit of armor. And the dragon woke up three days early.",
+      "scenes": [
+        {
+          "id": "cave-mouth",
+          "title": "The Cave Mouth",
+          "readAloud": "A round stone door is set into the hill, circled with glowing runes. Carved above it, a poem: \"Three friends share my key: the wind that whistles, the water that runs, the fire that warms. Speak my friends in order, and I will open.\"",
+          "gmNotes": "The answer is WIND, WATER, FIRE. Wizard's Light can count as \"fire.\" Wrong answer: the runes flash and a stone fist gently bonks one hero on the nose — 1 damage, very embarrassing.",
+          "options": [
+            { "label": "Solve the riddle", "check": "Mind 10+", "outcome": "They figure out the elements — or a hero just thinks to try speaking them." }
+          ]
+        },
+        {
+          "id": "goblin-kitchen",
+          "title": "The Goblin Kitchen",
+          "readAloud": "A wide room with a crackling fire pit. A goblin parent looks up from a cooking pot, startled — and two small goblin kids peek out from behind a barrel. Nobody here looks like they want a fight.",
+          "gmNotes": "They're a FAMILY. Combat only if the heroes attack first — the parent is the only fighter; the kids cry. In the kitchen: 5 gold, a sack of dried mushrooms (sells for 3 gold), and an old key labeled \"DEEP DOOR.\"",
+          "options": [
+            { "label": "Talk — or show any kindness", "check": "Mind 10+", "outcome": "The parent calms, tells them about the deeper cave, and warns of a haunted suit of armor." }
+          ],
+          "encounter": {
+            "id": "hoard-goblin-kitchen",
+            "title": "The Goblin Kitchen",
+            "places": [
+              { "name": "The doorway" },
+              { "name": "The fire pit" },
+              { "name": "The sleeping nook" }
+            ],
+            "monsters": [
+              { "monster": "goblin", "place": "The fire pit" }
+            ]
+          },
+          "rewards": [
+            { "label": "5 gold found in the kitchen", "gold": 5 },
+            { "label": "Sack of dried mushrooms — sells for 3 gold (homebrew)" },
+            { "label": "Old key labeled DEEP DOOR (homebrew)" }
+          ]
+        },
+        {
+          "id": "slime-tunnel",
+          "title": "The Slime Tunnel",
+          "readAloud": "A narrow passage drips with water. The walls glisten a little too much…",
+          "gmNotes": "Two cave slimes cling to the walls and drop on the first hero past. Surprise: Speed 13+ to spot them first; on a fail, the lead hero takes one free hit. Tactics: a slime SPLITS when hit hard (5+ damage) — each half has 3 HP and does d4 (use the improviser: Wimpy, name it \"Half-Slime\"). On hit, the hero is Stuck until they roll Might 10+ on their turn. The DEEP DOOR key fits the locked door past the slimes.",
+          "options": [
+            { "label": "Spot the slimes first", "check": "Speed 13+", "outcome": "The party isn't surprised — no free hit." },
+            { "label": "Pick the deep door's lock", "check": "Speed 13+", "outcome": "Opens without the key. (The key from the goblin kitchen opens it free.)" }
+          ],
+          "encounter": {
+            "id": "hoard-slime-tunnel",
+            "title": "The Slime Tunnel",
+            "places": [
+              { "name": "The tunnel mouth" },
+              { "name": "The narrow passage" },
+              { "name": "The deep door", "lock": "Speed 13 to pick the lock" }
+            ],
+            "monsters": [
+              { "monster": "slime", "place": "The narrow passage", "count": 2 }
+            ]
+          }
+        },
+        {
+          "id": "haunted-knight",
+          "title": "The Haunted Knight",
+          "readAloud": "A tall stone room. On a pedestal stands a dusty suit of armor holding a sword. As you step inside, the helmet slowly turns toward you — and the armor clanks to life.",
+          "gmNotes": "It's a ghost — only Mind-based attacks hurt it (Wizard's Zap, Healer spells). Other hits CLANG but do no damage. Hint for the kids: on a missed hit, say \"Your sword passes RIGHT THROUGH it.\" Peaceful end: the ghost was a knight who failed his duty — Healer's Calm plus \"Your watch is over, the dragon is awake again\" sends him to rest. He drops his sword and bows.",
+          "encounter": {
+            "id": "hoard-haunted-knight",
+            "title": "The Haunted Knight",
+            "places": [
+              { "name": "The doorway" },
+              { "name": "The stone hall" },
+              { "name": "The pedestal" }
+            ],
+            "monsters": [
+              { "monster": "haunted-knight", "place": "The pedestal" }
+            ]
+          },
+          "rewards": [
+            { "label": "The Haunted Sword — +1 damage, glows blue near ghosts (homebrew, magic)" },
+            { "label": "A golden ring worth 50 gold", "gold": 50 }
+          ]
+        },
+        {
+          "id": "the-hoard",
+          "title": "The Hoard (and the Dragon)",
+          "readAloud": "A huge cavern, glittering with GOLD in every direction. And in the middle of it all — a small green dragon, wide awake and very grumpy. \"Did you wake me up THREE DAYS EARLY?\"",
+          "gmNotes": "Fight: tough! Heroes need teamwork — the dragon's first sneeze (on a natural 1) hits everyone in front for d6 fire each. Bargain (the smart one): Mind 13+ or a clever offer — there's so much gold the dragon doesn't mind sharing; each hero takes ONE thing if they leave peacefully and keep the secret. Trick: throw the Healer's Calm on the dragon, then tip-toe out with what they can carry.",
+          "options": [
+            { "label": "Bargain with the dragon", "check": "Mind 13+", "outcome": "Or a clever offer. Each hero takes one thing, leaves peacefully, keeps the secret." },
+            { "label": "The Calm trick", "check": null, "outcome": "Healer's Calm on the dragon, then tip-toe out with what they can carry." }
+          ],
+          "encounter": {
+            "id": "hoard-the-dragon",
+            "title": "The Hoard",
+            "places": [
+              { "name": "The cavern mouth" },
+              { "name": "The gold piles" },
+              { "name": "The dragon's perch" }
+            ],
+            "monsters": [
+              { "monster": "sneezing-dragon", "place": "The dragon's perch" }
+            ]
+          },
+          "rewards": [
+            { "label": "Win or bargain: 100 gold each + one magic item per hero", "gold": 100 },
+            { "label": "The Calm trick: 50 gold each — and everyone keeps their lives, also a win", "gold": 50 }
+          ]
+        }
+      ]
+    }
+  ]
+}
