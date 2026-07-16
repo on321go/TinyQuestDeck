@@ -50,6 +50,7 @@ struct GMView: View {
     @State private var adHocTitle = ""
     @State private var remoteNoteFor: GMPartyMember? = nil
     @State private var openAdventure: Adventure? = nil
+    @State private var scanningHero = false
 
 
     var body: some View {
@@ -80,6 +81,14 @@ struct GMView: View {
         .sheet(isPresented: $addingMember) {
             AddPartyMemberSheet(repo: repo) { party.add($0) }
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $scanningHero) {
+            ScanHeroCardSheet(repo: repo,
+                              existingIDs: Set(party.members.map(\.id))) { card in
+                // update(), not add(): same id = same hero, so a re-scan after a
+                // level-up refreshes the snapshot in place. add() would no-op.
+                party.update(GMPartyMember(card: card))
+            }
         }
         .fullScreenCover(isPresented: $showingBoard) {
             EncounterView(repo: repo, store: encounters, party: party) { showingBoard = false }
@@ -263,7 +272,7 @@ struct GMView: View {
     private var partyPanel: some View {
         panel("The Party") {
             if party.members.isEmpty {
-                Text("Who's playing this game? Add the GM's own hero from this iPad, or add a player by hand. Scanning a hero-card QR from a kid's sheet lands here next.")
+                Text("Who's playing this game? Scan the hero card on each player's Character Sheet, add the GM's own hero from this iPad, or add a player by hand.")
                     .font(questFontLight(14)).foregroundStyle(.black.opacity(0.5))
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -350,8 +359,10 @@ struct GMView: View {
                     }
                 }
             }
+            Button("Scan a hero card…", systemImage: "qrcode.viewfinder") {
+                scanningHero = true
+            }
             Button("Add by hand…") { addingMember = true }
-            // NEXT: "Scan a hero card…" — the QR import, same GMPartyMember record.
         } label: {
             Label("Add to the party", systemImage: "plus.circle.fill")
                 .font(questFont(14)).foregroundStyle(GMStyle.accent)

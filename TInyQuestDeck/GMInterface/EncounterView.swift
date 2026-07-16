@@ -62,6 +62,7 @@ struct EncounterView: View {
     @State private var selectedID: UUID? = nil
     @State private var detail: DetailRef? = nil
     @State private var addingPlace = false
+    @State private var scanningHero = false
     @State private var addingPlayer = false
     @State private var improvising: MonsterThreat? = nil
     @State private var improvName = ""
@@ -77,6 +78,7 @@ struct EncounterView: View {
             .sheet(item: $detail) { detailSheet($0) }
             .sheet(isPresented: $addingPlace) { placeSheet }
             .sheet(isPresented: $addingPlayer) { newPlayerSheet }
+            .sheet(isPresented: $scanningHero) { scanHeroSheet }
             .alert("Name it!", isPresented: improvBinding, presenting: improvising,
                    actions: { improvActions($0) },
                    message: { improvMessage($0) })
@@ -135,6 +137,30 @@ struct EncounterView: View {
         }
         .presentationDetents([.medium, .large])
     }
+    
+    /// Late arrival, QR flavor: scan the newcomer's hero card → a party record
+        /// carrying their REAL CharacterChoices.id → chip on the board, in one motion.
+        /// Same two-step as newPlayerSheet; the identity is imported instead of typed,
+        /// which is the whole point — a hand-typed member can never be awarded to.
+        private var scanHeroSheet: some View {
+            ScanHeroCardSheet(repo: repo,
+                              existingIDs: Set(party.members.map(\.id))) { card in
+                let member = GMPartyMember(card: card)
+                party.update(member)
+                // A re-scan of someone ALREADY fighting refreshes their party card but
+                // must not drop a second chip. addFighterMenu prevents duplicates by
+                // filtering the menu (`benched`); a scan bypasses that filter, and
+                // store.addHero doesn't guard.
+                if !isOnBoard(member.id) { store.addHero(member, to: defaultPlaceID) }
+            }
+        }
+
+        private func isOnBoard(_ memberID: UUID) -> Bool {
+            store.encounter?.combatants.contains { c in
+                if case .hero(let m) = c.kind { return m == memberID }
+                return false
+            } ?? false
+        }
 
     /// The improviser's one text field: "GM names it" is the whole rule.
     @ViewBuilder
@@ -265,6 +291,9 @@ struct EncounterView: View {
                 }
             }
             Section("Late arrival?") {
+                Button { scanningHero = true } label: {
+                    Label("Scan a hero card…", systemImage: "qrcode.viewfinder")
+                }
                 Button { addingPlayer = true } label: {
                     Label("New player just showed up…", systemImage: "figure.wave")
                 }
@@ -273,7 +302,7 @@ struct EncounterView: View {
             headerButton("Add Fighter", "plus.circle.fill")
         }
     }
-
+    
     // MARK: Selection hint
 
     @ViewBuilder

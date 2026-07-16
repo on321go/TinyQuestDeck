@@ -74,10 +74,10 @@ struct MainTabView: View {
                 RulebookView(store: rulebookStore, repo: repo)
             
             }
-            Tab("Spells", systemImage: "sparkles", value: .spells) {
-                ComingSoonTab(title: "Spells", symbol: "sparkles",
-                              blurb: "Every spell, for quick reference mid-game.")
-            }
+//            Tab("Spells", systemImage: "sparkles", value: .spells) {
+//                ComingSoonTab(title: "Spells", symbol: "sparkles",
+//                              blurb: "Every spell, for quick reference mid-game.")
+//            }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
                 ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
             }

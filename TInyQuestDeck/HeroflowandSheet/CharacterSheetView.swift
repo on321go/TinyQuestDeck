@@ -126,7 +126,9 @@ private struct SheetBody: View {
     @State private var showcaseInfoItem: ItemDefinition? = nil
     // Temporary: lets the table hand out story loot before the GM Portal exists. Flip off
     // when GM tokens (QR) land — then loot arrives authorized, not free-added.
+    @State private var showingHeroCard = false
     private let showGearGrantDevControl = true
+    
 
     private struct PendingTransform {
         let ability: AbilityDefinition
@@ -185,7 +187,10 @@ private struct SheetBody: View {
                     statTile("MIND", .mind)
                 }
                 actionButtons
-                goldBar
+                HStack(spacing: 10) {
+                    goldBar
+                    heroCardButton
+                }
             }
         }
     }
@@ -328,6 +333,28 @@ private struct SheetBody: View {
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
         .fixedSize()      // hug content — a compact pill under the recharge button, not full width
     }
+    
+    // MARK: My Hero Card (the QR the GM scans to put this hero on their map)
+        //
+        // Sits beside the wallet because that's the "who am I to the table" corner of the
+        // sheet — and it OUTLIVES the dev gold stepper, which retires when Milestone B's
+        // grant tokens land. Pure display: showing a card mutates nothing.
+
+        private var heroCardButton: some View {
+            Button { showingHeroCard = true } label: {
+                Label("Hero Card", systemImage: "qrcode")
+                    .font(questFont(14)).foregroundStyle(.black)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .sheet(isPresented: $showingHeroCard) {
+                HeroCardSheet(hero: character, repo: repo, bg: bg, accent: accent)
+                    .presentationDetents([.medium, .large])
+            }
+        }
 
     private func goldStepButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
