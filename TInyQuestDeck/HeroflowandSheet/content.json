@@ -2763,5 +2763,31 @@
         "reset": "recharge"
       }
     }
+  ],
+  "monsters": [
+    { "id": "goblin", "name": "Goblin", "hp": 4, "toHit": 2, "damageDice": "d6",
+      "quirk": "Cowardly. Runs if half its friends fall." },
+    { "id": "wolf", "name": "Wolf", "hp": 6, "toHit": 3, "damageDice": "d6", "damageBonus": 1,
+      "quirk": "Hunts in pairs. Gives one bite, then circles." },
+    { "id": "skeleton", "name": "Skeleton", "hp": 5, "toHit": 2, "damageDice": "d6",
+      "quirk": "Falls apart on a natural 20 against it." },
+    { "id": "slime", "name": "Slime", "hp": 8, "toHit": 1, "damageDice": "d6", "damageNote": "sticky",
+      "quirk": "Hit hero is Stuck until they roll Might 10+." },
+    { "id": "bandit", "name": "Bandit", "hp": 7, "toHit": 3, "damageDice": "d6", "damageBonus": 1,
+      "quirk": "Will surrender if outnumbered or scared." },
+    { "id": "giant-spider", "name": "Giant Spider", "hp": 9, "toHit": 3, "damageDice": "d6", "damageNote": "poison",
+      "quirk": "On hit, hero is Hurt for 2 rounds." },
+    { "id": "ghost", "name": "Ghost", "hp": 10, "toHit": 3, "damageDice": "d6", "damageNote": "chilling",
+      "quirk": "Only Mind-based attacks hurt it." },
+    { "id": "ogre", "name": "Ogre", "hp": 16, "toHit": 4, "damageDice": "d6", "damageBonus": 3,
+      "quirk": "Slow. Heroes go first. Loves to brag." },
+    { "id": "sneezing-dragon", "name": "Sneezing Dragon", "hp": 20, "toHit": 5, "damageDice": "d6", "damageBonus": 2, "damageNote": "fire",
+      "quirk": "Sneezes (everyone in front: d6 fire) on a 1." },
+    { "id": "mischief-sprite", "name": "Mischief Sprite", "hp": 3, "toHit": 4, "damageDice": "d4", "damageNote": "prank",
+    "quirk": "Steals one item. Leaves a flower in its place." },
+    { "id": "young-griffin", "name": "Young Griffin", "hp": 14, "toHit": 3, "damageDice": "d6", "damageBonus": 2,
+    "quirk": "More curious than dangerous. Wants its prize back — can be befriended, calmed, or scared off with clever light." },
+    { "id": "haunted-knight", "name": "Haunted Knight", "hp": 12, "toHit": 3, "damageDice": "d6", "damageBonus": 2,
+    "quirk": "A ghost in armor — only Mind-based attacks hurt it. Swords pass RIGHT THROUGH. Calm + kind words send it to rest." }
   ]
 }

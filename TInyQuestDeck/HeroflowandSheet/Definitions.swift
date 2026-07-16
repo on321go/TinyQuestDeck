@@ -213,6 +213,75 @@ public struct RaceDefinition: Codable, Hashable, Sendable, Identifiable {
     public let ability: AbilityDefinition
 }
 
+// MARK: - Monsters (the GM's bestiary — structured content, not a rulebook table)
+//
+// Monsters roll d20 + a FLAT toHit (like a companion's hitBonus, never a stat).
+// `damageNote` is flavor ("fire", "sticky", "poison") — display only, honor system.
+// The quirk is the GM's best material; every surface that shows a monster shows it.
+// GM-authored monsters come later as stored data; content-authored is the catalog.
+
+public enum MonsterThreat: String, CaseIterable, Codable, Sendable {
+    case wimpy, normal, tough, boss
+
+    /// Quick Monster Math buckets (rulebook: 1–4 / 5–10 / 11–18 / 19–30).
+    public static func bucket(hp: Int) -> MonsterThreat {
+        switch hp {
+        case ..<5:   .wimpy
+        case ..<11:  .normal
+        case ..<19:  .tough
+        default:     .boss
+        }
+    }
+
+    /// The rulebook's "Good for…" line — bench section headers.
+    public var benchLabel: String {
+        switch self {
+        case .wimpy:  "Wimpy — first fight, lots of them"
+        case .normal: "Normal — a real fight"
+        case .tough:  "Tough — a scary middle boss"
+        case .boss:   "Boss — end of the adventure"
+        }
+    }
+}
+
+public struct MonsterDefinition: Codable, Hashable, Sendable, Identifiable {
+    public let id: String
+    public let name: String
+    public let hp: Int
+    public let toHit: Int               // flat d20 bonus
+    public let damageDice: DiceExpr
+    public let damageBonus: Int         // default 0 ("d6+2" → dice d6, bonus 2)
+    public let damageNote: String?      // "fire", "sticky", "poison" — flavor tag
+    public let quirk: String
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        hp = try c.decode(Int.self, forKey: .hp)
+        toHit = try c.decode(Int.self, forKey: .toHit)
+        damageDice = try c.decode(DiceExpr.self, forKey: .damageDice)
+        damageBonus = try c.decodeIfPresent(Int.self, forKey: .damageBonus) ?? 0
+        damageNote = try c.decodeIfPresent(String.self, forKey: .damageNote)
+        quirk = try c.decode(String.self, forKey: .quirk)
+    }
+}
+
+public extension MonsterDefinition {
+    /// Derived Quick Monster Math bucket (bench grouping, improviser defaults).
+    var threat: MonsterThreat { .bucket(hp: hp) }
+
+    /// The table's damage cell: "d6+2 fire", "d4 prank", "d6".
+    var damageLine: String {
+        var s = damageDice.count == 1 ? "d\(damageDice.faces)"
+                                      : "\(damageDice.count)d\(damageDice.faces)"
+        if damageBonus > 0 { s += "+\(damageBonus)" }
+        if damageBonus < 0 { s += "\(damageBonus)" }
+        if let note = damageNote { s += " \(note)" }
+        return s
+    }
+}
+
 // MARK: - Class & Path
 
 public struct ClassDefinition: Codable, Hashable, Sendable, Identifiable {
@@ -298,6 +367,7 @@ public struct ContentBundle: Codable, Sendable {
     public let items: [ItemDefinition]
     public let races: [RaceDefinition]
     public let companions: [CompanionDefinition]
+    public let monsters: [MonsterDefinition]
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -310,5 +380,6 @@ public struct ContentBundle: Codable, Sendable {
         items = try c.decodeIfPresent([ItemDefinition].self, forKey: .items) ?? []
         races = try c.decode([RaceDefinition].self, forKey: .races)
         companions = try c.decodeIfPresent([CompanionDefinition].self, forKey: .companions) ?? []
+        monsters = try c.decodeIfPresent([MonsterDefinition].self, forKey: .monsters) ?? []
     }
 }

@@ -117,7 +117,7 @@ extension CharacterChoices {
 }
 
 /// Where an acquisition came from. The tag every future gate + audit log reads.
-public enum GrantSource: Hashable, Sendable {
+public enum GrantSource: Hashable, Sendable, Codable {
     case purchase, foundLoot, adventure
     case gmToken(String)
 }

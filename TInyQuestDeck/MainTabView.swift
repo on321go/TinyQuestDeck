@@ -16,7 +16,7 @@ import SwiftUI
 //    }
 //}
 
-enum MainTab: Hashable { case sheet, heroes, books, spells, shop }
+enum MainTab: Hashable { case sheet, heroes, books, spells, shop, gm }
 
 struct MainTabView: View {
     @State private var content = ContentStore()
@@ -24,9 +24,14 @@ struct MainTabView: View {
     @State private var combat = CombatStore()
     @State private var rulebookStore = RulebookStore()
     @State private var shop = ShopStore()
+    @State private var gm = GMStore()
+    @State private var party = GMPartyStore()
+    @State private var encounters = EncounterStore()
+    @State private var adventureStore = AdventureStore()
     @State private var tab: MainTab = .heroes
     @State private var selectedHeroID: UUID? = nil
     @State private var building = false
+    
 
     var body: some View {
         Group {
@@ -75,6 +80,11 @@ struct MainTabView: View {
             }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
                 ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
+            }
+            Tab("GM", systemImage: "crown.fill", value: .gm) {
+                GMView(repo: repo, roster: roster, gm: gm,
+                       party: party, encounters: encounters,
+                       adventures: adventureStore, rulebook: rulebookStore)
             }
         }
     }

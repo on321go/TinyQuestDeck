@@ -25,6 +25,9 @@ public protocol ContentRepository {
     func items() -> [ItemDefinition]
     func companion(_ id: String) -> CompanionDefinition?
     func companions() -> [CompanionDefinition]
+    /// The GM's bestiary — structured monsters from content.
+        func monster(_ id: String) -> MonsterDefinition?
+        func monsters() -> [MonsterDefinition]
 }
 
 public struct ContentIssue: Equatable, Sendable, CustomStringConvertible {
@@ -52,6 +55,7 @@ public final class ValidatingContentRepository: ContentRepository {
     private let gearByID: [String: GearDefinition]
     private let raceByID: [String: RaceDefinition]
     private let companionByID: [String: CompanionDefinition]
+    private let monsterByID: [String: MonsterDefinition]
 
     public init(bundle: ContentBundle) throws {
         self.bundle = bundle
@@ -64,6 +68,7 @@ public final class ValidatingContentRepository: ContentRepository {
         itemByID = Dictionary(uniqueKeysWithValues: bundle.items.map { ($0.id, $0) })
         raceByID = Dictionary(uniqueKeysWithValues: bundle.races.map { ($0.id, $0) })
         companionByID = Dictionary(uniqueKeysWithValues: bundle.companions.map { ($0.id, $0) })
+        monsterByID = Dictionary(uniqueKeysWithValues: bundle.monsters.map { ($0.id, $0) })
 
         let issues = Self.validate(bundle,
             classByID: classByID, pathByID: pathByID, abilityByID: abilityByID,
@@ -85,6 +90,8 @@ public final class ValidatingContentRepository: ContentRepository {
     private let itemByID: [String: ItemDefinition]
     public func item(_ id: String) -> ItemDefinition? { itemByID[id] }
     public func items() -> [ItemDefinition] { bundle.items }
+    public func monster(_ id: String) -> MonsterDefinition? { monsterByID[id] }
+    public func monsters() -> [MonsterDefinition] { bundle.monsters }
 
     // MARK: Validation
 
@@ -173,6 +180,15 @@ public final class ValidatingContentRepository: ContentRepository {
                 need(it.spellID == nil, o, "only scrolls may set spellID")
             }
         }
+        
+        // Monsters: sane table numbers. (Quick Monster Math tops out at 30, but
+                // that's a guideline, not a cap — only outright nonsense fails.)
+                for m in b.monsters {
+                    let o = "monster:\(m.id)"
+                    need(m.hp >= 1, o, "hp must be >= 1")
+                    need(m.toHit >= 0, o, "toHit must be >= 0")
+                    need(!m.quirk.isEmpty, o, "quirk must not be empty — quirks are the point")
+                }
 
         // Cross-check derived starting HP against the rulebook's stated path totals.
         // NOTE: sums ALL startingGearIDs — safe because kit weapons carry 0 maxHP;

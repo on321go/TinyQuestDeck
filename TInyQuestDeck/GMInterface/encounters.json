@@ -1,0 +1,87 @@
+{
+  "presets": [
+    {
+      "id": "webbed-cave",
+      "title": "The Webbed Cave",
+      "places": [
+        { "name": "Cave mouth" },
+        { "name": "The dark pool" },
+        { "name": "The roof", "lock": "Speed 12 to climb", "parent": "Cave mouth" }
+      ],
+      "monsters": [
+        { "monster": "giant-spider", "place": "The roof" },
+        { "monster": "slime", "place": "The dark pool" }
+      ]
+    },
+    {
+      "id": "old-bridge",
+      "title": "The Old Bridge",
+      "places": [
+        { "name": "Near bank" },
+        { "name": "The old bridge" },
+        { "name": "Far bank" },
+        { "name": "Under the bridge", "lock": "Speed 10 to climb down", "parent": "The old bridge" }
+      ],
+      "monsters": [
+        { "monster": "bandit", "place": "Far bank", "count": 2 },
+        { "monster": "mischief-sprite", "place": "Under the bridge" }
+      ]
+    },
+    {
+      "id": "wizards-tower",
+      "title": "The Wizard's Tower",
+      "places": [
+        { "name": "The great hall" },
+        { "name": "The winding stair" },
+        { "name": "The study" },
+        { "name": "The balcony", "lock": "Speed 12 to climb the ivy", "parent": "The great hall" }
+      ],
+      "monsters": [
+        { "monster": "skeleton", "place": "The winding stair", "count": 2 },
+        { "monster": "ghost", "place": "The study" }
+      ]
+    },
+    {
+      "id": "pirate-ship",
+      "title": "The Pirate Ship",
+      "places": [
+        { "name": "The dock" },
+        { "name": "Main deck" },
+        { "name": "The captain's cabin" },
+        { "name": "The crow's nest", "lock": "Speed 12 to climb the rigging", "parent": "Main deck" }
+      ],
+      "monsters": [
+        { "monster": "bandit", "place": "Main deck", "count": 3 },
+        { "monster": "ogre", "place": "The captain's cabin" }
+      ]
+    },
+    {
+      "id": "throne-room",
+      "title": "The Throne Room",
+      "places": [
+        { "name": "The grand doors" },
+        { "name": "The long hall" },
+        { "name": "The throne" },
+        { "name": "The gallery", "lock": "Speed 12 to climb the pillars", "parent": "The long hall" }
+      ],
+      "monsters": [
+        { "monster": "skeleton", "place": "The long hall", "count": 2 },
+        { "monster": "ghost", "place": "The throne" }
+      ]
+    },
+    {
+      "id": "forest-camp",
+      "title": "The Forest Camp",
+      "places": [
+        { "name": "The tree line" },
+        { "name": "The campfire" },
+        { "name": "The supply tent" },
+        { "name": "A tall pine", "lock": "Speed 10 to climb", "parent": "The tree line" }
+      ],
+      "monsters": [
+        { "monster": "goblin", "place": "The campfire", "count": 3 },
+        { "monster": "wolf", "place": "The tree line" }
+      ]
+    }
+  ]
+}
