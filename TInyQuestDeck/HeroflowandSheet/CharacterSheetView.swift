@@ -179,6 +179,7 @@ private struct SheetBody: View {
                     VStack(alignment: .leading, spacing: 10) {
                         levelBadge
                         buffSlot
+                        starBar
                     }
                 }
                 HStack(spacing: 12) {
@@ -190,6 +191,7 @@ private struct SheetBody: View {
                 HStack(spacing: 10) {
                     goldBar
                     heroCardButton
+                    
                 }
             }
         }
@@ -273,32 +275,39 @@ private struct SheetBody: View {
     }
 
     private var levelBadge: some View {
-        Button { showLevelUp = true } label: {
-            HStack(spacing: 10) {
-                Text(sheet.pathName.uppercased()).font(questFont(22))
-                Text("Level \(sheet.level)").font(questFont(24))
+            Button { showLevelUp = true } label: {
+                HStack(spacing: 10) {
+                    Text(sheet.pathName.uppercased()).font(questFont(22))
+                    Text("Level \(sheet.level)").font(questFont(24))
+                    if character.canLevelUp {
+                        Image(systemName: "sparkles")
+                            .font(.title3).foregroundStyle(TierColor.signature)
+                    }
+                }
+                .foregroundStyle(.black)
+                .padding(.horizontal, 18).padding(.vertical, 10)
+                .background(bg, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(character.canLevelUp ? TierColor.signature : .black,
+                                  lineWidth: character.canLevelUp ? 3 : 2))
             }
-            .foregroundStyle(.black)
-            .padding(.horizontal, 18).padding(.vertical, 10)
-            .background(bg, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
-        }
-        .buttonStyle(.plain)
-        .sheet(isPresented: $showLevelUp) {
-            LevelUpSheet(
-                targetLevel: min(character.level + 1, 3),
-                pointsPool: 2,
-                currentMight: sheet.might,
-                currentSpeed: sheet.speed,
-                currentMind: sheet.mind,
-                atMaxLevel: character.level >= 3,
-                bg: bg, accent: accent
-            ) { alloc in
-                levelUp(applying: alloc)
+            .buttonStyle(.plain)
+            .sheet(isPresented: $showLevelUp) {
+                LevelUpSheet(
+                    targetLevel: min(character.level + 1, 3),
+                    pointsPool: 2,
+                    currentMight: sheet.might,
+                    currentSpeed: sheet.speed,
+                    currentMind: sheet.mind,
+                    atMaxLevel: character.level >= 3,
+                    starsToGo: character.canLevelUp ? nil : character.starsToNextLevel,
+                    bg: bg, accent: accent
+                ) { alloc in
+                    levelUp(applying: alloc)
+                }
+                .presentationDetents([.medium, .large])
             }
-            .presentationDetents([.medium, .large])
         }
-    }
     
     // MARK: Gold wallet (header)
   
@@ -362,6 +371,31 @@ private struct SheetBody: View {
         }
         .buttonStyle(.plain)
     }
+    
+    // MARK: Star track (progression — the third of the hero's ledger controls)
+        //
+        // Gold · Hero Card · Stars: the three things the GM's award pipeline feeds, in one
+        // row. The ± buttons are the honor-system award path and the ONLY way a star reaches
+        // this iPad until QR Milestone B ships and is proven on two devices — they retire
+        // with showGoldDevControls, not before.
+        private let showStarDevControls = true
+
+        private var starBar: some View {
+            // Bound explicitly rather than ternary-in-argument: a closure literal opposite
+            // `nil` is exactly the shape that stalls the Swift 6 type checker in a body
+            // this size.
+            let add:    (() -> Void)? = showStarDevControls ? { adjustStars(by: 1) } : nil
+            let remove: (() -> Void)? = showStarDevControls ? { adjustStars(by: -1) } : nil
+            return StarTrack(stars: character.stars,
+                             readyToLevel: character.canLevelUp,
+                             onAdd: add, onRemove: remove)
+        }
+
+        private func adjustStars(by delta: Int) {
+            var c = character
+            c.stars = max(0, c.stars + delta)
+            roster.update(c)   // stars never touch Max HP — no commitChoices needed
+        }
 
     private var coinIcon: some View {
         ZStack {
@@ -1627,26 +1661,29 @@ private struct LevelUpSheet: View {
     let currentSpeed: Int
     let currentMind: Int
     let atMaxLevel: Bool
+    let starsToGo: Int?
     let bg: Color
     let accent: Color
     var onConfirm: ([Stat: Int]) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var alloc: [Stat: Int] = [.might: 0, .speed: 0, .mind: 0]
-
+    
     private var spent: Int { alloc.values.reduce(0, +) }
     private var left: Int { pointsPool - spent }
-
+    
     var body: some View {
         VStack {
-            if atMaxLevel { maxedContent } else { spendContent }
+            if atMaxLevel { maxedContent }
+            else if let n = starsToGo, n > 0 { notYetContent(n) }
+            else { spendContent }
         }
         .padding(24)
         .frame(maxWidth: 480)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(bg.opacity(0.85))
     }
-
+    
     // MARK: Maxed
 
     private var maxedContent: some View {
@@ -1665,6 +1702,27 @@ private struct LevelUpSheet: View {
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
     }
+    
+    // MARK: Not yet — the track hasn't reached the next flag
+        //
+        // The badge stays tappable on purpose: a kid who taps it should learn what they're
+        // working toward, not find a dead button.
+        private func notYetContent(_ starsToGo: Int) -> some View {
+            VStack(spacing: 16) {
+                Image(systemName: "star.circle.fill").font(.system(size: 48))
+                    .foregroundStyle(TierColor.signature)
+                Text(starsToGo == 1 ? "One more star!" : "\(starsToGo) more stars!")
+                    .font(questFont(22)).foregroundStyle(.black)
+                    .multilineTextAlignment(.center)
+                Text("Finish a quest, take down a boss, or do something so clever it skips the fight — then come back and level up!")
+                    .font(questFontLight(15)).foregroundStyle(.black.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                closeButton("Okay!")
+            }
+            .padding(22)
+            .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2))
+        }
 
     // MARK: Spend
 

@@ -6,14 +6,143 @@
       "group": "player",
       "icon": "sparkles",
       "blocks": [
-        { "kind": "paragraph", "text": "In Tiny Quest Deck, one person is the Game Master (the GM). The GM tells a story and plays all the monsters and characters you meet. Everyone else is a Hero. Together, you go on adventures, solve problems, and fight monsters." },
-        { "kind": "paragraph", "text": "The GM describes what's happening. The Heroes say what they want to do. When something is hard or risky, you roll dice to see what happens." },
-        { "kind": "callout", "title": "What you need to play", "tier": "starting", "body": [
-          "One d20 (the big 20-sided die) and one d6 (regular 6-sided die)",
-          "A pencil and a character sheet for each player",
-          "This rulebook (the Game Master uses it)",
-          "Imagination"
-        ] }
+        {
+          "kind": "paragraph",
+          "text": "Five steps and you're playing. Read down, then go."
+        },
+        {
+          "kind": "steps",
+          "items": [
+            {
+              "n": 1,
+              "title": "Pick your class — what you do",
+              "body": "Pick the sentence that sounds like you:",
+              "blocks": [
+                {
+                  "kind": "cards",
+                  "columns": 2,
+                  "items": [
+                    {
+                      "icon": "shield.lefthalf.filled",
+                      "title": "Knight",
+                      "text": "“I stand in front and hit hard.”"
+                    },
+                    {
+                      "icon": "figure.walk.motion",
+                      "title": "Scout",
+                      "text": "“I sneak, climb, and shoot from anywhere.”"
+                    },
+                    {
+                      "icon": "wand.and.stars",
+                      "title": "Wizard",
+                      "text": "“I know things — and blast things.”"
+                    },
+                    {
+                      "icon": "heart.fill",
+                      "title": "Healer",
+                      "text": "“I keep my friends standing.”"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Pick your kind — who you are",
+              "body": "Your looks, your charm, and one small perk. Class is what you do; kind is who you are. There are no wrong picks — the app walks you through both."
+            },
+            {
+              "n": 3,
+              "title": "Know your three numbers",
+              "body": "Might = strong. Mind = smart and magic. Speed = quick and sneaky.",
+              "highlight": "Roll the d20, add your stat. 10 or more — you did it!",
+              "highlightIcon": "die.face.5.fill"
+            },
+            {
+              "n": 4,
+              "title": "Your turn in a fight",
+              "body": "Move one place, then do one thing — Free Actions ride on top. Close hits your place; Far hits anything you can see.",
+              "blocks": [
+                {
+                  "kind": "cards",
+                  "columns": 2,
+                  "items": [
+                    {
+                      "icon": "shoeprints.fill",
+                      "title": "Move",
+                      "badge": "1 per turn",
+                      "color": "move",
+                      "text": "Go one place over — no roll, nothing spent.",
+                      "examples": "Step onto the bridge · try a climb lock"
+                    },
+                    {
+                      "icon": "burst.fill",
+                      "title": "Your one thing",
+                      "badge": "1 per turn",
+                      "color": "thing",
+                      "text": "The big act of your turn — pick one.",
+                      "examples": "Attack · cast a spell · help a friend · RUN 2+ places (running eats this!)"
+                    },
+                    {
+                      "icon": "bolt.fill",
+                      "title": "Free Action",
+                      "badge": "rides on top",
+                      "color": "free",
+                      "text": "A bonus — uses neither slot. Any time during your turn.",
+                      "examples": "Quick Swap your gear · Two Weapons extra attack · powers marked Free Action"
+                    },
+                    {
+                      "icon": "bolt.shield.fill",
+                      "title": "Reaction",
+                      "badge": "not your turn · 1 per round",
+                      "color": "reaction",
+                      "text": "Fires on someone ELSE'S turn — if one of your powers says Reaction.",
+                      "examples": "Block a hit for a friend · anything on your sheet marked Reaction"
+                    }
+                  ]
+                },
+                {
+                  "kind": "chips",
+                  "title": "Lila's whole turn, in blocks",
+                  "rows": [
+                    {
+                      "joined": true,
+                      "items": [
+                        {
+                          "text": "Move — onto the bridge",
+                          "color": "move"
+                        },
+                        {
+                          "text": "One thing — great axe!",
+                          "color": "thing"
+                        },
+                        {
+                          "text": "Free — Quick Swap to shield",
+                          "color": "free"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Later, on the ogre's turn:",
+                      "items": [
+                        {
+                          "text": "Reaction — “I block it!”",
+                          "color": "reaction"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Go play",
+              "icon": "checkmark",
+              "body": "Say what you want to try — the GM and the dice do the rest. You can't do it wrong."
+            }
+          ]
+        }
       ]
     },
     {
@@ -22,16 +151,39 @@
       "group": "player",
       "icon": "chart.bar.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "Every hero has three numbers that say what they're good at:" },
-        { "kind": "table",
-          "headers": ["Stat", "What it's for", "Examples"],
+        {
+          "kind": "paragraph",
+          "text": "Every hero has three numbers that say what they're good at:"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Stat",
+            "What it's for",
+            "Examples"
+          ],
           "rows": [
-            ["MIGHT", "Strength, toughness, swinging weapons", "Lift a gate, swing a sword"],
-            ["MIND", "Spells, smarts, knowing things", "Cast a spell, solve a riddle"],
-            ["SPEED", "Quickness, sneakiness, aiming", "Sneak past a guard, shoot a bow"]
+            [
+              "MIGHT",
+              "Strength, toughness, swinging weapons",
+              "Lift a gate, swing a sword"
+            ],
+            [
+              "MIND",
+              "Spells, smarts, knowing things",
+              "Cast a spell, solve a riddle"
+            ],
+            [
+              "SPEED",
+              "Quickness, sneakiness, aiming",
+              "Sneak past a guard, shoot a bow"
+            ]
           ]
         },
-        { "kind": "paragraph", "text": "Your stat is a small number like +1, +2, or +3. You add it to your dice roll." }
+        {
+          "kind": "paragraph",
+          "text": "Your stat is a small number like +1, +2, or +3. You add it to your dice roll."
+        }
       ]
     },
     {
@@ -40,16 +192,56 @@
       "group": "player",
       "icon": "die.face.5.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "When you try to do something hard, roll the d20 and add the stat that fits. If your total is 10 or more, you succeed!" },
-        { "kind": "callout", "title": "Example", "tier": "starting", "body": [
-          "Lila the Knight wants to push open a stuck door.",
-          "The GM says: “Roll Might.”",
-          "Lila has Might +3. She rolls the d20 and gets a 9.",
-          "9 + 3 = 12. That's 10 or more, so the door creaks open!"
-        ] },
-        { "kind": "heading", "text": "Natural 20s and Natural 1s" },
-        { "kind": "paragraph", "text": "If your d20 lands on 20 (before adding your stat), something extra cool happens. See the Legendary Roll table in the GM section." },
-        { "kind": "paragraph", "text": "If your d20 lands on 1 (before adding your stat), something goes funnily wrong. See the Legendary Fail table in the GM section." }
+        {
+          "kind": "paragraph",
+          "text": "When you try to do something hard, roll the d20 and add the stat that fits. If your total is 10 or more, you succeed!"
+        },
+        {
+          "kind": "callout",
+          "title": "Example",
+          "tier": "starting",
+          "body": [
+            "Lila the Knight wants to push open a stuck door.",
+            "The GM says: “Roll Might.”",
+            "Lila has Might +3. She rolls the d20 and gets a 9.",
+            "9 + 3 = 12. That's 10 or more, so the door creaks open!"
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "Natural 20s and Natural 1s"
+        },
+        {
+          "kind": "paragraph",
+          "text": "If your d20 lands on 20 (before adding your stat), something extra cool happens. See the Legendary Roll table in the GM section."
+        },
+        {
+          "kind": "paragraph",
+          "text": "If your d20 lands on 1 (before adding your stat), something goes funnily wrong. See the Legendary Fail table in the GM section."
+        },
+        {
+          "kind": "heading",
+          "text": "Who's Who & What You Need"
+        },
+        {
+          "kind": "paragraph",
+          "text": "In Tiny Quest Deck, one person is the Game Master (the GM). The GM tells a story and plays all the monsters and characters you meet. Everyone else is a Hero. Together, you go on adventures, solve problems, and fight monsters."
+        },
+        {
+          "kind": "paragraph",
+          "text": "The GM describes what's happening. The Heroes say what they want to do. When something is hard or risky, you roll dice to see what happens."
+        },
+        {
+          "kind": "callout",
+          "title": "What you need to play",
+          "tier": "starting",
+          "body": [
+            "One d20 (the big 20-sided die) and one d6 (regular 6-sided die)",
+            "A pencil and a character sheet for each player",
+            "This rulebook (the Game Master uses it)",
+            "Imagination"
+          ]
+        }
       ]
     },
     {
@@ -58,19 +250,45 @@
       "group": "player",
       "icon": "burst.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "When you fight a monster, take turns going around the table. On your turn:" },
-        { "kind": "bullets", "items": [
-          "Move (you can always move a little bit, no roll needed).",
-          "Do ONE thing: attack, cast a spell, or help a friend."
-        ] },
-        { "kind": "paragraph", "text": "Some powers are marked Reaction or Free Action — those don't use up your one thing (see Quick Rule Words)." },
-        { "kind": "heading", "text": "Attacking" },
-        { "kind": "paragraph", "text": "Roll the d20 and add the right stat (Might for heavy weapons, Mind for spells and magic weapons, Speed for light weapons and bows). If your total is 10 or more, you hit! Then roll the d6 and add your stat — that's how much damage the monster takes." },
-        { "kind": "heading", "text": "Getting Hurt" },
-        { "kind": "paragraph", "text": "Every hero has a Max HP (Health Points) that comes from their class and their armor. When you get hit, the GM tells you how much damage you take. Cross off that many HP boxes on your character sheet." },
-        { "kind": "callout", "title": "You don't die", "tier": "path", "body": [
-          "If your HP hits 0, you're knocked out. A friend can heal you to wake you up. You don't die — Tiny Quest Deck is a friendly game."
-        ] }
+        {
+          "kind": "paragraph",
+          "text": "When you fight a monster, take turns going around the table. On your turn:"
+        },
+        {
+          "kind": "bullets",
+          "items": [
+            "Move (you can always move a little bit, no roll needed).",
+            "Do ONE thing: attack, cast a spell, or help a friend."
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "text": "Some powers are marked Reaction or Free Action — those don't use up your one thing (see Quick Rule Words)."
+        },
+        {
+          "kind": "heading",
+          "text": "Attacking"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Roll the d20 and add the right stat (Might for heavy weapons, Mind for spells and magic weapons, Speed for light weapons and bows). If your total is 10 or more, you hit! Then roll the d6 and add your stat — that's how much damage the monster takes."
+        },
+        {
+          "kind": "heading",
+          "text": "Getting Hurt"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Every hero has a Max HP (Health Points) that comes from their class and their armor. When you get hit, the GM tells you how much damage you take. Cross off that many HP boxes on your character sheet."
+        },
+        {
+          "kind": "callout",
+          "title": "You don't die",
+          "tier": "path",
+          "body": [
+            "If your HP hits 0, you're knocked out. A friend can heal you to wake you up. You don't die — Tiny Quest Deck is a friendly game."
+          ]
+        }
       ]
     },
     {
@@ -79,12 +297,25 @@
       "group": "player",
       "icon": "moon.zzz.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "Tiny Quest Deck powers come back in two different ways. This keeps big signature moves special while letting everyday tricks fire more often." },
-        { "kind": "table",
-          "headers": ["Comes back when...", "What it means"],
+        {
+          "kind": "paragraph",
+          "text": "Tiny Quest Deck powers come back in two different ways. This keeps big signature moves special while letting everyday tricks fire more often."
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Comes back when...",
+            "What it means"
+          ],
           "rows": [
-            ["Rest", "You take a break after a tough fight or a long stretch. All HP comes back, all spells come back, and powers marked (Rest) recharge."],
-            ["Recharge", "Roll a d6 at the start of your turn. On a 6, all (Recharge) abilities and non-rest spells come back. Roll only during combat. On a recharge you may also swap one Ready Spell for one from your Spellbook, for free."]
+            [
+              "Rest",
+              "You take a break after a tough fight or a long stretch. All HP comes back, all spells come back, and powers marked (Rest) recharge."
+            ],
+            [
+              "Recharge",
+              "Roll a d6 at the start of your turn. On a 6, all (Recharge) abilities and non-rest spells come back. Roll only during combat. On a recharge you may also swap one Ready Spell for one from your Spellbook, for free."
+            ]
           ]
         }
       ]
@@ -95,20 +326,57 @@
       "group": "player",
       "icon": "text.book.closed.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "These are the words that show up on cards, in spells, and in monster quirks. The first four (Hurt, Stuck, Frightened, Asleep) are conditions — they plug into team combos." },
-        { "kind": "table",
-          "headers": ["Word", "Means"],
+        {
+          "kind": "paragraph",
+          "text": "These are the words that show up on cards, in spells, and in monster quirks. The first four (Hurt, Stuck, Frightened, Asleep) are conditions — they plug into team combos."
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Word",
+            "Means"
+          ],
           "rows": [
-            ["Hurt", "Wounded, burning, poisoned, sick, or weakened. Roll with −1 until it ends."],
-            ["Stuck", "Cannot move for the listed time. You can still attack or cast spells if you can reach."],
-            ["Frightened", "Scared or shaken. Roll with −1 and you can't move toward the thing that scared you until it ends."],
-            ["Asleep", "You are knocked out. You cannot do anything. A friend can wake you by shaking you (uses their turn) or by hitting you for 1 damage."],
-            ["Free Action", "A bonus move. It does not use your normal turn."],
-            ["Reaction", "Use during another player's or an enemy's turn. Once per round."],
-            ["Rest", "A break. Used spells and many powers come back. Some signature abilities only recharge with a rest and are marked (Rest)."],
-            ["Recharge", "Roll a d6 at the start of your turn. A 6 recharges all (Recharge) abilities and non-rest spells. Roll only during combat. On a recharge you may swap a Ready Spell for one from your Spellbook, for free."],
-            ["Hidden", "Enemies do not target you. Usually ends when you attack. Scout-only."],
-            ["Two Weapons", "Roll d20 to hit as a free action for dual wielding. Damage is d6 only."]
+            [
+              "Hurt",
+              "Wounded, burning, poisoned, sick, or weakened. Roll with −1 until it ends."
+            ],
+            [
+              "Stuck",
+              "Cannot move for the listed time. You can still attack or cast spells if you can reach."
+            ],
+            [
+              "Frightened",
+              "Scared or shaken. Roll with −1 and you can't move toward the thing that scared you until it ends."
+            ],
+            [
+              "Asleep",
+              "You are knocked out. You cannot do anything. A friend can wake you by shaking you (uses their turn) or by hitting you for 1 damage."
+            ],
+            [
+              "Free Action",
+              "A bonus move. It does not use your normal turn."
+            ],
+            [
+              "Reaction",
+              "Use during another player's or an enemy's turn. Once per round."
+            ],
+            [
+              "Rest",
+              "A break. Used spells and many powers come back. Some signature abilities only recharge with a rest and are marked (Rest)."
+            ],
+            [
+              "Recharge",
+              "Roll a d6 at the start of your turn. A 6 recharges all (Recharge) abilities and non-rest spells. Roll only during combat. On a recharge you may swap a Ready Spell for one from your Spellbook, for free."
+            ],
+            [
+              "Hidden",
+              "Enemies do not target you. Usually ends when you attack. Scout-only."
+            ],
+            [
+              "Two Weapons",
+              "Roll d20 to hit as a free action for dual wielding. Damage is d6 only."
+            ]
           ]
         }
       ]
@@ -119,17 +387,64 @@
       "group": "player",
       "icon": "arrow.up.circle.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "Heroes get stronger as the adventure goes on. Each class levels the same way:" },
-        { "kind": "table",
-          "headers": ["Level", "What changes"],
-          "rows": [
-            ["Level 2", "Base HP goes up (add gear bonuses). Boost your stats by 2 points (all on one stat, or split them). Gain your Path Power."],
-            ["Level 3", "Base HP goes up again. Boost your stats by 2 more points. Gain your Path Signature powers."]
+        {
+          "kind": "heading",
+          "text": "How do I level up? Earn stars!"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Your hero has a star track — six stars long. Fill 3 stars to reach Level 2. Fill all 6 to reach Level 3."
+        },
+        {
+          "kind": "paragraph",
+          "text": "The party earns a star together when you:"
+        },
+        {
+          "kind": "bullets",
+          "items": [
+            "Finish a quest or a big chapter of the adventure.",
+            "Take down a boss.",
+            "Do something SO good it skips one of those — talk the ogre out of fighting, sneak everyone past the dragon, solve the whole problem with one brilliant idea. If it would have been a milestone, it counts as one!"
           ]
         },
-        { "kind": "callout", "title": "In the app", "tier": "path", "body": [
-          "Tap your level badge on the character sheet to level up — spend your 2 points across Might, Speed, and Mind however you like. Your new powers appear automatically."
-        ] }
+        {
+          "kind": "paragraph",
+          "text": "Sometimes the GM gives one hero a bonus star for a moment that was extra clever, brave, kind, or funny. Those are rare and special — most stars, you earn together."
+        },
+        {
+          "kind": "heading",
+          "text": "What changes when you level"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Heroes get stronger as the adventure goes on. Each class levels the same way:"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Level",
+            "What changes"
+          ],
+          "rows": [
+            [
+              "Level 2",
+              "Base HP goes up (add gear bonuses). Boost your stats by 2 points (all on one stat, or split them). Gain your Path Power."
+            ],
+            [
+              "Level 3",
+              "Base HP goes up again. Boost your stats by 2 more points. Gain your Path Signature powers."
+            ]
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "In the app",
+          "tier": "path",
+          "body": [
+            "Your stars live next to your Hero Card button. When the track hits a flag, your level badge lights up — tap it to level up!",
+            "Tap your level badge on the character sheet to level up — spend your 2 points across Might, Speed, and Mind however you like. Your new powers appear automatically."
+          ]
+        }
       ]
     },
     {
@@ -138,28 +453,88 @@
       "group": "player",
       "icon": "shield.lefthalf.filled",
       "blocks": [
-        { "kind": "paragraph", "text": "Any character can use any gear. Pick the weapon and armor that fit your hero's style! Each weapon belongs to a category that decides which stat you roll to hit." },
-        { "kind": "heading", "text": "Weapon Categories" },
-        { "kind": "table",
-          "headers": ["Category", "Stat to Hit", "Range", "Damage"],
+        {
+          "kind": "paragraph",
+          "text": "Any character can use any gear. Pick the weapon and armor that fit your hero's style! Each weapon belongs to a category that decides which stat you roll to hit."
+        },
+        {
+          "kind": "heading",
+          "text": "Weapon Categories"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Category",
+            "Stat to Hit",
+            "Range",
+            "Damage"
+          ],
           "rows": [
-            ["Heavy Melee", "d20 + Might", "Close. Two-handed, no shield.", "d6 + Might"],
-            ["Light Melee", "d20 + Might or Speed", "Close", "d6"],
-            ["Ranged Physical", "d20 + Speed", "Far. Two-handed, no shield.", "d6 + Speed"],
-            ["Magic / Mental", "d20 + Mind", "Close or Far", "d6"]
+            [
+              "Heavy Melee",
+              "d20 + Might",
+              "Close. Two-handed, no shield.",
+              "d6 + Might"
+            ],
+            [
+              "Light Melee",
+              "d20 + Might or Speed",
+              "Close",
+              "d6"
+            ],
+            [
+              "Ranged Physical",
+              "d20 + Speed",
+              "Far. Two-handed, no shield.",
+              "d6 + Speed"
+            ],
+            [
+              "Magic / Mental",
+              "d20 + Mind",
+              "Close or Far",
+              "d6"
+            ]
           ]
         },
-        { "kind": "callout", "title": "Light weapons vary", "tier": "path", "body": [
-          "Some light melee weapons hit with Might (heavier one-handers like maces and hand-axes) and some with Speed (finesse blades like daggers and rapiers). The app shows the exact stat for each weapon when you add it — that's the source of truth."
-        ] },
-        { "kind": "heading", "text": "Armor" },
-        { "kind": "paragraph", "text": "Armor makes tracking health easy by directly increasing your Max HP." },
-        { "kind": "table",
-          "headers": ["Gear Type", "HP Bonus", "The Trade-off"],
+        {
+          "kind": "callout",
+          "title": "Light weapons vary",
+          "tier": "path",
+          "body": [
+            "Some light melee weapons hit with Might (heavier one-handers like maces and hand-axes) and some with Speed (finesse blades like daggers and rapiers). The app shows the exact stat for each weapon when you add it — that's the source of truth."
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "Armor"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Armor makes tracking health easy by directly increasing your Max HP."
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Gear Type",
+            "HP Bonus",
+            "The Trade-off"
+          ],
           "rows": [
-            ["Armor", "+2 Max HP", "—"],
-            ["Shield", "+1 Max HP", "Uses one hand. Cannot use Bows or Heavy Melee."],
-            ["Adventurer Clothes", "No Bonus", "—"]
+            [
+              "Armor",
+              "+2 Max HP",
+              "—"
+            ],
+            [
+              "Shield",
+              "+1 Max HP",
+              "Uses one hand. Cannot use Bows or Heavy Melee."
+            ],
+            [
+              "Adventurer Clothes",
+              "No Bonus",
+              "—"
+            ]
           ]
         }
       ]
@@ -170,7 +545,70 @@
       "group": "gm",
       "icon": "person.bust.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "This section is for the Game Master. Keep it handy while you run the game — it covers how to decide what to roll, how hard things are, and how monsters work." }
+        {
+          "kind": "paragraph",
+          "text": "Your whole job, on one page. Everything else is a tap away."
+        },
+        {
+          "kind": "heading",
+          "text": "The loop — repeat until bedtime"
+        },
+        {
+          "kind": "steps",
+          "items": [
+            {
+              "n": 1,
+              "title": "Describe",
+              "body": "Paint the scene in two sentences. Stop while they're curious."
+            },
+            {
+              "n": 2,
+              "title": "Ask",
+              "body": "“What do you do?” Then actually wait."
+            },
+            {
+              "n": 3,
+              "title": "Resolve",
+              "body": "Easy? Just say yes. Hard and risky? Call for a roll. Then back to 1."
+            }
+          ]
+        },
+        {
+          "kind": "cards",
+          "columns": 2,
+          "items": [
+            {
+              "icon": "die.face.5.fill",
+              "title": "When to roll",
+              "text": "Only when it's hard AND failing is interesting. Target 10. Hard 13. Really hard 16. Easy things never roll — just say yes."
+            },
+            {
+              "icon": "hand.point.up.left.fill",
+              "title": "Which stat",
+              "text": "Push, lift, swing, resist — Might. Know, cast, see through tricks — Mind. Sneak, shoot, climb, dodge — Speed. When unsure, let the kid argue for their best stat."
+            },
+            {
+              "icon": "burst.fill",
+              "title": "Fights",
+              "text": "Name 2–4 places out loud. Go around the table. Each turn: Move, then one thing. Natural 20 or 1 — open the Legendary tables and enjoy."
+            },
+            {
+              "icon": "star.fill",
+              "title": "Golden rules",
+              "text": "Say yes to weird ideas. Make failure funny, never boring. Heroes get knocked out, never die. Reward clever as much as strong."
+            }
+          ]
+        },
+        {
+          "kind": "crossLink",
+          "title": "One tap away:",
+          "targets": [
+            "gm-difficulty",
+            "gm-stat-call",
+            "gm-legendary",
+            "gm-monsters"
+          ]
+        }
       ]
     },
     {
@@ -179,18 +617,49 @@
       "group": "gm",
       "icon": "questionmark.circle.fill",
       "blocks": [
-        { "kind": "table",
-          "headers": ["The Hero wants to...", "Call for..."],
+        {
+          "kind": "table",
+          "headers": [
+            "The Hero wants to...",
+            "Call for..."
+          ],
           "rows": [
-            ["Push, lift, smash, climb a rope", "MIGHT"],
-            ["Swing a sword, axe, or club", "MIGHT"],
-            ["Resist being knocked over or poisoned", "MIGHT"],
-            ["Cast a spell, recall a fact, solve a puzzle", "MIND"],
-            ["Talk to an animal or a magical creature", "MIND"],
-            ["See through an illusion or trick", "MIND"],
-            ["Sneak, hide, dodge, run fast", "SPEED"],
-            ["Shoot a bow or throw something", "SPEED"],
-            ["Pick a lock, balance, do a tricky climb", "SPEED"]
+            [
+              "Push, lift, smash, climb a rope",
+              "MIGHT"
+            ],
+            [
+              "Swing a sword, axe, or club",
+              "MIGHT"
+            ],
+            [
+              "Resist being knocked over or poisoned",
+              "MIGHT"
+            ],
+            [
+              "Cast a spell, recall a fact, solve a puzzle",
+              "MIND"
+            ],
+            [
+              "Talk to an animal or a magical creature",
+              "MIND"
+            ],
+            [
+              "See through an illusion or trick",
+              "MIND"
+            ],
+            [
+              "Sneak, hide, dodge, run fast",
+              "SPEED"
+            ],
+            [
+              "Shoot a bow or throw something",
+              "SPEED"
+            ],
+            [
+              "Pick a lock, balance, do a tricky climb",
+              "SPEED"
+            ]
           ]
         }
       ]
@@ -201,14 +670,38 @@
       "group": "gm",
       "icon": "gauge.with.dots.needle.67percent",
       "blocks": [
-        { "kind": "paragraph", "text": "By default, a roll of 10 or more succeeds. If something is harder than usual, raise the target. If it's easier, skip the roll entirely." },
-        { "kind": "table",
-          "headers": ["Difficulty", "Target", "Examples"],
+        {
+          "kind": "paragraph",
+          "text": "By default, a roll of 10 or more succeeds. If something is harder than usual, raise the target. If it's easier, skip the roll entirely."
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Difficulty",
+            "Target",
+            "Examples"
+          ],
           "rows": [
-            ["Easy", "(no roll)", "Walking across a room, opening an unlocked door"],
-            ["Normal", "10 or more", "Most things heroes try"],
-            ["Hard", "13 or more", "Climbing a slick wall, sneaking past a watchful guard"],
-            ["Really Hard", "16 or more", "Lifting a portcullis alone, fooling a dragon"]
+            [
+              "Easy",
+              "(no roll)",
+              "Walking across a room, opening an unlocked door"
+            ],
+            [
+              "Normal",
+              "10 or more",
+              "Most things heroes try"
+            ],
+            [
+              "Hard",
+              "13 or more",
+              "Climbing a slick wall, sneaking past a watchful guard"
+            ],
+            [
+              "Really Hard",
+              "16 or more",
+              "Lifting a portcullis alone, fooling a dragon"
+            ]
           ]
         }
       ]
@@ -219,27 +712,64 @@
       "group": "gm",
       "icon": "star.circle.fill",
       "blocks": [
-        { "kind": "heading", "text": "Legendary Roll (natural 20)" },
-        { "kind": "paragraph", "text": "When a hero rolls a natural 20, they deal max dice damage, then double it. After damage is applied, they pick one:" },
-        { "kind": "callout", "title": "Option 1 — Shockwave", "tier": "signature", "body": [
-          "Knock down enemies around the target and give them Stuck. Plus, ask the GM to alter the room in a small way:",
-          "A wall cracks open.",
-          "Part of the roof collapses.",
-          "The struck target flies into the boss and knocks an item out of its hand."
-        ] },
-        { "kind": "callout", "title": "Option 2 — Free Action", "tier": "signature", "body": [
-          "Take an extra free action right away."
-        ] },
-        { "kind": "callout", "title": "Why it's fun", "tier": "path", "body": [
-          "Instead of just doing math, the kid gets to describe an epic moment: “I chop his shield in half so he can't block,” or “I shoot my arrow so hard it pins him to the wall and he's Stuck.” You just say “Yes” to whatever they describe."
-        ] },
-        { "kind": "heading", "text": "Legendary Fail (natural 1)" },
-        { "kind": "paragraph", "text": "When a hero rolls a natural 1, something goes funnily wrong. Keep it light — the goal is laughs, not ruined plans." },
-        { "kind": "table",
-          "headers": ["When the 1 happens on...", "What goes wrong"],
+        {
+          "kind": "heading",
+          "text": "Legendary Roll (natural 20)"
+        },
+        {
+          "kind": "paragraph",
+          "text": "When a hero rolls a natural 20, they deal max dice damage, then double it. After damage is applied, they pick one:"
+        },
+        {
+          "kind": "callout",
+          "title": "Option 1 — Shockwave",
+          "tier": "signature",
+          "body": [
+            "Knock down enemies around the target and give them Stuck. Plus, ask the GM to alter the room in a small way:",
+            "A wall cracks open.",
+            "Part of the roof collapses.",
+            "The struck target flies into the boss and knocks an item out of its hand."
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "Option 2 — Free Action",
+          "tier": "signature",
+          "body": [
+            "Take an extra free action right away."
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "Why it's fun",
+          "tier": "path",
+          "body": [
+            "Instead of just doing math, the kid gets to describe an epic moment: “I chop his shield in half so he can't block,” or “I shoot my arrow so hard it pins him to the wall and he's Stuck.” You just say “Yes” to whatever they describe."
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "Legendary Fail (natural 1)"
+        },
+        {
+          "kind": "paragraph",
+          "text": "When a hero rolls a natural 1, something goes funnily wrong. Keep it light — the goal is laughs, not ruined plans."
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "When the 1 happens on...",
+            "What goes wrong"
+          ],
           "rows": [
-            ["An attack", "You accidentally hit an ally with the attack instead (you pick which one)."],
-            ["A stat check (Might, Mind, Speed)", "You do the opposite of what you were trying to do."]
+            [
+              "An attack",
+              "You accidentally hit an ally with the attack instead (you pick which one)."
+            ],
+            [
+              "A stat check (Might, Mind, Speed)",
+              "You do the opposite of what you were trying to do."
+            ]
           ]
         }
       ]
@@ -250,31 +780,133 @@
       "group": "gm",
       "icon": "pawprint.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "Pick monsters to fit the scene. Most have HP between 4 and 20. To attack a hero, the monster rolls d20 + its To-Hit; on 10+, the hero takes the listed damage. Quirks make each monster memorable — use them!" },
-        { "kind": "table",
-          "headers": ["Monster", "HP", "To-Hit", "Damage", "Quirk"],
+        {
+          "kind": "paragraph",
+          "text": "Pick monsters to fit the scene. Most have HP between 4 and 20. To attack a hero, the monster rolls d20 + its To-Hit; on 10+, the hero takes the listed damage. Quirks make each monster memorable — use them!"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Monster",
+            "HP",
+            "To-Hit",
+            "Damage",
+            "Quirk"
+          ],
           "rows": [
-            ["Goblin", "4", "+2", "d6", "Cowardly. Runs if half its friends fall."],
-            ["Wolf", "6", "+3", "d6+1", "Hunts in pairs. Gives one bite, then circles."],
-            ["Skeleton", "5", "+2", "d6", "Falls apart on a natural 20 against it."],
-            ["Slime", "8", "+1", "d6 (sticky)", "Hit hero is Stuck until they roll Might 10+."],
-            ["Bandit", "7", "+3", "d6+1", "Will surrender if outnumbered or scared."],
-            ["Giant Spider", "9", "+3", "d6 (poison)", "On hit, hero is Hurt for 2 rounds."],
-            ["Ghost", "10", "+3", "d6 (chilling)", "Only Mind-based attacks hurt it."],
-            ["Ogre", "16", "+4", "d6+3", "Slow. Heroes go first. Loves to brag."],
-            ["Sneezing Dragon", "20", "+5", "d6+2 fire", "Sneezes (everyone in front: d6 fire) on a 1."],
-            ["Mischief Sprite", "3", "+4", "d4 (prank)", "Steals one item. Leaves a flower in its place."]
+            [
+              "Goblin",
+              "4",
+              "+2",
+              "d6",
+              "Cowardly. Runs if half its friends fall."
+            ],
+            [
+              "Wolf",
+              "6",
+              "+3",
+              "d6+1",
+              "Hunts in pairs. Gives one bite, then circles."
+            ],
+            [
+              "Skeleton",
+              "5",
+              "+2",
+              "d6",
+              "Falls apart on a natural 20 against it."
+            ],
+            [
+              "Slime",
+              "8",
+              "+1",
+              "d6 (sticky)",
+              "Hit hero is Stuck until they roll Might 10+."
+            ],
+            [
+              "Bandit",
+              "7",
+              "+3",
+              "d6+1",
+              "Will surrender if outnumbered or scared."
+            ],
+            [
+              "Giant Spider",
+              "9",
+              "+3",
+              "d6 (poison)",
+              "On hit, hero is Hurt for 2 rounds."
+            ],
+            [
+              "Ghost",
+              "10",
+              "+3",
+              "d6 (chilling)",
+              "Only Mind-based attacks hurt it."
+            ],
+            [
+              "Ogre",
+              "16",
+              "+4",
+              "d6+3",
+              "Slow. Heroes go first. Loves to brag."
+            ],
+            [
+              "Sneezing Dragon",
+              "20",
+              "+5",
+              "d6+2 fire",
+              "Sneezes (everyone in front: d6 fire) on a 1."
+            ],
+            [
+              "Mischief Sprite",
+              "3",
+              "+4",
+              "d4 (prank)",
+              "Steals one item. Leaves a flower in its place."
+            ]
           ]
         },
-        { "kind": "heading", "text": "Quick Monster Math" },
-        { "kind": "paragraph", "text": "If you need to invent a monster on the fly, use these rules of thumb:" },
-        { "kind": "table",
-          "headers": ["Threat Level", "HP", "Damage", "Good for..."],
+        {
+          "kind": "heading",
+          "text": "Quick Monster Math"
+        },
+        {
+          "kind": "paragraph",
+          "text": "If you need to invent a monster on the fly, use these rules of thumb:"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Threat Level",
+            "HP",
+            "Damage",
+            "Good for..."
+          ],
           "rows": [
-            ["Wimpy", "1–4", "d4", "First fight, lots of them"],
-            ["Normal", "5–10", "d6", "A real fight"],
-            ["Tough", "11–18", "d6+2", "A scary middle boss"],
-            ["Boss", "19–30", "d6+3", "End of the adventure"]
+            [
+              "Wimpy",
+              "1–4",
+              "d4",
+              "First fight, lots of them"
+            ],
+            [
+              "Normal",
+              "5–10",
+              "d6",
+              "A real fight"
+            ],
+            [
+              "Tough",
+              "11–18",
+              "d6+2",
+              "A scary middle boss"
+            ],
+            [
+              "Boss",
+              "19–30",
+              "d6+3",
+              "End of the adventure"
+            ]
           ]
         }
       ]
@@ -285,10 +917,54 @@
       "group": "gm",
       "icon": "gift.fill",
       "blocks": [
-        { "kind": "paragraph", "text": "After a good fight or a clever solution, hand out a reward. Gear, gold, a funny item, or a new spell all work. Let the treasure fit the story — a defeated wizard drops a wand; a dragon's hoard has gold and a magic sword." },
-        { "kind": "callout", "title": "In the app", "tier": "path", "body": [
-          "Heroes track Normal Items and Magic Items right on the character sheet. Add whatever you award — the app keeps the list. Gear that changes stats (weapons, armor) goes in the Gear box and updates Max HP automatically."
-        ] }
+        {
+          "kind": "paragraph",
+          "text": "After a good fight or a clever solution, hand out a reward. Gear, gold, a funny item, or a new spell all work. Let the treasure fit the story — a defeated wizard drops a wand; a dragon's hoard has gold and a magic sword."
+        },
+        {
+          "kind": "callout",
+          "title": "Stars for what they achieved. Gold for how they played.",
+          "tier": "signature",
+          "body": [
+            "You hold two reward currencies, and they do different jobs."
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "Stars are milestone-sized"
+        },
+        {
+          "kind": "paragraph",
+          "text": "Quest finished, boss down — or anything that would have BEEN one of those, however they pulled it off. One perfect roll that avoids the whole fight earns the boss star. Never withhold a star because the win was too clever."
+        },
+        {
+          "kind": "paragraph",
+          "text": "Quest and boss stars always go to the whole party — it keeps everyone leveling together, and with siblings at the table that matters more than any rule in this book."
+        },
+        {
+          "kind": "heading",
+          "text": "Gold and items are moment-sized"
+        },
+        {
+          "kind": "paragraph",
+          "text": "A great idea, a perfect joke, a kind gesture — reward it on the spot: 10–25 gold for a good moment, around 50 for one that defines the session. Better yet, hand them an item that matches the moment: a sneaky plan earns a smoke bomb, a funny one earns something from the Curiosities shelf, the merchant they rescued presses a potion into their hands."
+        },
+        {
+          "kind": "callout",
+          "title": "Bonus stars",
+          "tier": "path",
+          "body": [
+            "One hero, one moment, at most one per hero per session. Save them for the moments you'll retell at dinner. When in doubt, gold."
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "In the app",
+          "tier": "path",
+          "body": [
+            "Heroes track Normal Items and Magic Items right on the character sheet. Add whatever you award — the app keeps the list. Gear that changes stats (weapons, armor) goes in the Gear box and updates Max HP automatically."
+          ]
+        }
       ]
     }
   ]

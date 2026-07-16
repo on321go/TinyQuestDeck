@@ -10,13 +10,17 @@ import SwiftUI
 
 // MARK: - Tunable palette (one place to retune the reader's look)
 
-private enum RuleStyle {
+// NOTE: intentionally NOT private — RulebookBrowse.swift's BrowseCard mirrors
+// SectionCard's chrome and must read the same numbers. This stays the one place to
+// retune the reader's look.
+enum RuleStyle {
     static let blue        = Color(hex: "A8CBE4")   // central accent (New Hero name bar)
     static let blueInk     = Color(hex: "3E6E96")   // darker blue for header text on cream
 
     // Soft per-group page tints (behind the cream panels).
     static let playerPage  = Color(hex: "CDE3BE")   // green family
     static let gmPage      = Color(hex: "C9C4EC")   // purple family
+    static let browsePage  = Color(hex: "BCDCF0")   // blue family — the Browse ground
     static let pageTint    = 0.45                    // opacity of the page tint
 
     // Table
@@ -30,6 +34,20 @@ private enum RuleStyle {
 
     static let cardHeight: CGFloat = 88             // ~25% taller than the old ~70
     static let iconSize: CGFloat   = 46             // ~2x the old 26
+
+    // Action-economy colors (SPEC §2.1). Page-local visual aid for the Big Idea's
+    // economy block — deliberately NOT a global contract, so the overlap with the
+    // green/purple page tints above is known and accepted.
+    struct Economy { let fill: Color; let ink: Color; let badge: Color }
+    static func economy(_ c: EconomyColor?) -> Economy {
+        switch c ?? .plain {
+        case .move:     Economy(fill: Color(hex: "E6F1FB"), ink: Color(hex: "0C447C"), badge: Color(hex: "B5D4F4"))
+        case .thing:    Economy(fill: Color(hex: "FAECE7"), ink: Color(hex: "8A3417"), badge: Color(hex: "F5C4B3"))
+        case .free:     Economy(fill: Color(hex: "EAF3DE"), ink: Color(hex: "2F600E"), badge: Color(hex: "C0DD97"))
+        case .reaction: Economy(fill: Color(hex: "EEEDFE"), ink: Color(hex: "3C3489"), badge: Color(hex: "CECBF6"))
+        case .plain:    Economy(fill: TierColor.panelCream, ink: .black, badge: blue)
+        }
+    }
 }
 
 // MARK: - Root (Books tab)
@@ -70,7 +88,7 @@ struct RulebookView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Color.white)
-            .navigationDestination(for: RuleSection.self) { RuleSectionDetail(section: $0) }
+            .navigationDestination(for: RuleSection.self) { RuleSectionDetail(section: $0, store: store) }
         }
         .onAppear { if store.rulebook == nil && store.error == nil { store.load() } }
         .fullScreenCover(item: $browsing) { target in
@@ -101,45 +119,58 @@ struct RulebookView: View {
 
     /// "Browse Classes / Kinds" — read-only galleries reusing the creation screens,
     /// opened as full-screen covers (their own NavigationStack) so they never nest
-    /// inside this reader's stack.
+    /// inside this reader's stack. Sits on its own blue ground, matching the two
+    /// section groups below it.
     private var browseRow: some View {
-        LazyVGrid(columns: columns, spacing: 14) {
-            Button { browsing = .classes } label: {
-                BrowseCard(title: "Browse Classes",
-                           subtitle: "See every class and path",
-                           icon: "shield.lefthalf.filled", artKey: "browse-classes",
-                           accent: RuleStyle.blue)
-            }
-            .buttonStyle(.plain)
+        pageGround("Browse the Deck", tint: RuleStyle.browsePage) {
+            LazyVGrid(columns: columns, spacing: 22) {   // extra row spacing so icons can poke up
+                Button { browsing = .classes } label: {
+                    BrowseCard(title: "Browse Classes",
+                               subtitle: "See every class and path",
+                               icon: "shield.lefthalf.filled", artKey: "browse-classes",
+                               accent: RuleStyle.blue)
+                }
+                .buttonStyle(.plain)
 
-            Button { browsing = .kinds } label: {
-                BrowseCard(title: "Browse Kinds",
-                           subtitle: "Meet all eight kinds",
-                           icon: "person.3.fill", artKey: "browse-kinds",
-                           accent: RuleStyle.blue)
+                Button { browsing = .kinds } label: {
+                    BrowseCard(title: "Browse Kinds",
+                               subtitle: "Meet all eight kinds",
+                               icon: "person.3.fill", artKey: "browse-kinds",
+                               accent: RuleStyle.blue)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 
     @ViewBuilder
     private func group(_ title: String, _ sections: [RuleSection], tint: Color) -> some View {
         if !sections.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
-                Text(title.uppercased()).font(questFont(18)).foregroundStyle(.black.opacity(0.8))
+            pageGround(title, tint: tint) {
                 LazyVGrid(columns: columns, spacing: 22) {   // extra row spacing so icons can poke up
                     ForEach(sections) { section in
                         NavigationLink(value: section) { SectionCard(section: section) }
                             .buttonStyle(.plain)
                     }
                 }
-                .padding(.top, 8)   // room for the first row's poking icons
             }
-            .padding(16)
-            .background(tint.opacity(RuleStyle.pageTint),
-                        in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black.opacity(0.12), lineWidth: 1.5))
         }
+    }
+
+    /// The tinted page ground: titled card field behind a grid. One helper so the three
+    /// grounds (Browse / Player / GM) can only ever differ by title and hue.
+    private func pageGround<Content: View>(_ title: String,
+                                           tint: Color,
+                                           @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title.uppercased()).font(questFont(18)).foregroundStyle(.black.opacity(0.8))
+            content()
+                .padding(.top, 8)   // room for the first row's poking icons
+        }
+        .padding(16)
+        .background(tint.opacity(RuleStyle.pageTint),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black.opacity(0.12), lineWidth: 1.5))
     }
 
     @ViewBuilder
@@ -202,10 +233,18 @@ private struct SectionCard: View {
 
 struct RuleSectionDetail: View {
     let section: RuleSection
+    /// Needed so `crossLink` pills can resolve target ids → live section titles
+    /// (labels are never duplicated into rulebook.json) and push them.
+    let store: RulebookStore
 
     private var pageTint: Color {
         (section.group == .gm ? RuleStyle.gmPage : RuleStyle.playerPage)
             .opacity(RuleStyle.pageTint)
+    }
+
+    /// Group hue, handed to the blocks that draw structure (step spine, pills).
+    private var accent: Color {
+        section.group == .gm ? RuleStyle.calloutPurple : RuleStyle.calloutGreen
     }
 
     var body: some View {
@@ -213,7 +252,7 @@ struct RuleSectionDetail: View {
             VStack(alignment: .leading, spacing: 16) {
                 QuestChip(text: section.title, fill: RuleStyle.blue, size: 22)
                 ForEach(Array(section.blocks.enumerated()), id: \.offset) { _, block in
-                    BlockView(block: block)
+                    BlockView(block: block, store: store, accent: accent)
                 }
             }
             .padding(20)
@@ -230,6 +269,8 @@ struct RuleSectionDetail: View {
 
 private struct BlockView: View {
     let block: RuleBlock
+    let store: RulebookStore
+    let accent: Color
 
     var body: some View {
         switch block {
@@ -263,6 +304,18 @@ private struct BlockView: View {
         case .image(let key):
             QuestArt(name: "rules-\(key)", ratio: QuestRatio.banner,
                      symbol: "book.closed.fill", caption: nil)
+
+        case .steps(let items):
+            StepsSpine(steps: items, store: store, accent: accent)
+
+        case let .cards(columns, items):
+            CardsGrid(columns: columns, items: items)
+
+        case let .chips(title, rows):
+            ChipsPanel(title: title, rows: rows)
+
+        case let .crossLink(title, targets):
+            CrossLinkRow(title: title, targets: targets, store: store, accent: accent)
 
         case .unknown:
             EmptyView()
@@ -306,6 +359,342 @@ private struct CalloutBox: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(color.opacity(0.14), in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(color, lineWidth: 2.5))
+    }
+}
+
+// MARK: - Steps (numbered spine)
+//
+// The Big Idea's five-step on-ramp and the GM loop share this one renderer (vertical
+// spine both times — a 3-beat loop reads fine stacked, and one renderer is one thing
+// to retune). A step can nest blocks, which is how the class picker and the whole
+// action-economy block sit INSIDE their step, indented on the spine.
+
+private struct StepsSpine: View {
+    let steps: [RuleStep]
+    let store: RulebookStore
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
+                StepRow(step: step, isLast: i == steps.count - 1, store: store, accent: accent)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct StepRow: View {
+    let step: RuleStep
+    let isLast: Bool
+    let store: RulebookStore
+    let accent: Color
+
+    private let bubble: CGFloat = 34
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            // Spine: bubble + connector. The connector is a flexible frame, so it
+            // stretches to whatever the content column ends up being.
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle().fill(accent.opacity(0.35))
+                    Circle().strokeBorder(.black, lineWidth: 2)
+                    if let icon = step.icon {
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.black)
+                    } else {
+                        Text("\(step.n)").font(questFont(17)).foregroundStyle(.black)
+                    }
+                }
+                .frame(width: bubble, height: bubble)
+
+                if !isLast {
+                    Rectangle()
+                        .fill(accent.opacity(0.5))
+                        .frame(width: 3)
+                        .frame(maxHeight: .infinity)
+                }
+            }
+            .frame(width: bubble)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(step.title).font(questFont(18)).foregroundStyle(.black)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let body = step.body {
+                    Text(body).font(questFontLight(16)).foregroundStyle(.black.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let highlight = step.highlight {
+                    HighlightPill(text: highlight, icon: step.highlightIcon, accent: accent)
+                }
+
+                if let blocks = step.blocks {
+                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, nested in
+                        BlockView(block: nested, store: store, accent: accent)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, isLast ? 0 : 18)
+        }
+    }
+}
+
+/// The one sentence that matters most on the page (THE ONE RULE), in its own pill.
+private struct HighlightPill: View {
+    let text: String
+    let icon: String?
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let icon {
+                Image(systemName: icon).font(.system(size: 17, weight: .bold))
+            }
+            Text(text).font(questFont(16))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(.black)
+        .padding(.horizontal, 14).padding(.vertical, 9)
+        .background(accent.opacity(0.45), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+    }
+}
+
+// MARK: - Cards (mini-card grid: class picker, GM four-up, action economy)
+//
+// Deliberately NOT a LazyVGrid: these grids live nested inside a step inside a
+// ScrollView, and lazy containers on nested surfaces are the known culling-bug shape
+// (see HANDOFF_GM_Interface). Item counts are 4 — laziness buys nothing.
+
+private struct CardsGrid: View {
+    let columns: Int
+    let items: [RuleCard]
+
+    private var perRow: Int { max(1, columns) }
+    private var rows: [[RuleCard]] {
+        stride(from: 0, to: items.count, by: perRow).map {
+            Array(items[$0 ..< min($0 + perRow, items.count)])
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(alignment: .top, spacing: 10) {
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, card in
+                        RuleCardView(card: card)
+                    }
+                    // Keep the last row's cards the same width as a full row's.
+                    if row.count < perRow {
+                        ForEach(0 ..< (perRow - row.count), id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct RuleCardView: View {
+    let card: RuleCard
+
+    private var style: RuleStyle.Economy { RuleStyle.economy(card.color) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 8) {
+                if let icon = card.icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(style.ink)
+                }
+                Text(card.title).font(questFont(16)).foregroundStyle(style.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let badge = card.badge {
+                    Spacer(minLength: 6)
+                    Text(badge)
+                        .font(questFontLight(12)).foregroundStyle(style.ink)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(style.badge, in: Capsule())
+                        .overlay(Capsule().strokeBorder(.black.opacity(0.45), lineWidth: 1))
+                        .fixedSize()
+                }
+            }
+
+            if let text = card.text {
+                Text(text).font(questFontLight(15)).foregroundStyle(.black.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if let examples = card.examples {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(style.ink.opacity(0.75))
+                        .padding(.top, 3)
+                    Text(examples).font(questFontLight(14)).foregroundStyle(style.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(style.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+    }
+}
+
+// MARK: - Chips (the sample-turn strip)
+
+private struct ChipsPanel: View {
+    let title: String?
+    let rows: [RuleChipRow]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title {
+                Text(title).font(questFont(15)).foregroundStyle(.black.opacity(0.75))
+            }
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                ChipFlow(row: row)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+    }
+}
+
+private struct ChipFlow: View {
+    let row: RuleChipRow
+
+    var body: some View {
+        FlowLayout(spacing: 6) {
+            if let label = row.label {
+                Text(label).font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                    .padding(.vertical, 6)
+            }
+            ForEach(Array(row.items.enumerated()), id: \.offset) { i, chip in
+                if row.joined == true, i > 0 {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.black.opacity(0.4))
+                        .padding(.vertical, 8)
+                }
+                EconomyChip(chip: chip)
+            }
+        }
+    }
+}
+
+private struct EconomyChip: View {
+    let chip: RuleChip
+
+    var body: some View {
+        let style = RuleStyle.economy(chip.color)
+        Text(chip.text)
+            .font(questFontLight(14))
+            .foregroundStyle(style.ink)
+            .padding(.horizontal, 11).padding(.vertical, 6)
+            .background(style.fill, in: Capsule())
+            .overlay(Capsule().strokeBorder(.black.opacity(0.55), lineWidth: 1.5))
+    }
+}
+
+// MARK: - Cross-links (pill row → other sections)
+//
+// Labels come from the LIVE section titles via the store — the page points, it never
+// copies. An id that no longer resolves is dropped rather than rendering a dead pill.
+
+private struct CrossLinkRow: View {
+    let title: String?
+    let targets: [String]
+    let store: RulebookStore
+    let accent: Color
+
+    private var sections: [RuleSection] { targets.compactMap { store.section($0) } }
+
+    @ViewBuilder
+    var body: some View {
+        if !sections.isEmpty {
+            FlowLayout(spacing: 8) {
+                if let title {
+                    Text(title).font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                        .padding(.vertical, 7)
+                }
+                ForEach(sections) { section in
+                    NavigationLink(value: section) {
+                        HStack(spacing: 6) {
+                            Text(section.title).font(questFont(14)).foregroundStyle(.black)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.black.opacity(0.45))
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(accent.opacity(0.35), in: Capsule())
+                        .overlay(Capsule().strokeBorder(.black, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+// MARK: - FlowLayout
+//
+// Minimal wrapping row: chips and pills flow onto the next line instead of squeezing.
+// Used by the sample-turn strip and the cross-link pills.
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, widest: CGFloat = 0
+
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > maxWidth {
+                y += rowHeight + spacing
+                x = 0
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            widest = max(widest, x - spacing)
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: maxWidth.isFinite ? maxWidth : widest, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
+
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX {
+                y += rowHeight + spacing
+                x = bounds.minX
+                rowHeight = 0
+            }
+            view.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
     }
 }
 

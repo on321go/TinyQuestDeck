@@ -24,10 +24,18 @@ import SwiftData
 /// What was awarded. Purchasables are OFFICIAL content (resolvable ids — priced,
 /// sellable, showcase-eligible); homebrew is the free-text lane (GM-invented items,
 /// unsellable by design — see the official-vs-homebrew ruling in the shop handoff).
+///
+/// Adding a case is safe for the stored ledger: old StoredGrant blobs never contain
+/// it, and Swift's synthesized enum Codable keys on the case name, so nothing already
+/// written re-reads differently.
 enum GrantKind: Codable, Hashable, Sendable {
     case gold(Int)
     case purchasable(id: String, name: String)
     case homebrew(name: String, magic: Bool)
+    /// Progression. Almost always 1 — quest, boss, or a rare individual bonus.
+    /// Party-wide awards write ONE row per hero (see `awardStar(_:to:roster:)`), so
+    /// the ledger reads as "who has what," not "what did I announce."
+    case star(Int)
 }
 
 /// One ledger line.
@@ -69,6 +77,28 @@ final class GMStore {
         roster.update(hero)
         record(GrantEntry(heroID: heroID, heroName: hero.name,
                           kind: .gold(amount), source: .adventure, timestamp: .now))
+    }
+
+    /// Award (or take back) stars. Clamped at 0, uncapped upward — the track only
+    /// draws 6, but extras bank quietly for thresholds that don't exist yet.
+    ///
+    /// Deliberately does NOT touch `level`: stars entitle, the kid claims. The sheet's
+    /// level badge lights from `hero.canLevelUp` and the existing point-spend flow does
+    /// the rest, so a star award can never silently change a hero's build.
+    func awardStar(_ amount: Int = 1, to heroID: UUID, roster: RosterStore) {
+        guard amount != 0, var hero = roster.characters.first(where: { $0.id == heroID }) else { return }
+        hero.stars = max(0, hero.stars + amount)
+        roster.update(hero)
+        record(GrantEntry(heroID: heroID, heroName: hero.name,
+                          kind: .star(amount), source: .adventure, timestamp: .now))
+    }
+
+    /// The party-wide case — quest and boss stars, which are party-wide ALWAYS
+    /// (the sibling-proofing rule). One call, one row per hero, so the ledger can
+    /// still answer "does this hero have their star?" for each kid independently.
+    /// Heroes that no longer exist are skipped by the single-hero writer.
+    func awardStar(_ amount: Int = 1, toParty heroIDs: [UUID], roster: RosterStore) {
+        for heroID in heroIDs { awardStar(amount, to: heroID, roster: roster) }
     }
 
     /// Award official content — the same acquire() the shop's Buy uses, tagged
