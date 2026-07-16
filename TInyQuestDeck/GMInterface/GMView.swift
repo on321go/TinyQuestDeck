@@ -76,7 +76,7 @@ struct GMView: View {
             AwardComposer(hero: hero, repo: repo, roster: roster, gm: gm)
         }
         .sheet(item: $shortcut) { section in
-            NavigationStack { RuleSectionDetail(section: section) }
+            NavigationStack { RuleSectionDetail(section: section, store: rulebook) }
         }
         .sheet(isPresented: $addingMember) {
             AddPartyMemberSheet(repo: repo) { party.add($0) }

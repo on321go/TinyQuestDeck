@@ -66,7 +66,10 @@ struct BrowseKindsView: View {
 // MARK: - Books-tab entry card
 
 /// A rulebook landing card that opens a browsable gallery (Classes / Kinds).
-/// A rulebook landing card that opens a browsable gallery (Classes / Kinds).
+/// Chrome MIRRORS `SectionCard` in RulebookView.swift — same cream panel, same height,
+/// same art poking above the top-left corner — so the Browse ground and the two
+/// section grounds read as one grid. Both cards take their numbers from `RuleStyle`;
+/// retune there, not here, and the two can't drift apart.
 /// The leading art is QuestArt (asset `artKey`), falling back to the SF Symbol
 /// `icon` until that art is drawn.
 struct BrowseCard: View {
@@ -74,13 +77,10 @@ struct BrowseCard: View {
     let subtitle: String
     let icon: String            // SF Symbol fallback
     let artKey: String          // catalog asset name, e.g. "browse-classes"
-    let accent: Color
+    let accent: Color           // placeholder-gradient hue until the art is drawn
+
     var body: some View {
         HStack(spacing: 14) {
-            QuestArt(name: artKey, ratio: 1, colors: [accent, accent.opacity(0.5)],
-                     symbol: icon, caption: nil, framed: false)
-                .frame(width: 56, height: 56)
-                .background(accent.opacity(0.18), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(questFont(18)).foregroundStyle(.black)
                 Text(subtitle).font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
@@ -89,8 +89,19 @@ struct BrowseCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "chevron.right").font(.body).foregroundStyle(.black.opacity(0.3))
         }
-        .padding(16)
+        .padding(.leading, RuleStyle.iconSize + 8)     // reserve space for the overhanging icon
+        .padding(.trailing, 16)
+        .frame(height: RuleStyle.cardHeight)
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2.5))
+        // Art overhangs the top-left, poking above the box — same treatment as SectionCard.
+        .overlay(alignment: .topLeading) {
+            QuestArt(name: artKey, ratio: 1,
+                     colors: [accent, accent.opacity(0.5)],
+                     symbol: icon, caption: nil, framed: false)
+                .frame(width: RuleStyle.iconSize + 18, height: RuleStyle.iconSize + 18)
+                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                .offset(x: -6, y: -16)
+        }
     }
 }
