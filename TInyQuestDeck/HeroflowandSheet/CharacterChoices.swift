@@ -42,6 +42,12 @@ struct CharacterChoices: Identifiable, Hashable, Codable {
     /// every existing construction site AND every saved hero stays valid: no migration,
     /// no delete-and-relaunch.
     var gold: Int = 100      // starting budget to customize; earn more to diversify
+    /// Stars — the progression currency (never "XP"). Earned in milestone-sized chunks:
+    /// quest/boss stars party-wide, a rare individual GM bonus star. 3 → Level 2,
+    /// 6 → Level 3 (see `starThresholds`). NOT capped at 6: extras accumulate quietly
+    /// for levels that don't exist yet, per the spec's "add thresholds later, never
+    /// dilute existing ones." Same default-0 migration story as gold.
+    var stars: Int = 0
     var showcaseGearIDs: [String] = []   // up to 3 gear pieces the kid shows off
     var showcaseItemIDs: [String] = []   // up to 3 items the kid shows off
 }
@@ -75,8 +81,39 @@ extension CharacterChoices {
         readySpellIDs   = try c.decodeIfPresent([String].self,       forKey: .readySpellIDs) ?? []
         spiritImageID   = try c.decodeIfPresent(String.self,         forKey: .spiritImageID)
         gold            = try c.decodeIfPresent(Int.self,            forKey: .gold) ?? 100
+        stars           = try c.decodeIfPresent(Int.self,            forKey: .stars) ?? 0
         showcaseGearIDs = try c.decodeIfPresent([String].self, forKey: .showcaseGearIDs) ?? []
         showcaseItemIDs = try c.decodeIfPresent([String].self, forKey: .showcaseItemIDs) ?? []
+    }
+}
+
+// MARK: - Stars → levels (pure, derived — nothing stored but the count)
+
+extension CharacterChoices {
+    /// Stars needed to REACH each level: index 0 → Level 2, index 1 → Level 3.
+    /// One no-reset track, so these are cumulative totals, not per-level costs.
+    /// Levels 4+ would append here (e.g. 10) — never re-price 3 and 6.
+    static let starThresholds = [3, 6]
+
+    /// How many slots the track draws. Stars past this still count (see `stars`);
+    /// they just have nowhere to show yet.
+    static var starTrackLength: Int { starThresholds.last ?? 6 }
+
+    /// The level this hero's stars entitle them to. Levels are CLAIMED, not granted —
+    /// the kid still spends their 2 points in the level-up flow — so this is only ever
+    /// compared against `level`, never assigned to it.
+    var earnedLevel: Int {
+        1 + Self.starThresholds.filter { stars >= $0 }.count
+    }
+
+    /// True when the level badge should light up: the stars are in the bank and the
+    /// hero hasn't spent them yet. Drives the badge, not the leveling itself.
+    var canLevelUp: Bool { earnedLevel > level }
+
+    /// Stars still needed for the next level; nil once every threshold is passed.
+    var starsToNextLevel: Int? {
+        guard let next = Self.starThresholds.first(where: { $0 > stars }) else { return nil }
+        return next - stars
     }
 }
 
@@ -128,4 +165,3 @@ func startingSummary(for c: CharacterChoices, using repo: ContentRepository) -> 
         might: stat(.might), mind: stat(.mind), speed: stat(.speed),
         hp: hp, gearNames: kit.map(\.name), spells: spells)
 }
-
