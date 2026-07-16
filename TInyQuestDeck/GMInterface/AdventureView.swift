@@ -47,6 +47,8 @@ struct AdventureView: View {
     @State private var awarding: CharacterChoices? = nil
     @State private var goldPrefill: Int? = nil
     @State private var remoteNote: RemoteRef? = nil
+    @State private var namingImprov = false
+    @State private var improvTitle = ""
 
     private struct RemoteRef: Identifiable { let id = UUID(); let name: String }
     private var pageKey: String { "gm.adventure.page.\(adventure.id)" }
@@ -72,6 +74,11 @@ struct AdventureView: View {
             }, message: { _ in
                 Text("Starting a new battle replaces the one on the board.")
             })
+            .alert("Name the fight!", isPresented: $namingImprov) {
+                TextField("The Kitchen Ambush", text: $improvTitle)
+                Button("Start") { startBattle(blankPreset(named: improvTitle)) }
+                Button("Cancel", role: .cancel) {}
+            }
             .alert(item: $remoteNote) { ref in
                 Alert(title: Text("\(ref.name) lives on another iPad"),
                       message: Text("Awards can't land here directly — QR delivery is the next layer. For now, they use their sheet's gold stepper."),
@@ -189,6 +196,7 @@ struct AdventureView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
             }
             .buttonStyle(.plain)
+            improviseLink(defaultTitle: adventure.title)
         }
     }
 
@@ -211,6 +219,9 @@ struct AdventureView: View {
 
         if let preset = scene.encounter {
             encounterCard(preset)
+            improviseLink(defaultTitle: scene.title)
+        } else {
+            improviseCard(defaultTitle: scene.title)
         }
 
         if let rewards = scene.rewards, !rewards.isEmpty {
@@ -300,13 +311,7 @@ struct AdventureView: View {
                 }
             }
             Spacer()
-            Button {
-                if encounters.encounter != nil { pendingPreset = preset }
-                else {
-                    encounters.start(preset: preset, repo: repo)
-                    showingBoard = true
-                }
-            } label: {
+            Button { startBattle(preset) } label: {
                 Label("Start this battle", systemImage: "play.fill")
                     .font(questFont(14)).foregroundStyle(.black)
                     .lineLimit(1).fixedSize(horizontal: true, vertical: false)
@@ -322,6 +327,78 @@ struct AdventureView: View {
         .background(StoryStyle.box, in: RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16)
             .strokeBorder(StoryStyle.coral.opacity(0.8), lineWidth: 2))
+    }
+
+    /// One guard for every way a fight starts from the story: a live battle on
+    /// the board always gets the continue-vs-replace dialog first.
+    private func startBattle(_ preset: EncounterPreset) {
+        if encounters.encounter != nil {
+            pendingPreset = preset
+        } else {
+            encounters.start(preset: preset, repo: repo)
+            showingBoard = true
+        }
+    }
+
+    /// The GM's blank canvas — a named fight with two starter places to rename
+    /// and build on. The kids invented the battle; the board catches up.
+    private func blankPreset(named title: String) -> EncounterPreset {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        return EncounterPreset(
+            id: "improvised",
+            title: t.isEmpty ? "The Fight" : t,
+            places: [
+                EncounterPreset.PresetPlace(name: "Here", lock: nil, parent: nil, side: nil),
+                EncounterPreset.PresetPlace(name: "Over there", lock: nil, parent: nil, side: nil),
+            ],
+            monsters: [])
+    }
+
+    /// The dashed card for scenes with no written fight.
+    private func improviseCard(defaultTitle: String) -> some View {
+        Button {
+            improvTitle = defaultTitle
+            namingImprov = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "wand.and.stars")
+                    .font(.title3).foregroundStyle(StoryStyle.purple)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("NO FIGHT WRITTEN HERE")
+                        .font(questFont(14)).foregroundStyle(StoryStyle.ink.opacity(0.85))
+                    Text("Kids went sideways? Improvise one — name it, then build places and monsters right on the board.")
+                        .font(questFontLight(12)).foregroundStyle(StoryStyle.ink.opacity(0.5))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Label("Improvise a battle", systemImage: "play.fill")
+                    .font(questFont(13)).foregroundStyle(StoryStyle.ink)
+                    .lineLimit(1).fixedSize(horizontal: true, vertical: false)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(StoryStyle.field, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(StoryStyle.border, lineWidth: 1.5))
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(StoryStyle.box.opacity(0.6), in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(StoryStyle.border, style: StrokeStyle(lineWidth: 2, dash: [7, 5])))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The small link under a written fight (or the Hook) — for when the fight
+    /// that happens isn't the fight that was written.
+    private func improviseLink(defaultTitle: String) -> some View {
+        Button {
+            improvTitle = defaultTitle
+            namingImprov = true
+        } label: {
+            Label("Or improvise a different battle…", systemImage: "wand.and.stars")
+                .font(questFontLight(13)).foregroundStyle(StoryStyle.ink.opacity(0.5))
+        }
+        .buttonStyle(.plain)
     }
 
     private func monsterLine(_ preset: EncounterPreset) -> String {
