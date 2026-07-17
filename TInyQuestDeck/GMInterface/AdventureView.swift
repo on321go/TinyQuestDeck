@@ -44,7 +44,7 @@ struct AdventureView: View {
     @State private var page = 0
     @State private var showingBoard = false
     @State private var pendingPreset: EncounterPreset? = nil
-    @State private var awarding: CharacterChoices? = nil
+    @State private var awarding: GMPartyMember? = nil
     @State private var goldPrefill: Int? = nil
     @State private var remoteNote: RemoteRef? = nil
     @State private var namingImprov = false
@@ -58,10 +58,10 @@ struct AdventureView: View {
             .fullScreenCover(isPresented: $showingBoard) {
                 EncounterView(repo: repo, store: encounters, party: party) { showingBoard = false }
             }
-            .sheet(item: $awarding) { hero in
-                AwardComposer(hero: hero, repo: repo, roster: roster, gm: gm,
-                              initialGold: goldPrefill)
-            }
+            .sheet(item: $awarding) { member in
+                            AwardComposer(member: member, repo: repo, roster: roster, gm: gm,
+                                          initialGold: goldPrefill)
+                        }
             .confirmationDialog("A fight is already live", isPresented: pendingBinding,
                                 titleVisibility: .visible, presenting: pendingPreset,
                                 actions: { preset in
@@ -440,9 +440,9 @@ struct AdventureView: View {
         Menu {
             ForEach(party.members) { member in
                 Button(member.name) {
-                    if let hero = roster.characters.first(where: { $0.id == member.id }) {
+                    if roster.characters.contains(where: { $0.id == member.id }) {
                         goldPrefill = gold
-                        awarding = hero
+                        awarding = member
                     } else {
                         remoteNote = RemoteRef(name: member.name)
                     }

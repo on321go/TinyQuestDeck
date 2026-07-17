@@ -42,7 +42,7 @@ struct GMView: View {
     let adventures: AdventureStore
     let rulebook: RulebookStore
 
-    @State private var awarding: CharacterChoices? = nil
+    @State private var awarding: GMPartyMember? = nil
     @State private var shortcut: RuleSection? = nil
     @State private var showingBoard = false
     @State private var addingMember = false
@@ -72,8 +72,8 @@ struct GMView: View {
             .background(Color.white)
         }
         .onAppear { if rulebook.rulebook == nil && rulebook.error == nil { rulebook.load() } }
-        .sheet(item: $awarding) { hero in
-            AwardComposer(hero: hero, repo: repo, roster: roster, gm: gm)
+        .sheet(item: $awarding) { member in
+            AwardComposer(member: member, repo: repo, roster: roster, gm: gm)
         }
         .sheet(item: $shortcut) { section in
             NavigationStack { RuleSectionDetail(section: section, store: rulebook) }
@@ -301,10 +301,17 @@ struct GMView: View {
         let sheet = local.flatMap { deriveSheet(from: $0, using: repo) }
         let bg = sheet?.theme.map { Color(hex: $0.background) } ?? GMStyle.page
         let accent = sheet?.theme.map { Color(hex: $0.accent) } ?? GMStyle.accent
-
-        return Button {
-            if let local { awarding = local } else { remoteNoteFor = member }
-        } label: {
+        // Bound explicitly, and passed as `action:` rather than as a trailing closure:
+         // two trailing closures on Button is the shape that reports "extra trailing
+         // closure" when anything inside the first one fails to infer. Same family as
+         // starBar's note in CharacterSheetView — don't make the type checker guess in
+         // a body this size.
+         let isLocal = local != nil
+         let tap: () -> Void = {
+             if isLocal { awarding = member } else { remoteNoteFor = member }
+         }
+       
+        return Button(action: tap) {
             HStack(spacing: 12) {
                 QuestArt(name: QuestArtKey.portrait(combo: combo), ratio: QuestRatio.card,
                          colors: [accent, bg], symbol: "person.fill",
@@ -340,11 +347,11 @@ struct GMView: View {
             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
         }
         .buttonStyle(.plain)
-        .contextMenu {
-            Button("Remove \(member.name) from the party", role: .destructive) {
-                party.remove(member)
-            }
-        }
+         .contextMenu {
+             Button("Remove \(member.name) from the party", role: .destructive) {
+                 party.remove(member)
+             }
+         }
     }
 
     private var addMemberMenu: some View {
@@ -562,12 +569,22 @@ struct AddPartyMemberSheet: View {
     }
 }
 
-// MARK: - Award composer (direct grants for LOCAL heroes; the QR emit replaces
-// the Give button for remote members when that layer lands). Internal, not
-// private: AdventureView deep-links scene rewards here with the gold prefilled.
+// MARK: - Award composer
+//
+// THE TARGET IS A GMPartyMember, NOT A HERO — identity, never sheet state, which is
+// the same single-owner rule the party panel runs on. `localHero` is the ONE branch:
+// non-nil means the hero lives on this iPad and the token redeems in-process; nil
+// means it lives on another one and the token has to travel (step 6, Show QR).
+//
+// EVERY AWARD IS A GrantToken. Give doesn't mutate a hero — it builds a token and
+// calls `gm.redeem`, exactly what a scanned code will do on the kid's device. One
+// redeem path, two transports; the QR is transport, not the award.
+//
+// Internal, not private: AdventureView deep-links scene rewards here with the gold
+// prefilled.
 
 struct AwardComposer: View {
-    let hero: CharacterChoices        // identity snapshot; live gold reads from roster
+    let member: GMPartyMember
     let repo: ContentRepository
     let roster: RosterStore
     let gm: GMStore
@@ -576,6 +593,7 @@ struct AwardComposer: View {
     @Environment(\.dismiss) private var dismiss
     @State private var mode: Mode = .gold
     @State private var goldAmount = 10
+    @State private var starAmount = 1
     @State private var query = ""
     @State private var confirming: Purchasable? = nil
     @State private var homebrewName = ""
@@ -583,20 +601,39 @@ struct AwardComposer: View {
     @State private var toast: String? = nil
 
     private enum Mode: String, CaseIterable, Identifiable {
-            case gold = "Gold", star = "Star", item = "Item", homebrew = "Homebrew"
-            var id: String { rawValue }
+        case gold = "Gold", star = "Star", item = "Item", homebrew = "Homebrew"
+        var id: String { rawValue }
+    }
+
+    /// nil = this hero lives on another iPad. The composer's only structural branch.
+    private var localHero: CharacterChoices? {
+        roster.characters.first { $0.id == member.id }
+    }
+    private var isLocal: Bool { localHero != nil }
+
+    /// Live from the roster when local; unknowable when remote — their sheet is the
+    /// only place those numbers exist, and this iPad has no business guessing.
+    private var liveGold: Int? { localHero?.gold }
+    private var liveStars: Int? { localHero?.stars }
+
+    // MARK: The one award path
+
+    /// Build the token, redeem it here. A remote member's Give becomes Show QR in
+    /// step 6 — same token, same redeem, different transport.
+    private func give(_ kind: GrantKind, flashing line: String) {
+        guard let hero = localHero else { return }
+        let token = GrantToken.single(kind, hero: hero.id, name: member.name)
+        let result = gm.redeem(token, on: hero.id, roster: roster, repo: repo)
+        if case .applied = result {
+            flash(line)
+        } else {
+            // A fresh nonce on a hero we just resolved can only fail on content that
+            // doesn't resolve — a composer/repo mismatch, i.e. a bug, not a table event.
+            print("⚠️ AwardComposer: redeem returned \(result) for \(member.name)")
+            flash("That didn't land — check the console.")
         }
-    
-    private var liveGold: Int {
-        roster.characters.first { $0.id == hero.id }?.gold ?? hero.gold
     }
-    
-    @State private var starAmount = 1
-    
-    private var liveStars: Int {
-        roster.characters.first { $0.id == hero.id }?.stars ?? hero.stars
-    }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -606,7 +643,7 @@ struct AwardComposer: View {
                         ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
                     }
                     .pickerStyle(.segmented)
-                    
+
                     switch mode {
                     case .gold:     goldSection
                     case .star:     starSection
@@ -641,9 +678,8 @@ struct AwardComposer: View {
         }
         .confirmationDialog(confirming?.name ?? "", isPresented: confirmingBinding,
                             titleVisibility: .visible, presenting: confirming) { p in
-            Button("Give to \(hero.name)") {
-                gm.award(p, to: hero.id, roster: roster, repo: repo)
-                flash("\(p.name) → \(hero.name)!")
+            Button("Give to \(member.name)") {
+                give(.purchasable(id: p.id, name: p.name), flashing: "\(p.name) → \(member.name)!")
             }
             Button("Cancel", role: .cancel) {}
         } message: { p in
@@ -657,83 +693,103 @@ struct AwardComposer: View {
 
     private var heroHeader: some View {
         HStack(spacing: 10) {
-            Text(hero.name.uppercased()).font(questFont(20)).foregroundStyle(.black)
-            HStack(spacing: 5) {
-                Image(systemName: "star.fill").font(.caption).foregroundStyle(TierColor.signature)
-                Text("\(liveStars)")
-                    .font(questFont(18)).foregroundStyle(TierColor.signature)
-                    .contentTransition(.numericText())
+            Text(member.name.uppercased()).font(questFont(20)).foregroundStyle(.black)
+            if let stars = liveStars {
+                HStack(spacing: 5) {
+                    Image(systemName: "star.fill").font(.caption).foregroundStyle(TierColor.signature)
+                    Text("\(stars)")
+                        .font(questFont(18)).foregroundStyle(TierColor.signature)
+                        .contentTransition(.numericText())
+                }
             }
             Spacer()
-            HStack(spacing: 5) {
-                Circle().fill(Color(hex: "C79008")).frame(width: 12, height: 12)
-                Text("\(liveGold)")
-                    .font(questFont(18)).foregroundStyle(Color(hex: "C79008"))
-                    .contentTransition(.numericText())
+            if let gold = liveGold {
+                HStack(spacing: 5) {
+                    Circle().fill(Color(hex: "C79008")).frame(width: 12, height: 12)
+                    Text("\(gold)")
+                        .font(questFont(18)).foregroundStyle(Color(hex: "C79008"))
+                        .contentTransition(.numericText())
+                }
+            } else {
+                Label("On their iPad", systemImage: "ipad")
+                    .font(questFontLight(12)).foregroundStyle(.black.opacity(0.55))
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
     }
-    
+
     // Stars — the progression currency. Milestone-sized and mostly party-wide, so this
-        // stays deliberately blunt: one star, one hero, one tap. A quest or boss star means
-        // repeating that for each kid (or one scanned code, once Milestone B lands) — that
-        // repetition IS the sibling-proofing, and at three heroes it's cheap.
-        private var starSection: some View {
-            let live = roster.characters.first { $0.id == hero.id } ?? hero
-            let slots = CharacterChoices.starTrackLength
-            let filled = min(max(0, liveStars), slots)
+    // stays deliberately blunt: one star, one hero, one tap. A quest or boss star means
+    // repeating that for each kid (or one scanned code, once the party token lands) —
+    // that repetition IS the sibling-proofing, and at three heroes it's cheap.
+    //
+    // THE INVARIANT: this awards stars and nothing else. `redeem` routes .star through
+    // `awardStar`, which never touches `level` — it only makes `canLevelUp` true, and
+    // the kid still spends the points. Stars entitle; the kid claims.
+    private var starSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Stars for what they achieved, gold for how they played. A star is milestone-sized: quest done, boss down — or anything that would have BEEN one of those, however they pulled it off. A great moment that isn't a milestone is worth gold.")
+                .font(questFontLight(13)).foregroundStyle(.black.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
 
-            return VStack(alignment: .leading, spacing: 14) {
-                Text("Stars for what they achieved, gold for how they played. A star is milestone-sized: quest done, boss down — or anything that would have BEEN one of those, however they pulled it off. A great moment that isn't a milestone is worth gold.")
-                    .font(questFontLight(13)).foregroundStyle(.black.opacity(0.6))
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: 6) {
-                    ForEach(0 ..< slots, id: \.self) { i in
-                        Image(systemName: i < filled ? "star.fill" : "star")
-                            .font(.title3)
-                            .foregroundStyle(i < filled ? TierColor.signature : .black.opacity(0.25))
-                    }
-                    if liveStars > slots {
-                        Text("+\(liveStars - slots)")
-                            .font(questFont(14)).foregroundStyle(.black.opacity(0.5))
-                    }
-                    Spacer()
-                    Text(starStatus(live))
-                        .font(questFontLight(12))
-                        .foregroundStyle(live.canLevelUp ? TierColor.signature : .black.opacity(0.55))
-                }
-
-                Stepper(value: $starAmount, in: -3...3) {
-                    Text(starLabel(starAmount))
-                        .font(questFont(20))
-                        .foregroundStyle(starAmount >= 0 ? TierColor.signature : .red)
-                        .contentTransition(.numericText())
-                }
-
-                awardButton(starAmount >= 0 ? "Award \(starLabel(starAmount))" : "Take back \(starLabel(-starAmount))",
-                            enabled: starAmount != 0) {
-                    gm.awardStar(starAmount, to: hero.id, roster: roster)
-                    flash(starAmount >= 0 ? "★ → \(hero.name)!" : "\(starAmount) star — oof!")
-                }
+            // Split out: the track was the fattest expression in this body, and giant
+            // view expressions time out the Swift 6 type checker.
+            if let live = localHero {
+                starTrackPreview(live)
+            } else {
+                Text("Their star track lives on their iPad.")
+                    .font(questFontLight(12)).foregroundStyle(.black.opacity(0.5))
             }
-            .padding(16)
-            .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
-        }
 
-        private func starLabel(_ n: Int) -> String {
-            "\(n >= 0 ? "+" : "")\(n) star\(abs(n) == 1 ? "" : "s")"
-        }
+            Stepper(value: $starAmount, in: -3...3) {
+                Text(starLabel(starAmount))
+                    .font(questFont(20))
+                    .foregroundStyle(starAmount >= 0 ? TierColor.signature : .red)
+                    .contentTransition(.numericText())
+            }
 
-        private func starStatus(_ hero: CharacterChoices) -> String {
-            if hero.canLevelUp { return "Ready for Level \(hero.earnedLevel)!" }
-            if let togo = hero.starsToNextLevel { return "\(togo) to go" }
-            return "Track full"
+            awardButton(starAmount >= 0 ? "Award \(starLabel(starAmount))" : "Take back \(starLabel(-starAmount))",
+                        enabled: starAmount != 0 && isLocal) {
+                give(.star(starAmount),
+                     flashing: starAmount >= 0 ? "★ → \(member.name)!" : "\(starAmount) star — oof!")
+            }
         }
+        .padding(16)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
+    }
+
+    private func starTrackPreview(_ hero: CharacterChoices) -> some View {
+        let slots = CharacterChoices.starTrackLength
+        let filled = min(max(0, hero.stars), slots)
+        return HStack(spacing: 6) {
+            ForEach(0 ..< slots, id: \.self) { i in
+                Image(systemName: i < filled ? "star.fill" : "star")
+                    .font(.title3)
+                    .foregroundStyle(i < filled ? TierColor.signature : .black.opacity(0.25))
+            }
+            if hero.stars > slots {
+                Text("+\(hero.stars - slots)")
+                    .font(questFont(14)).foregroundStyle(.black.opacity(0.5))
+            }
+            Spacer()
+            Text(starStatus(hero))
+                .font(questFontLight(12))
+                .foregroundStyle(hero.canLevelUp ? TierColor.signature : .black.opacity(0.55))
+        }
+    }
+
+    private func starLabel(_ n: Int) -> String {
+        "\(n >= 0 ? "+" : "")\(n) star\(abs(n) == 1 ? "" : "s")"
+    }
+
+    private func starStatus(_ hero: CharacterChoices) -> String {
+        if hero.canLevelUp { return "Ready for Level \(hero.earnedLevel)!" }
+        if let togo = hero.starsToNextLevel { return "\(togo) to go" }
+        return "Track full"
+    }
 
     private var goldSection: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -759,10 +815,10 @@ struct AwardComposer: View {
                     .contentTransition(.numericText())
             }
             awardButton(goldAmount >= 0 ? "Award \(goldAmount) gold" : "Take \(-goldAmount) gold",
-                        enabled: goldAmount != 0) {
-                gm.awardGold(goldAmount, to: hero.id, roster: roster)
-                flash(goldAmount >= 0 ? "+\(goldAmount) gold → \(hero.name)!"
-                                      : "\(goldAmount) gold — ouch!")
+                        enabled: goldAmount != 0 && isLocal) {
+                give(.gold(goldAmount),
+                     flashing: goldAmount >= 0 ? "+\(goldAmount) gold → \(member.name)!"
+                                               : "\(goldAmount) gold — ouch!")
             }
         }
         .padding(16)
@@ -818,6 +874,7 @@ struct AwardComposer: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .disabled(!isLocal)
                         }
                     }
                     .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
@@ -827,22 +884,23 @@ struct AwardComposer: View {
         }
     }
 
+    /// A PREDICTION, read off the member's class — the same value local or remote. The
+    /// real fork happens in ShopRules.grant on the device that redeems, against the
+    /// real hero, which is why the token carries an id and not a resolved grant.
     private func awardNote(_ p: Purchasable) -> String {
         switch p {
         case .gear:
-            return "Lands in \(hero.name)'s owned gear — they equip it from the sheet's Add menu."
+            return "Lands in \(member.name)'s owned gear — they equip it from the sheet's Add menu."
         case .item(let i):
             switch i.kind {
             case .scroll:
-                return ShopRules.isCaster(hero, repo: repo)
-                    ? "\(hero.name) is a caster — they'll learn this spell into their spellbook."
-                    : "\(hero.name) isn't a caster — they'll carry the scroll as a one-shot magic item."
+                return "Lands in Magic Items as a scroll. A caster can learn it from their own sheet — or hold it and hand it to someone who can."
             case .consumable:       return "Lands in Normal Items."
             case .magicConsumable, .curio: return "Lands in Magic Items."
             }
         }
     }
-
+    
     private var homebrewSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Something you invented at the table. It lands on the sheet as a free-text item — if it earns a spot in the official game later, add it to the content under the same name and every copy upgrades itself.")
@@ -858,9 +916,10 @@ struct AwardComposer: View {
             }
             .tint(Color(hex: "8A4FD0"))
             awardButton("Award it",
-                        enabled: !homebrewName.trimmingCharacters(in: .whitespaces).isEmpty) {
-                gm.awardHomebrew(homebrewName, magic: homebrewMagic, to: hero.id, roster: roster)
-                flash("\(homebrewName) → \(hero.name)!")
+                        enabled: !homebrewName.trimmingCharacters(in: .whitespaces).isEmpty && isLocal) {
+                let trimmed = homebrewName.trimmingCharacters(in: .whitespaces)
+                give(.homebrew(name: trimmed, magic: homebrewMagic),
+                     flashing: "\(trimmed) → \(member.name)!")
                 homebrewName = ""
             }
         }

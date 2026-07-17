@@ -74,8 +74,11 @@ enum QuestQR {
             }
             return .hero(card)
         case Kind.grant:
-            // Milestone B lands on the KID's iPad, not here.
-            return .unsupported("That's a reward code — scan it on the player's iPad, not the GM's.")
+            guard let token = try? JSONDecoder().decode(GrantToken.self, from: data),
+                  !token.nonce.isEmpty else {
+                return .unsupported("That reward code looks scrambled — try holding steadier.")
+            }
+            return .grant(token)
         default:
             return .unsupported("This iPad doesn't know that kind of code yet.")
         }
@@ -84,6 +87,7 @@ enum QuestQR {
 
 enum QRScan {
     case hero(HeroCard)
+    case grant(GrantToken)
     case unsupported(String)        // the message to show, already kid-readable
 }
 
@@ -150,6 +154,73 @@ extension HeroCard {
                   portrait: hero.portraitID
                       ?? QuestArtKey.portraitCombo(race: hero.raceID, klass: hero.classID))
     }
+}
+
+// MARK: - Payload: the grant token (Milestone B)
+//
+// THE TOKEN IS THE AWARD; THE QR IS ONLY TRANSPORT. A hero on this iPad gets the same
+// struct redeemed in-process (no code, no camera — an iPad physically cannot scan its
+// own screen); a hero on another iPad gets it rendered and scanned. One redeem path,
+// two transports.
+//
+// `kind` is GrantKind verbatim — the ledger's vocabulary, unforked. Its `.purchasable`
+// id is already namespaced ("gear:x" / "item:y"), so the kid's device resolves it from
+// its OWN content.json via Purchasable.resolve. Small payload; robust code.
+//
+// No signing. The threat model is a kid double-tapping, not forgery.
+
+struct GrantToken: Codable, Hashable {
+    var v: Int = QuestQR.version
+    var t: String = QuestQR.Kind.grant
+    /// One-shot id. Dedup keys on (nonce, hero) — NEVER nonce alone. See SeenTokens.
+    var nonce: String
+    /// nil = a PARTY token: ANY hero may redeem it, once each. This is the party-star
+    /// mechanism — one code, each kid scans it in turn.
+    var hero: UUID?
+    /// Display only, and only on a single-hero token. Lets the wrong iPad say "this
+    /// reward is for Mittens" instead of a shrug. Never trusted for anything.
+    var heroName: String?
+    var kind: GrantKind
+
+    enum CodingKeys: String, CodingKey {
+        case v, t, nonce, hero, kind
+        case heroName = "n"     // short on the wire; every byte is a QR module
+    }
+
+    init(nonce: String, hero: UUID?, heroName: String?, kind: GrantKind) {
+        self.nonce = nonce; self.hero = hero; self.heroName = heroName; self.kind = kind
+    }
+
+    /// decodeIfPresent throughout — the CharacterChoices pattern, so a v2 token that
+    /// only ADDS fields still redeems on a v1 build. `kind` is the exception: a token
+    /// with no kind isn't an award, so it throws and decode() reports "scrambled".
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        v        = try c.decodeIfPresent(Int.self,    forKey: .v) ?? QuestQR.version
+        t        = try c.decodeIfPresent(String.self, forKey: .t) ?? QuestQR.Kind.grant
+        nonce    = try c.decodeIfPresent(String.self, forKey: .nonce) ?? ""
+        hero     = try c.decodeIfPresent(UUID.self,   forKey: .hero)
+        heroName = try c.decodeIfPresent(String.self, forKey: .heroName)
+        kind     = try c.decode(GrantKind.self,       forKey: .kind)
+    }
+}
+
+extension GrantToken {
+    /// One hero's award.
+    static func single(_ kind: GrantKind, hero: UUID, name: String?) -> GrantToken {
+        GrantToken(nonce: UUID().uuidString, hero: hero, heroName: name, kind: kind)
+    }
+
+    /// The party's award — quest and boss stars, which are party-wide ALWAYS (the
+    /// sibling-proofing rule). ONE token, no hero, redeemed once per kid.
+    static func party(_ kind: GrantKind) -> GrantToken {
+        GrantToken(nonce: UUID().uuidString, hero: nil, heroName: nil, kind: kind)
+    }
+
+    var isParty: Bool { hero == nil }
+
+    /// A party token addresses everyone; a single token addresses exactly one hero.
+    func addresses(_ heroID: UUID) -> Bool { hero == nil || hero == heroID }
 }
 
 extension GMPartyMember {
@@ -327,6 +398,7 @@ struct ScanHeroCardSheet: View {
                     guard phase == .scanning else { return }   // first code wins
                     switch QuestQR.decode(raw) {
                     case .hero(let card):        phase = .found(card)
+                    case .grant:                 phase = .problem("That's a reward code — scan it on the player's iPad, not the GM's.")
                     case .unsupported(let note): phase = .problem(note)
                     }
                 }
@@ -336,7 +408,7 @@ struct ScanHeroCardSheet: View {
             }
         }
     }
-
+    
     // MARK: Confirmation
 
     private func confirmation(_ card: HeroCard) -> some View {
