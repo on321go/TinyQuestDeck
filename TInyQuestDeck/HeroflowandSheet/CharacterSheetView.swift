@@ -74,6 +74,9 @@ struct CharacterSheetView: View {
     let repo: ContentRepository
     let roster: RosterStore
     let combat: CombatStore
+    /// The single GMStore from the root. Only the reward scanner uses it — `redeem`
+    /// owns the dedup guard and the ledger, and both must be the one instance.
+    let gm: GMStore
     let characterID: UUID
 
     private var character: CharacterChoices? {
@@ -84,7 +87,8 @@ struct CharacterSheetView: View {
     var body: some View {
         Group {
             if let c = character, let sheet = deriveSheet(from: c, using: repo) {
-                SheetBody(repo: repo, roster: roster, combat: combat, character: c, sheet: sheet)
+                SheetBody(repo: repo, roster: roster, combat: combat, gm: gm,
+                                          character: c, sheet: sheet)
                     .onAppear {
                         combat.seed(c.id, maxHP: sheet.maxHP)
                         c.pets.forEach { pet in
@@ -107,6 +111,7 @@ private struct SheetBody: View {
     let repo: ContentRepository
     let roster: RosterStore
     let combat: CombatStore
+    let gm: GMStore
     let character: CharacterChoices
     let sheet: CharacterSheet
 
@@ -128,6 +133,7 @@ private struct SheetBody: View {
     // Temporary: lets the table hand out story loot before the GM Portal exists. Flip off
     // when GM tokens (QR) land — then loot arrives authorized, not free-added.
     @State private var showingHeroCard = false
+    @State private var showingRedeem = false
     private let showGearGrantDevControl = true
     
 
@@ -211,7 +217,7 @@ private struct SheetBody: View {
                 HStack(spacing: 10) {
                     goldBar
                     heroCardButton
-                    
+                    redeemButton
                 }
             }
         }
@@ -385,6 +391,32 @@ private struct SheetBody: View {
             }
         }
 
+    // MARK: Rewards (the code the GM shows; THIS hero takes it)
+        //
+        // Third in the hero's ledger row, and the pair to Hero Card: that one is "here's
+        // who I am," this one is "here's what I got." Being on the sheet is load-bearing,
+        // not decorative — a party token names no hero, so the sheet you're on is what
+        // decides who's claiming it.
+        //
+        // Unlike the ± steppers beside it, this one does NOT retire. It's the delivery
+        // path they retire in favor of.
+
+        private var redeemButton: some View {
+            Button { showingRedeem = true } label: {
+                Label("Rewards", systemImage: "qrcode.viewfinder")
+                    .font(questFont(14)).foregroundStyle(.black)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .sheet(isPresented: $showingRedeem) {
+                RedeemSheet(hero: character, repo: repo, roster: roster, gm: gm,
+                            bg: bg, accent: accent)
+            }
+        }
+    
     private func goldStepButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.title2).foregroundStyle(tint)

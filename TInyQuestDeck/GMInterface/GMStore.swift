@@ -38,6 +38,21 @@ enum GrantKind: Codable, Hashable, Sendable {
     case star(Int)
 }
 
+extension GrantKind {
+    /// One line, GM voice. The ledger row and the token sheet both say this — there is
+    /// exactly one GM-facing description of a kind. (RedeemSheet's `describe` is the
+    /// KID's voice for the same enum: "A star!" vs "+1 star". Same data, different
+    /// room — don't merge those.)
+    var summary: String {
+        switch self {
+        case .gold(let n):                   n >= 0 ? "+\(n) gold" : "\(n) gold"
+        case .purchasable(_, let name):      name
+        case .homebrew(let name, let magic): "\(name)\(magic ? " ✦" : "") · homebrew"
+        case .star(let n):                   "\(n >= 0 ? "+" : "")\(n) star\(abs(n) == 1 ? "" : "s")"
+        }
+    }
+}
+
 /// One ledger line.
 struct GrantEntry: Codable, Hashable, Identifiable, Sendable {
     var id = UUID()

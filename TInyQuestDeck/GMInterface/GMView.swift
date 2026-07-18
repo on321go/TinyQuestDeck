@@ -48,7 +48,6 @@ struct GMView: View {
     @State private var addingMember = false
     @State private var namingAdHoc = false
     @State private var adHocTitle = ""
-    @State private var remoteNoteFor: GMPartyMember? = nil
     @State private var openAdventure: Adventure? = nil
     @State private var scanningHero = false
 
@@ -106,11 +105,11 @@ struct GMView: View {
             }
             Button("Cancel", role: .cancel) { adHocTitle = "" }
         }
-        .alert(item: $remoteNoteFor) { member in
-            Alert(title: Text("\(member.name) lives on another iPad"),
-                  message: Text("Their hero isn't on this device, so awards can't land here directly. QR delivery — you show a code, they scan it — is the next layer. For now, use the sheet's gold stepper and Found-on-an-Adventure menu on their iPad."),
-                  dismissButton: .default(Text("Got it")))
-        }
+//        .alert(item: $remoteNoteFor) { member in
+//            Alert(title: Text("\(member.name) lives on another iPad"),
+//                  message: Text("Their hero isn't on this device, so awards can't land here directly. QR delivery — you show a code, they scan it — is the next layer. For now, use the sheet's gold stepper and Found-on-an-Adventure menu on their iPad."),
+//                  dismissButton: .default(Text("Got it")))
+//        }
     }
 
     // MARK: Rulebook shortcuts (gm-monsters removed — the bench IS the live version)
@@ -302,15 +301,16 @@ struct GMView: View {
         let bg = sheet?.theme.map { Color(hex: $0.background) } ?? GMStyle.page
         let accent = sheet?.theme.map { Color(hex: $0.accent) } ?? GMStyle.accent
         // Bound explicitly, and passed as `action:` rather than as a trailing closure:
-         // two trailing closures on Button is the shape that reports "extra trailing
-         // closure" when anything inside the first one fails to infer. Same family as
-         // starBar's note in CharacterSheetView — don't make the type checker guess in
-         // a body this size.
-         let isLocal = local != nil
-         let tap: () -> Void = {
-             if isLocal { awarding = member } else { remoteNoteFor = member }
-         }
-       
+        // two trailing closures on Button is the shape that reports "extra trailing
+        // closure" when anything inside the first one fails to infer. Same family as
+        // starBar's note in CharacterSheetView — don't make the type checker guess in
+        // a body this size.
+        //
+        // No branch anymore: the COMPOSER is what knows local from remote, and it
+        // handles both. This card just says who was tapped.
+        let isLocal = local != nil
+        let tap: () -> Void = { awarding = member }
+        
         return Button(action: tap) {
             HStack(spacing: 12) {
                 QuestArt(name: QuestArtKey.portrait(combo: combo), ratio: QuestRatio.card,
@@ -334,20 +334,18 @@ struct GMView: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Label("Award", systemImage: "gift.fill")
-                    .font(questFont(13)).foregroundStyle(.black.opacity(local != nil ? 1 : 0.4))
+                Label(isLocal ? "Award" : "Send", systemImage: isLocal ? "gift.fill" : "qrcode")
+                    .font(questFont(13)).foregroundStyle(.black)
                     .padding(.horizontal, 12).padding(.vertical, 8)
-                    .background(local != nil ? TierColor.selectPeach : Color.gray.opacity(0.2),
-                                in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(.black.opacity(local != nil ? 1 : 0.3), lineWidth: 2))
+                    .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.black, lineWidth: 2))
             }
             .padding(12)
             .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
         }
         .buttonStyle(.plain)
-         .contextMenu {
+        .contextMenu {
              Button("Remove \(member.name) from the party", role: .destructive) {
                  party.remove(member)
              }
@@ -461,25 +459,24 @@ struct GMView: View {
     }
 
     private func ledgerRow(_ e: GrantEntry) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(e.heroName) — \(grantLabel(e.kind))")
-                    .font(questFont(14)).foregroundStyle(.black)
-                Text(e.timestamp.formatted(date: .abbreviated, time: .shortened))
-                    .font(questFontLight(11)).foregroundStyle(.black.opacity(0.5))
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(e.heroName) — \(e.kind.summary)")
+                        .font(questFont(14)).foregroundStyle(.black)
+                    Text(e.timestamp.formatted(date: .abbreviated, time: .shortened))
+                        .font(questFontLight(11)).foregroundStyle(.black.opacity(0.5))
+                }
+                Spacer()
+                if case .gmTokenIssued = e.source {
+                    // "sent" ≠ "received". This iPad cannot know if they scanned it.
+                    Label("code sent", systemImage: "qrcode")
+                        .font(questFontLight(11)).foregroundStyle(.black.opacity(0.5))
+                        .lineLimit(1).fixedSize()
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .overlay(Capsule().strokeBorder(.black.opacity(0.2), lineWidth: 1))
+                }
             }
-            Spacer()
-        }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-    }
-
-    private func grantLabel(_ kind: GrantKind) -> String {
-            switch kind {
-            case .gold(let n):                  n >= 0 ? "+\(n) gold" : "\(n) gold"
-            case .purchasable(_, let name):     name
-            case .homebrew(let name, let magic): "\(name)\(magic ? " ✦" : "") · homebrew"
-            case .star(let n):                  "\(n >= 0 ? "+" : "")\(n) star\(abs(n) == 1 ? "" : "s")"
-            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
         }
 
     // MARK: Shared panel chrome
@@ -599,6 +596,7 @@ struct AwardComposer: View {
     @State private var homebrewName = ""
     @State private var homebrewMagic = false
     @State private var toast: String? = nil
+    @State private var emitted: GrantToken? = nil
 
     private enum Mode: String, CaseIterable, Identifiable {
         case gold = "Gold", star = "Star", item = "Item", homebrew = "Homebrew"
@@ -618,21 +616,29 @@ struct AwardComposer: View {
 
     // MARK: The one award path
 
-    /// Build the token, redeem it here. A remote member's Give becomes Show QR in
-    /// step 6 — same token, same redeem, different transport.
-    private func give(_ kind: GrantKind, flashing line: String) {
-        guard let hero = localHero else { return }
-        let token = GrantToken.single(kind, hero: hero.id, name: member.name)
-        let result = gm.redeem(token, on: hero.id, roster: roster, repo: repo)
-        if case .applied = result {
-            flash(line)
-        } else {
-            // A fresh nonce on a hero we just resolved can only fail on content that
-            // doesn't resolve — a composer/repo mismatch, i.e. a bug, not a table event.
-            print("⚠️ AwardComposer: redeem returned \(result) for \(member.name)")
-            flash("That didn't land — check the console.")
+    /// Build the token, then pick a transport. Local: redeem in-process — no code, no
+        /// camera, because an iPad cannot scan its own screen. Remote: issue it, record it
+        /// as SENT, and put it on the glass for them to scan.
+        ///
+        /// ONE TOKEN TYPE, ONE REDEEM. The kid's device runs the same `redeem` this method
+        /// calls directly for a local hero. That's the whole milestone in ten lines.
+        private func give(_ kind: GrantKind, flashing line: String) {
+            guard let hero = localHero else {
+                // Remote. Nothing lands here — the hero isn't on this iPad.
+                emitted = gm.issue(kind, to: member)
+                return
+            }
+            let token = GrantToken.single(kind, hero: hero.id, name: member.name)
+            let result = gm.redeem(token, on: hero.id, roster: roster, repo: repo)
+            if case .applied = result {
+                flash(line)
+            } else {
+                // A fresh nonce on a hero we just resolved can only fail on content that
+                // doesn't resolve — a composer/repo mismatch, i.e. a bug, not a table event.
+                print("⚠️ AwardComposer: redeem returned \(result) for \(member.name)")
+                flash("That didn't land — check the console.")
+            }
         }
-    }
 
     var body: some View {
         NavigationStack {
@@ -678,13 +684,22 @@ struct AwardComposer: View {
         }
         .confirmationDialog(confirming?.name ?? "", isPresented: confirmingBinding,
                             titleVisibility: .visible, presenting: confirming) { p in
-            Button("Give to \(member.name)") {
-                give(.purchasable(id: p.id, name: p.name), flashing: "\(p.name) → \(member.name)!")
-            }
+            Button(isLocal ? "Give to \(member.name)" : "Show a code for \(member.name)") {
+                            // The dialog is still dismissing; a .sheet presented in this same tick
+                            // gets swallowed — and `issue` would still have minted the token and
+                            // written the ledger row, so you'd get a "code sent" row for a code
+                            // nobody ever saw. Hop one runloop and let the dialog finish.
+                            let kind = GrantKind.purchasable(id: p.id, name: p.name)
+                            let line = "\(p.name) → \(member.name)!"
+                            Task { @MainActor in give(kind, flashing: line) }
+                        }
             Button("Cancel", role: .cancel) {}
         } message: { p in
             Text(awardNote(p))
         }
+        .sheet(item: $emitted) { token in
+                    GrantTokenSheet(token: token, memberName: member.name, repo: repo)
+                }
     }
 
     private var confirmingBinding: Binding<Bool> {
@@ -749,9 +764,11 @@ struct AwardComposer: View {
                     .foregroundStyle(starAmount >= 0 ? TierColor.signature : .red)
                     .contentTransition(.numericText())
             }
-
-            awardButton(starAmount >= 0 ? "Award \(starLabel(starAmount))" : "Take back \(starLabel(-starAmount))",
-                        enabled: starAmount != 0 && isLocal) {
+            
+            awardButton(awardTitle(starAmount >= 0 ? "Award \(starLabel(starAmount))"
+                                   : "Take back \(starLabel(-starAmount))"),
+                        symbol: awardSymbol,
+                        enabled: starAmount != 0) {
                 give(.star(starAmount),
                      flashing: starAmount >= 0 ? "★ → \(member.name)!" : "\(starAmount) star — oof!")
             }
@@ -814,11 +831,12 @@ struct AwardComposer: View {
                     .foregroundStyle(goldAmount >= 0 ? Color(hex: "C79008") : .red)
                     .contentTransition(.numericText())
             }
-            awardButton(goldAmount >= 0 ? "Award \(goldAmount) gold" : "Take \(-goldAmount) gold",
-                        enabled: goldAmount != 0 && isLocal) {
+            awardButton(awardTitle(goldAmount >= 0 ? "Award \(goldAmount) gold" : "Take \(-goldAmount) gold"),
+                        symbol: awardSymbol,
+                        enabled: goldAmount != 0) {
                 give(.gold(goldAmount),
                      flashing: goldAmount >= 0 ? "+\(goldAmount) gold → \(member.name)!"
-                                               : "\(goldAmount) gold — ouch!")
+                     : "\(goldAmount) gold — ouch!")
             }
         }
         .padding(16)
@@ -874,7 +892,6 @@ struct AwardComposer: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            .disabled(!isLocal)
                         }
                     }
                     .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
@@ -883,6 +900,12 @@ struct AwardComposer: View {
             }
         }
     }
+    
+    /// Local heroes get the verb; remote heroes get a code. Same token behind both.
+        private func awardTitle(_ localTitle: String) -> String {
+            isLocal ? localTitle : "Show the code"
+        }
+        private var awardSymbol: String { isLocal ? "gift.fill" : "qrcode" }
 
     /// A PREDICTION, read off the member's class — the same value local or remote. The
     /// real fork happens in ShopRules.grant on the device that redeems, against the
@@ -915,8 +938,8 @@ struct AwardComposer: View {
                 Text("Magic item").font(questFont(15)).foregroundStyle(.black)
             }
             .tint(Color(hex: "8A4FD0"))
-            awardButton("Award it",
-                        enabled: !homebrewName.trimmingCharacters(in: .whitespaces).isEmpty && isLocal) {
+            awardButton(awardTitle("Award it"), symbol: awardSymbol,
+                                    enabled: !homebrewName.trimmingCharacters(in: .whitespaces).isEmpty) {
                 let trimmed = homebrewName.trimmingCharacters(in: .whitespaces)
                 give(.homebrew(name: trimmed, magic: homebrewMagic),
                      flashing: "\(trimmed) → \(member.name)!")
@@ -928,9 +951,10 @@ struct AwardComposer: View {
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.black, lineWidth: 2))
     }
 
-    private func awardButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: "gift.fill")
+    private func awardButton(_ title: String, symbol: String = "gift.fill",
+                              enabled: Bool, action: @escaping () -> Void) -> some View {
+         Button(action: action) {
+             Label(title, systemImage: symbol)
                 .font(questFont(16)).foregroundStyle(.black)
                 .padding(.horizontal, 20).padding(.vertical, 11)
                 .background(enabled ? TierColor.selectPeach : Color.gray.opacity(0.25),

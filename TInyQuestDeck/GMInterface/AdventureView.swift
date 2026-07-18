@@ -46,11 +46,10 @@ struct AdventureView: View {
     @State private var pendingPreset: EncounterPreset? = nil
     @State private var awarding: GMPartyMember? = nil
     @State private var goldPrefill: Int? = nil
-    @State private var remoteNote: RemoteRef? = nil
     @State private var namingImprov = false
     @State private var improvTitle = ""
 
-    private struct RemoteRef: Identifiable { let id = UUID(); let name: String }
+
     private var pageKey: String { "gm.adventure.page.\(adventure.id)" }
 
     var body: some View {
@@ -78,11 +77,6 @@ struct AdventureView: View {
                 TextField("The Kitchen Ambush", text: $improvTitle)
                 Button("Start") { startBattle(blankPreset(named: improvTitle)) }
                 Button("Cancel", role: .cancel) {}
-            }
-            .alert(item: $remoteNote) { ref in
-                Alert(title: Text("\(ref.name) lives on another iPad"),
-                      message: Text("Awards can't land here directly — QR delivery is the next layer. For now, they use their sheet's gold stepper."),
-                      dismissButton: .default(Text("Got it")))
             }
     }
 
@@ -433,19 +427,15 @@ struct AdventureView: View {
         .overlay(RoundedRectangle(cornerRadius: 16)
             .strokeBorder(StoryStyle.gold.opacity(0.7), lineWidth: 2))
     }
-
+    
     /// Gold reward → pick a hero → the award composer opens prefilled. Local
     /// heroes grant directly; remote members get the QR explainer (next layer).
     private func giveMenu(gold: Int) -> some View {
         Menu {
             ForEach(party.members) { member in
                 Button(member.name) {
-                    if roster.characters.contains(where: { $0.id == member.id }) {
-                        goldPrefill = gold
-                        awarding = member
-                    } else {
-                        remoteNote = RemoteRef(name: member.name)
-                    }
+                    goldPrefill = gold
+                    awarding = member
                 }
             }
         } label: {
