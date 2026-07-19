@@ -50,6 +50,7 @@ struct GMView: View {
     @State private var adHocTitle = ""
     @State private var openAdventure: Adventure? = nil
     @State private var scanningHero = false
+    @State private var awardingParty = false
 
 
     var body: some View {
@@ -72,8 +73,11 @@ struct GMView: View {
         }
         .onAppear { if rulebook.rulebook == nil && rulebook.error == nil { rulebook.load() } }
         .sheet(item: $awarding) { member in
-            AwardComposer(member: member, repo: repo, roster: roster, gm: gm)
-        }
+                    AwardComposer(target: .one(member), repo: repo, roster: roster, gm: gm)
+                }
+                .sheet(isPresented: $awardingParty) {
+                    AwardComposer(target: .party(party.members), repo: repo, roster: roster, gm: gm)
+                }
         .sheet(item: $shortcut) { section in
             NavigationStack { RuleSectionDetail(section: section, store: rulebook) }
         }
@@ -282,6 +286,7 @@ struct GMView: View {
                 }
             }
             addMemberMenu
+            partyAwardButton
         }
     }
 
@@ -309,6 +314,7 @@ struct GMView: View {
         // No branch anymore: the COMPOSER is what knows local from remote, and it
         // handles both. This card just says who was tapped.
         let isLocal = local != nil
+        let awardable = isLocal || member.isLinked
         let tap: () -> Void = { awarding = member }
         
         return Button(action: tap) {
@@ -334,11 +340,14 @@ struct GMView: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Label(isLocal ? "Award" : "Send", systemImage: isLocal ? "gift.fill" : "qrcode")
-                    .font(questFont(13)).foregroundStyle(.black)
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                    .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.black, lineWidth: 2))
+                Label(chipTitle(local: isLocal, awardable: awardable),
+                      systemImage: chipSymbol(local: isLocal, awardable: awardable))
+                .font(questFont(13)).foregroundStyle(.black)
+                .lineLimit(1).fixedSize()
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(awardable ? TierColor.selectPeach : Color(hex: "E8A020"),
+                            in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.black, lineWidth: 2))
             }
             .padding(12)
             .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 16))
@@ -346,12 +355,25 @@ struct GMView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-             Button("Remove \(member.name) from the party", role: .destructive) {
-                 party.remove(member)
-             }
-         }
+            Button("Remove \(member.name) from the party", role: .destructive) {
+                party.remove(member)
+            }
+        }
     }
-
+    
+    /// Award (here) · Send (their iPad) · Not linked (nobody's — typed in by hand).
+    /// Amber isn't a wall: the tap still opens the composer, which is where the
+    /// explanation and the remedy live.
+    private func chipTitle(local: Bool, awardable: Bool) -> String {
+        if !awardable { return "Not linked" }
+        return local ? "Award" : "Send"
+    }
+    
+    private func chipSymbol(local: Bool, awardable: Bool) -> String {
+        if !awardable { return "exclamationmark.triangle.fill" }
+        return local ? "gift.fill" : "qrcode"
+    }
+    
     private var addMemberMenu: some View {
         // Local heroes not yet in the party (the GM's own hero, design-test heroes).
         let memberIDs = Set(party.members.map(\.id))
@@ -378,6 +400,21 @@ struct GMView: View {
         }
         .buttonStyle(.plain)
     }
+    
+    /// The party token's front door. Quest and boss stars are party-wide ALWAYS, and
+        /// "everyone gets 25 gold" turns out to be just as common — one code beats N.
+        private var partyAwardButton: some View {
+            Button { awardingParty = true } label: {
+                Label("Award the whole party…", systemImage: "person.3.fill")
+                    .font(questFont(14)).foregroundStyle(.black)
+                    .lineLimit(1).fixedSize()
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .disabled(party.members.isEmpty)
+        }
 
     // MARK: Monster bench (§7.1.2 — the live bestiary; improviser is on the board)
 
@@ -566,6 +603,13 @@ struct AddPartyMemberSheet: View {
     }
 }
 
+/// WHO an award is for. `.one` addresses a hero by id; `.party` addresses nobody, which
+/// is exactly what a party token is — one code, redeemed once per kid.
+enum AwardTarget {
+    case one(GMPartyMember)
+    case party([GMPartyMember])
+}
+
 // MARK: - Award composer
 //
 // THE TARGET IS A GMPartyMember, NOT A HERO — identity, never sheet state, which is
@@ -581,11 +625,11 @@ struct AddPartyMemberSheet: View {
 // prefilled.
 
 struct AwardComposer: View {
-    let member: GMPartyMember
+    let target: AwardTarget
     let repo: ContentRepository
     let roster: RosterStore
     let gm: GMStore
-    var initialGold: Int? = nil       // scene-reward deep-link prefill
+    var initialGold: Int? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var mode: Mode = .gold
@@ -603,11 +647,44 @@ struct AwardComposer: View {
         var id: String { rawValue }
     }
 
-    /// nil = this hero lives on another iPad. The composer's only structural branch.
-    private var localHero: CharacterChoices? {
-        roster.characters.first { $0.id == member.id }
-    }
-    private var isLocal: Bool { localHero != nil }
+    /// The single member, when there is one. nil for a party award.
+        private var single: GMPartyMember? {
+            if case .one(let m) = target { return m }
+            return nil
+        }
+
+        /// Everyone this award touches.
+        private var members: [GMPartyMember] {
+            switch target {
+            case .one(let m):   return [m]
+            case .party(let m): return m
+            }
+        }
+
+        private var displayName: String {
+            switch target {
+            case .one(let m): return m.name
+            case .party:      return "the whole party"
+            }
+        }
+
+        /// nil = nothing to redeem in-process. True for every party award (a party token
+        /// has no single hero) and for any remote member.
+        private var localHero: CharacterChoices? {
+            single.flatMap { m in roster.characters.first { $0.id == m.id } }
+        }
+        private var isLocal: Bool { localHero != nil }
+
+        private func isHere(_ m: GMPartyMember) -> Bool {
+            roster.characters.contains { $0.id == m.id }
+        }
+
+        private var isAwardable: Bool {
+            switch target {
+            case .one(let m):    return isLocal || m.isLinked
+            case .party(let ms): return ms.contains { $0.isLinked || isHere($0) }
+            }
+        }
 
     /// Live from the roster when local; unknowable when remote — their sheet is the
     /// only place those numbers exist, and this iPad has no business guessing.
@@ -616,27 +693,37 @@ struct AwardComposer: View {
 
     // MARK: The one award path
 
-    /// Build the token, then pick a transport. Local: redeem in-process — no code, no
-        /// camera, because an iPad cannot scan its own screen. Remote: issue it, record it
-        /// as SENT, and put it on the glass for them to scan.
-        ///
-        /// ONE TOKEN TYPE, ONE REDEEM. The kid's device runs the same `redeem` this method
-        /// calls directly for a local hero. That's the whole milestone in ten lines.
+    /// Build the token, then pick a transport per target. Local hero: redeem here — no
+        /// code, no camera. Remote hero: issue and show the code. PARTY: one code, and every
+        /// local member redeems in-process on the way out, because they can't scan this
+        /// screen either.
         private func give(_ kind: GrantKind, flashing line: String) {
-            guard let hero = localHero else {
-                // Remote. Nothing lands here — the hero isn't on this iPad.
-                emitted = gm.issue(kind, to: member)
-                return
-            }
-            let token = GrantToken.single(kind, hero: hero.id, name: member.name)
-            let result = gm.redeem(token, on: hero.id, roster: roster, repo: repo)
-            if case .applied = result {
-                flash(line)
-            } else {
-                // A fresh nonce on a hero we just resolved can only fail on content that
-                // doesn't resolve — a composer/repo mismatch, i.e. a bug, not a table event.
-                print("⚠️ AwardComposer: redeem returned \(result) for \(member.name)")
-                flash("That didn't land — check the console.")
+            switch target {
+            case .one(let m):
+                guard let hero = localHero else {
+                    emitted = gm.issue(kind, to: m)   // nothing lands here — not this iPad's hero
+                    return
+                }
+                let token = GrantToken.single(kind, hero: hero.id, name: m.name)
+                let result = gm.redeem(token, on: hero.id, roster: roster, repo: repo)
+                if case .applied = result {
+                    flash(line)
+                } else {
+                    print("⚠️ AwardComposer: redeem returned \(result) for \(m.name)")
+                    flash("That didn't land — check the console.")
+                }
+
+            case .party(let ms):
+                if let token = gm.issueToParty(kind, members: ms, roster: roster, repo: repo) {
+                    emitted = token
+                } else if ms.contains(where: { isHere($0) }) {
+                    // Everyone was local. It already landed; there's nothing to scan.
+                    flash(line)
+                } else {
+                    // Nobody was addressable. isAwardable should have caught this at the
+                    // door — if this fires, the gate above isn't applied.
+                    flash("Nobody in the party is linked to a hero yet.")
+                }
             }
         }
 
@@ -645,16 +732,20 @@ struct AwardComposer: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     heroHeader
-                    Picker("Mode", selection: $mode) {
-                        ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+                    if isAwardable {
+                        Picker("Mode", selection: $mode) {
+                            ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
 
-                    switch mode {
-                    case .gold:     goldSection
-                    case .star:     starSection
-                    case .item:     itemSection
-                    case .homebrew: homebrewSection
+                        switch mode {
+                        case .gold:     goldSection
+                        case .star:     starSection
+                        case .item:     itemSection
+                        case .homebrew: homebrewSection
+                        }
+                    } else {
+                        unlinkedPanel
                     }
                 }
                 .padding(20)
@@ -684,13 +775,13 @@ struct AwardComposer: View {
         }
         .confirmationDialog(confirming?.name ?? "", isPresented: confirmingBinding,
                             titleVisibility: .visible, presenting: confirming) { p in
-            Button(isLocal ? "Give to \(member.name)" : "Show a code for \(member.name)") {
+            Button(isLocal ? "Give to \(displayName)" : "Show a code for \(displayName)") {
                             // The dialog is still dismissing; a .sheet presented in this same tick
                             // gets swallowed — and `issue` would still have minted the token and
                             // written the ledger row, so you'd get a "code sent" row for a code
                             // nobody ever saw. Hop one runloop and let the dialog finish.
                             let kind = GrantKind.purchasable(id: p.id, name: p.name)
-                            let line = "\(p.name) → \(member.name)!"
+                            let line = "\(p.name) → \(displayName)!"
                             Task { @MainActor in give(kind, flashing: line) }
                         }
             Button("Cancel", role: .cancel) {}
@@ -698,8 +789,8 @@ struct AwardComposer: View {
             Text(awardNote(p))
         }
         .sheet(item: $emitted) { token in
-                    GrantTokenSheet(token: token, memberName: member.name, repo: repo)
-                }
+            GrantTokenSheet(token: token, memberName: single?.name, repo: repo)
+        }
     }
 
     private var confirmingBinding: Binding<Bool> {
@@ -708,7 +799,7 @@ struct AwardComposer: View {
 
     private var heroHeader: some View {
         HStack(spacing: 10) {
-            Text(member.name.uppercased()).font(questFont(20)).foregroundStyle(.black)
+            Text(displayName.uppercased()).font(questFont(20)).foregroundStyle(.black)
             if let stars = liveStars {
                 HStack(spacing: 5) {
                     Image(systemName: "star.fill").font(.caption).foregroundStyle(TierColor.signature)
@@ -725,17 +816,48 @@ struct AwardComposer: View {
                         .font(questFont(18)).foregroundStyle(Color(hex: "C79008"))
                         .contentTransition(.numericText())
                 }
+            } else if single == nil {
+                Label("Everyone", systemImage: "person.3.fill")
+                    .font(questFontLight(12)).foregroundStyle(.black.opacity(0.55))
             } else {
                 Label("On their iPad", systemImage: "ipad")
                     .font(questFontLight(12)).foregroundStyle(.black.opacity(0.55))
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
-    }
+                .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+            }
 
-    // Stars — the progression currency. Milestone-sized and mostly party-wide, so this
+            /// The dead end, named. A member's `id` is the award address; a hand-typed member's
+            /// id is a fresh UUID that addresses no hero anywhere, so there is nothing to give
+            /// and no code worth showing. Not a scold — the remedy is two taps, and it's the one
+            /// GMParty.swift already documents ("remove + rescan").
+            private var unlinkedPanel: some View {
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Not linked to a hero", systemImage: "exclamationmark.triangle.fill")
+                        .font(questFont(17)).foregroundStyle(Color(hex: "C79008"))
+                    Text(single == nil
+                         ? "Nobody in the party is linked to a hero yet. Awards are addressed to a hero, and a typed name isn't one."
+                         : "\(displayName) was typed in by hand, so this iPad knows their name and class but not WHICH hero they are. A code sent to them would land nowhere and tell the player it wasn't theirs.")
+                        .font(questFontLight(14)).foregroundStyle(.black.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Fix it: remove them from the party (long-press their card), then add them again with Scan a Hero Card. Their card carries their real id and awards will find them from then on.")
+                        .font(questFontLight(14)).foregroundStyle(.black.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Divider().overlay(.black.opacity(0.15))
+                    Text("Typed members are still fine on the battle board — they just can't be paid.")
+                        .font(questFontLight(12)).foregroundStyle(.black.opacity(0.45))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "E8A020").opacity(0.15), in: RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(Color(hex: "E8A020"), lineWidth: 2))
+            }
+
+            // Stars — the progression currency. Milestone-sized and mostly party-wide, so this
     // stays deliberately blunt: one star, one hero, one tap. A quest or boss star means
     // repeating that for each kid (or one scanned code, once the party token lands) —
     // that repetition IS the sibling-proofing, and at three heroes it's cheap.
@@ -754,10 +876,11 @@ struct AwardComposer: View {
             if let live = localHero {
                 starTrackPreview(live)
             } else {
-                Text("Their star track lives on their iPad.")
-                    .font(questFontLight(12)).foregroundStyle(.black.opacity(0.5))
+                Text(single == nil ? "Each kid's track lives on their own iPad."
+                     : "Their star track lives on their iPad.")
+                .font(questFontLight(12)).foregroundStyle(.black.opacity(0.5))
             }
-
+            
             Stepper(value: $starAmount, in: -3...3) {
                 Text(starLabel(starAmount))
                     .font(questFont(20))
@@ -770,7 +893,7 @@ struct AwardComposer: View {
                         symbol: awardSymbol,
                         enabled: starAmount != 0) {
                 give(.star(starAmount),
-                     flashing: starAmount >= 0 ? "★ → \(member.name)!" : "\(starAmount) star — oof!")
+                     flashing: starAmount >= 0 ? "★ → \(displayName)!" : "\(starAmount) star — oof!")
             }
         }
         .padding(16)
@@ -835,7 +958,7 @@ struct AwardComposer: View {
                         symbol: awardSymbol,
                         enabled: goldAmount != 0) {
                 give(.gold(goldAmount),
-                     flashing: goldAmount >= 0 ? "+\(goldAmount) gold → \(member.name)!"
+                     flashing: goldAmount >= 0 ? "+\(goldAmount) gold → \(displayName)!"
                      : "\(goldAmount) gold — ouch!")
             }
         }
@@ -913,7 +1036,7 @@ struct AwardComposer: View {
     private func awardNote(_ p: Purchasable) -> String {
         switch p {
         case .gear:
-            return "Lands in \(member.name)'s owned gear — they equip it from the sheet's Add menu."
+            return "Lands in \(displayName)'s owned gear — they equip it from the sheet's Add menu."
         case .item(let i):
             switch i.kind {
             case .scroll:
@@ -942,7 +1065,7 @@ struct AwardComposer: View {
                                     enabled: !homebrewName.trimmingCharacters(in: .whitespaces).isEmpty) {
                 let trimmed = homebrewName.trimmingCharacters(in: .whitespaces)
                 give(.homebrew(name: trimmed, magic: homebrewMagic),
-                     flashing: "\(trimmed) → \(member.name)!")
+                     flashing: "\(trimmed) → \(displayName)!")
                 homebrewName = ""
             }
         }

@@ -48,6 +48,7 @@ struct AdventureView: View {
     @State private var goldPrefill: Int? = nil
     @State private var namingImprov = false
     @State private var improvTitle = ""
+    @State private var awardingParty = false
 
 
     private var pageKey: String { "gm.adventure.page.\(adventure.id)" }
@@ -57,10 +58,14 @@ struct AdventureView: View {
             .fullScreenCover(isPresented: $showingBoard) {
                 EncounterView(repo: repo, store: encounters, party: party) { showingBoard = false }
             }
+            .sheet(isPresented: $awardingParty) {
+                AwardComposer(target: .party(party.members), repo: repo, roster: roster,
+                              gm: gm, initialGold: goldPrefill)
+            }
             .sheet(item: $awarding) { member in
-                            AwardComposer(member: member, repo: repo, roster: roster, gm: gm,
-                                          initialGold: goldPrefill)
-                        }
+                AwardComposer(target: .one(member), repo: repo, roster: roster, gm: gm,
+                              initialGold: goldPrefill)
+            }
             .confirmationDialog("A fight is already live", isPresented: pendingBinding,
                                 titleVisibility: .visible, presenting: pendingPreset,
                                 actions: { preset in
@@ -431,13 +436,20 @@ struct AdventureView: View {
     /// Gold reward → pick a hero → the award composer opens prefilled. Local
     /// heroes grant directly; remote members get the QR explainer (next layer).
     private func giveMenu(gold: Int) -> some View {
-        Menu {
-            ForEach(party.members) { member in
-                Button(member.name) {
+            Menu {
+                Button {
                     goldPrefill = gold
-                    awarding = member
+                    awardingParty = true
+                } label: {
+                    Label("Everyone", systemImage: "person.3.fill")
                 }
-            }
+                Divider()
+                ForEach(party.members) { member in
+                    Button(member.name) {
+                        goldPrefill = gold
+                        awarding = member
+                    }
+                }
         } label: {
             Label("Give \(gold)g", systemImage: "person.fill.badge.plus")
                 .font(questFont(12)).foregroundStyle(.black)

@@ -235,4 +235,42 @@ final class GMStore {
             print("💾 GMStore: issued \(token.nonce.prefix(8)) → \(member.name)")
             return token
         }
+    
+    /// ONE token, addressed to nobody. Every kid scans it in turn and `(nonce, heroID)`
+        /// makes it land exactly once each — which is the whole reason the dedup key is a
+        /// pair. Keying on nonce alone would tell the second kid it was already used.
+        ///
+        /// LOCAL MEMBERS REDEEM RIGHT HERE. Not a shortcut: they physically cannot scan this
+        /// iPad's own screen, so there is no transport for them and none is needed. Same
+        /// token, in-process — the two-transports rule, applied per member instead of per
+        /// award.
+        ///
+        /// Unlinked members are skipped silently. There's no hero id to address and no row
+        /// worth writing; the party panel already flags them in amber.
+        ///
+        /// Returns nil when nobody needs the code — every member was local, it already
+        /// landed, and there is nothing to hold up.
+        @discardableResult
+        func issueToParty(_ kind: GrantKind, members: [GMPartyMember],
+                          roster: RosterStore, repo: ContentRepository) -> GrantToken? {
+            let token = GrantToken.party(kind)
+            var needsCode = false
+            var landed = 0
+
+            for m in members {
+                if roster.characters.contains(where: { $0.id == m.id }) {
+                    redeem(token, on: m.id, roster: roster, repo: repo)
+                    landed += 1
+                } else if m.isLinked {
+                    // "Sent," not "received" — same honesty as `issue`. One row per member
+                    // so the ledger keeps answering "does THIS kid have their star."
+                    record(GrantEntry(heroID: m.id, heroName: m.name, kind: kind,
+                                      source: .gmTokenIssued(token.nonce), timestamp: .now))
+                    needsCode = true
+                }
+            }
+
+            print("💾 GMStore: party \(kind.summary) — \(landed) here, code needed: \(needsCode)")
+            return needsCode ? token : nil
+        }
 }

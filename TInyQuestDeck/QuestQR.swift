@@ -240,7 +240,8 @@ extension GMPartyMember {
                   pathID: card.path.isEmpty ? nil : card.path,
                   level: card.level,
                   portraitCombo: card.portrait
-                      ?? QuestArtKey.portraitCombo(race: card.race, klass: card.klass))
+                  ?? QuestArtKey.portraitCombo(race: card.race, klass: card.klass),
+                  linked: true)      // the card carried the hero's real id
     }
 }
 
@@ -443,11 +444,16 @@ struct RedeemSheet: View {
     }
 
     private func wrongHeroNote(_ token: GrantToken) -> String {
-        guard let name = token.heroName else {
-            return "That reward is for somebody else. Ask your GM to show yours!"
+            guard let name = token.heroName else {
+                return "That reward is for somebody else. Ask your GM to show yours!"
+            }
+            // NAME MATCHES, ID DOESN'T. The GM typed this player into the party instead of
+            // scanning their Hero Card, so the token addresses a hero that exists nowhere.
+            if name.caseInsensitiveCompare(hero.name) == .orderedSame {
+                return "This code has your name on it, but not your hero! Ask your GM to scan your Hero Card into the party, then send it again."
+            }
+            return "That reward is for \(name)! Ask your GM to show yours."
         }
-        return "That reward is for \(name)! Ask your GM to show yours."
-    }
 
     // MARK: Confirmation — what you're about to take
 
