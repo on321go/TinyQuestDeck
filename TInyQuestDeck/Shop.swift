@@ -46,15 +46,27 @@ public enum Purchasable: Identifiable, Hashable, Sendable {
 public enum PurchaseGrant: Hashable, Sendable {
     case gear(id: String)                        // → ownedGearIDs
     case consumable(name: String, magic: Bool)   // → normalItems / magicItems (free-text)
-    case learnSpell(spellID: String)             // → spellbookIDs (caster learns it)
+    case learnSpell(spellID: String)             
 }
 
 public enum ShopRules {
     /// A hero can hold spells in a book at all only if their class has a spell list.
-    /// Computed off `classes()` so it doesn't depend on an optional by-id repo method.
-    static func isCaster(_ hero: CharacterChoices, repo: ContentRepository) -> Bool {
-        repo.classes().first { $0.id == hero.classID }?.spellListID != nil
-    }
+        /// Computed off `classes()` so it doesn't depend on an optional by-id repo method.
+        static func isCaster(_ hero: CharacterChoices, repo: ContentRepository) -> Bool {
+            isCaster(classID: hero.classID, repo: repo)
+        }
+
+        /// The class-only form. The award composer needs this: for a hero on ANOTHER iPad
+        /// there's no CharacterChoices to ask, but `GMPartyMember.classID` is the same
+        /// value — so the "they'll learn it / they'll carry it" note reads identically for
+        /// local and remote targets.
+        ///
+        /// It's only ever a PREDICTION. The actual scroll fork happens in
+        /// `ShopRules.grant(for:buyer:)` on the device that redeems, against the real hero.
+        /// That's precisely why a token carries the content id and not a resolved grant.
+        static func isCaster(classID: String, repo: ContentRepository) -> Bool {
+            repo.classes().first { $0.id == classID }?.spellListID != nil
+        }
 
     /// Gold is the only gate. Returns the shortfall (> 0) when unaffordable, else nil.
     static func shortfall(buying p: Purchasable, hero: CharacterChoices) -> Int? {
@@ -75,11 +87,19 @@ public enum ShopRules {
             case .magicConsumable, .curio:
                 return .consumable(name: i.name, magic: true)
             case .scroll:
-                if isCaster(buyer, repo: repo), let sid = i.spellID {
-                    return .learnSpell(spellID: sid)
-                } else {
-                    return .consumable(name: i.name, magic: true)   // carried, not learned
-                }
+                // SCROLLS ENTITLE, THE CASTER CLAIMS — the star rule, applied to objects.
+                //
+                // A scroll is ALWAYS an object. It used to fork right here: a caster's
+                // scroll became a spellbook line at the moment of purchase, which meant
+                // the kid never owned a scroll and never got asked. Nothing left to hand
+                // a friend, nothing to save for later, no undo — the register decided.
+                //
+                // Now acquiring only ever ADDS the object (same invariant as awards:
+                // "awards only ever add ownership"). `CharacterChoices.learn(scroll:)`
+                // is the claim, and it's the kid's tap. `spellID` is still on the
+                // definition; the sheet resolves it by the name-match rule when the
+                // caster decides.
+                return .consumable(name: i.name, magic: true)
             }
         }
     }
@@ -114,18 +134,69 @@ extension CharacterChoices {
           receive(ShopRules.grant(for: p, buyer: self, repo: repo))
           // later: ledger.append(GrantEntry(item: p.id, source: source, at: .now))
       }
+    
+    /// THE CLAIM — the third hand-changing verb, beside `acquire` and `release`.
+        /// A scroll the hero is holding becomes a spell they know.
+        ///
+        /// KID-INITIATED, ALWAYS. Nothing else in the app may call this: acquire adds the
+        /// object, and this is the only thing that spends it. Same invariant the star track
+        /// runs on — the entitlement arrives on its own, the build change never does.
+        ///
+        /// Routes through `receive(.learnSpell:)` rather than touching `spellbookIDs`
+        /// directly, so the mechanism stays in one place. That case is no longer something
+        /// the shop does TO a buyer; it's what a caster chooses.
+        ///
+        /// Matched by NAME — the same rule that auto-upgrades a homebrew item when it's
+        /// promoted into content under the same name. Duplicates spend one copy, exactly
+        /// like `release`. Returns false if the hero isn't holding it (a stale row).
+        @discardableResult
+        mutating func learn(scroll name: String, spellID: String) -> Bool {
+            guard let i = magicItems.firstIndex(of: name) else { return false }
+            magicItems.remove(at: i)
+            receive(.learnSpell(spellID: spellID))   // not auto-Ready — the kid readies it
+            return true
+        }
 }
 
 /// Where an acquisition came from. The tag every future gate + audit log reads.
 public enum GrantSource: Hashable, Sendable, Codable {
     case purchase, foundLoot, adventure
+    /// The hero RECEIVED this — a token was redeemed on the device the hero lives on.
     case gmToken(String)
+    /// The GM ISSUED a token addressed to this hero; whether it was ever scanned is
+    /// unknowable from this device. Only ever written on the GM's iPad, and it's the
+    /// honest tag for the ledger's remote and party rows. Adding a CASE is safe for
+    /// stored blobs (no existing row contains it); mutating an existing one is not —
+    /// GMStore.init decodes with `try?`, so a keyNotFound silently DROPS the row.
+    case gmTokenIssued(String)
 }
 
 extension Purchasable {
     /// What the shop pays: half, rounded down. The loss is the point — a buy/sell loop
     /// is always net negative, so there's nothing to exploit.
     var sellPrice: Int { cost / 2 }
+}
+
+extension Purchasable {
+    /// The inverse of `id`. "gear:long-sword" / "item:healing-potion" back to the thing.
+    ///
+    /// THE PREFIX IS THE DISCRIMINATOR, and it has been on the wire since the ledger's
+    /// first row — `GMStore.award` records `.purchasable(id: p.id, ...)`, which is this
+    /// namespaced form, not the raw content id. That's what lets a grant token carry a
+    /// bare id and resolve unambiguously on the kid's device: gear ids and item ids live
+    /// in different namespaces that could otherwise collide.
+    ///
+    /// nil = this device's content.json doesn't have it (a token from a newer build, or
+    /// homebrew that was never promoted). Callers report it; nothing crashes.
+    static func resolve(_ id: String, repo: ContentRepository) -> Purchasable? {
+        guard let sep = id.firstIndex(of: ":") else { return nil }
+        let rest = String(id[id.index(after: sep)...])
+        switch id[id.startIndex ..< sep] {
+        case "gear": return repo.gear(rest).map(Purchasable.gear)
+        case "item": return repo.item(rest).map(Purchasable.item)
+        default:     return nil
+        }
+    }
 }
 
 extension ShopRules {

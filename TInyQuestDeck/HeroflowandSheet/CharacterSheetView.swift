@@ -74,6 +74,9 @@ struct CharacterSheetView: View {
     let repo: ContentRepository
     let roster: RosterStore
     let combat: CombatStore
+    /// The single GMStore from the root. Only the reward scanner uses it — `redeem`
+    /// owns the dedup guard and the ledger, and both must be the one instance.
+    let gm: GMStore
     let characterID: UUID
 
     private var character: CharacterChoices? {
@@ -84,7 +87,8 @@ struct CharacterSheetView: View {
     var body: some View {
         Group {
             if let c = character, let sheet = deriveSheet(from: c, using: repo) {
-                SheetBody(repo: repo, roster: roster, combat: combat, character: c, sheet: sheet)
+                SheetBody(repo: repo, roster: roster, combat: combat, gm: gm,
+                                          character: c, sheet: sheet)
                     .onAppear {
                         combat.seed(c.id, maxHP: sheet.maxHP)
                         c.pets.forEach { pet in
@@ -107,6 +111,7 @@ private struct SheetBody: View {
     let repo: ContentRepository
     let roster: RosterStore
     let combat: CombatStore
+    let gm: GMStore
     let character: CharacterChoices
     let sheet: CharacterSheet
 
@@ -124,9 +129,11 @@ private struct SheetBody: View {
     @State private var pickingPetArtFor: PetChoice? = nil
     @State private var pickingSpiritArt = false
     @State private var showcaseInfoItem: ItemDefinition? = nil
+    @State private var pendingLearn: PendingLearn? = nil
     // Temporary: lets the table hand out story loot before the GM Portal exists. Flip off
     // when GM tokens (QR) land — then loot arrives authorized, not free-added.
     @State private var showingHeroCard = false
+    @State private var showingRedeem = false
     private let showGearGrantDevControl = true
     
 
@@ -135,6 +142,13 @@ private struct SheetBody: View {
         let boxIndex: Int
         let total: Int
     }
+    
+    /// A scroll the caster tapped Learn on, awaiting confirmation. The scroll is spent,
+        /// so it gets a confirm — same courtesy as selling.
+        private struct PendingLearn {
+            let itemName: String
+            let spell: SpellDefinition
+        }
 
     /// Voice of the Wild spend awaiting a mode pick (Roots / Bloom / Spirit).
     private struct PendingSummon {
@@ -155,17 +169,29 @@ private struct SheetBody: View {
     private var state: CombatState { combat.states[character.id] ?? CombatState(currentHP: sheet.maxHP) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                headerRow
-                sheetPanel
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    headerRow
+                    sheetPanel
+                }
+                .padding(16)
+                .frame(maxWidth: 1000)
+                .frame(maxWidth: .infinity)
             }
-            .padding(16)
-            .frame(maxWidth: 1000)
-            .frame(maxWidth: .infinity)
+            .background(Color.white)
+            .confirmationDialog(pendingLearn.map { "Learn \($0.spell.name)?" } ?? "",
+                                isPresented: learnBinding, titleVisibility: .visible,
+                                presenting: pendingLearn) { p in
+                Button("Learn it — the scroll is used up") { learnScroll(p) }
+                Button("Keep the scroll", role: .cancel) {}
+            } message: { p in
+                Text("\(p.spell.name) goes in your spellbook for good — ready it from your spell list when you want to cast it. The scroll is gone after this, so if you'd rather give it to someone else, keep it.")
+            }
         }
-        .background(Color.white)
-    }
+
+        private var learnBinding: Binding<Bool> {
+            Binding(get: { pendingLearn != nil }, set: { if !$0 { pendingLearn = nil } })
+        }
 
     // MARK: Header (portrait+name | HP · level · buff slot | stats | action buttons)
 
@@ -191,7 +217,7 @@ private struct SheetBody: View {
                 HStack(spacing: 10) {
                     goldBar
                     heroCardButton
-                    
+                    redeemButton
                 }
             }
         }
@@ -365,6 +391,32 @@ private struct SheetBody: View {
             }
         }
 
+    // MARK: Rewards (the code the GM shows; THIS hero takes it)
+        //
+        // Third in the hero's ledger row, and the pair to Hero Card: that one is "here's
+        // who I am," this one is "here's what I got." Being on the sheet is load-bearing,
+        // not decorative — a party token names no hero, so the sheet you're on is what
+        // decides who's claiming it.
+        //
+        // Unlike the ± steppers beside it, this one does NOT retire. It's the delivery
+        // path they retire in favor of.
+
+        private var redeemButton: some View {
+            Button { showingRedeem = true } label: {
+                Label("Rewards", systemImage: "qrcode.viewfinder")
+                    .font(questFont(14)).foregroundStyle(.black)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .sheet(isPresented: $showingRedeem) {
+                RedeemSheet(hero: character, repo: repo, roster: roster, gm: gm,
+                            bg: bg, accent: accent)
+            }
+        }
+    
     private func goldStepButton(_ symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.title2).foregroundStyle(tint)
@@ -555,11 +607,12 @@ private struct SheetBody: View {
                 if let summon = state.summon { summonBox(summon) }
                 if character.pets.isEmpty { addPetBox }
                 if sheet.isCaster { gearBox }
-     
+                
                 itemsBox(title: "Normal Items", items: character.normalItems,
                          adding: $addingNormalItem) { commitItems(normal: $0) }
                 itemsBox(title: "Magic Items", items: character.magicItems,
-                         adding: $addingMagicItem) { commitItems(magic: $0) }
+                         adding: $addingMagicItem,
+                         learnable: learnableSpell) { commitItems(magic: $0) }
                 if sheet.isCaster {
                     showcaseGearBox
                     showcaseItemsBox
@@ -1184,6 +1237,29 @@ private struct SheetBody: View {
         }
         roster.update(c)
     }
+    
+    /// Is this free-text item a scroll THIS hero could still learn? nil = no Learn
+        /// button — not a caster, not a scroll, or they already know the spell.
+        ///
+        /// A known spell's scroll deliberately shows nothing: learning it again would just
+        /// eat the scroll for nothing. It stays an object, which is the point — it's now
+        /// worth handing to someone who doesn't know it.
+        ///
+        /// Name-match against the catalog, the same rule that upgrades a homebrew item when
+        /// it's promoted into content.
+        private func learnableSpell(_ itemName: String) -> SpellDefinition? {
+            guard sheet.isCaster else { return nil }
+            guard let def = repo.items().first(where: { $0.name == itemName && $0.kind == .scroll }),
+                  let spellID = def.spellID,
+                  !character.spellbookIDs.contains(spellID) else { return nil }
+            return repo.spell(spellID)
+        }
+
+        private func learnScroll(_ p: PendingLearn) {
+            var c = character
+            guard c.learn(scroll: p.itemName, spellID: p.spell.id) else { return }
+            roster.update(c)   // spells never touch Max HP — no commitChoices needed
+        }
 
     private func removeSpell(_ id: String) {
         var c = character
@@ -1435,25 +1511,37 @@ private struct SheetBody: View {
     // MARK: Items boxes
 
     private func itemsBox(title: String, items: [String],
-                          adding: Binding<Bool>, commit: @escaping ([String]) -> Void) -> some View {
+                              adding: Binding<Bool>,
+                              learnable: @escaping (String) -> SpellDefinition? = { _ in nil },
+                              commit: @escaping ([String]) -> Void) -> some View {
         sheetBox(title, height: SheetMetrics.row2Height) {
             ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    HStack {
-                        Text(item).font(questFont(14)).foregroundStyle(.black)
-                        Spacer()
-                        Button {
-                            var list = items; list.remove(at: index); commit(list)
-                        } label: {
-                            Image(systemName: "minus.circle").foregroundStyle(.red.opacity(0.5))
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        HStack {
+                            Text(item).font(questFont(14)).foregroundStyle(.black)
+                            Spacer()
+                            if let spell = learnable(item) {
+                                Button { pendingLearn = PendingLearn(itemName: item, spell: spell) } label: {
+                                    Label("Learn", systemImage: "sparkles")
+                                        .font(questFont(11)).foregroundStyle(accent)
+                                        .lineLimit(1).fixedSize()
+                                        .padding(.horizontal, 7).padding(.vertical, 3)
+                                        .overlay(Capsule().strokeBorder(accent.opacity(0.5), lineWidth: 1.5))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            Button {
+                                var list = items; list.remove(at: index); commit(list)
+                            } label: {
+                                Image(systemName: "minus.circle").foregroundStyle(.red.opacity(0.5))
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
-                }
-                Button { adding.wrappedValue = true } label: {
-                    Label("Add", systemImage: "plus.circle.fill")
-                        .font(questFont(14)).foregroundStyle(accent)
+                    Button { adding.wrappedValue = true } label: {
+                        Label("Add", systemImage: "plus.circle.fill")
+                            .font(questFont(14)).foregroundStyle(accent)
                         .frame(maxWidth: .infinity).padding(.vertical, 6)
                         .overlay(RoundedRectangle(cornerRadius: 8)
                             .strokeBorder(accent.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))

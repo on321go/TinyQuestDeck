@@ -24,7 +24,12 @@ struct GMPartyMember: Codable, Identifiable, Hashable {
     var pathID: String? = nil
     var level: Int = 1
     var portraitCombo: String? = nil   // QuestArt portrait key ("forest-elf-knight")
-}
+    var linked: Bool? = nil     // Bool?, NOT Bool = false — see the patch's note
+    }
+
+    extension GMPartyMember {
+        var isLinked: Bool { linked == true }
+    }
 
 extension GMPartyMember {
     /// Snapshot a hero that exists on THIS iPad (the GM's own hero, or a shared-iPad
@@ -38,9 +43,12 @@ extension GMPartyMember {
                   pathID: hero.pathID,
                   level: hero.level,
                   portraitCombo: hero.portraitID
-                      ?? QuestArtKey.portraitCombo(race: hero.raceID, klass: hero.classID))
+                      ?? QuestArtKey.portraitCombo(race: hero.raceID, klass: hero.classID),
+                  linked: true)      // the id IS a hero's
     }
 }
+
+
 
 @MainActor
 @Observable

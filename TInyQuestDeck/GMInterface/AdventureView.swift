@@ -44,13 +44,13 @@ struct AdventureView: View {
     @State private var page = 0
     @State private var showingBoard = false
     @State private var pendingPreset: EncounterPreset? = nil
-    @State private var awarding: CharacterChoices? = nil
+    @State private var awarding: GMPartyMember? = nil
     @State private var goldPrefill: Int? = nil
-    @State private var remoteNote: RemoteRef? = nil
     @State private var namingImprov = false
     @State private var improvTitle = ""
+    @State private var awardingParty = false
 
-    private struct RemoteRef: Identifiable { let id = UUID(); let name: String }
+
     private var pageKey: String { "gm.adventure.page.\(adventure.id)" }
 
     var body: some View {
@@ -58,8 +58,12 @@ struct AdventureView: View {
             .fullScreenCover(isPresented: $showingBoard) {
                 EncounterView(repo: repo, store: encounters, party: party) { showingBoard = false }
             }
-            .sheet(item: $awarding) { hero in
-                AwardComposer(hero: hero, repo: repo, roster: roster, gm: gm,
+            .sheet(isPresented: $awardingParty) {
+                AwardComposer(target: .party(party.members), repo: repo, roster: roster,
+                              gm: gm, initialGold: goldPrefill)
+            }
+            .sheet(item: $awarding) { member in
+                AwardComposer(target: .one(member), repo: repo, roster: roster, gm: gm,
                               initialGold: goldPrefill)
             }
             .confirmationDialog("A fight is already live", isPresented: pendingBinding,
@@ -78,11 +82,6 @@ struct AdventureView: View {
                 TextField("The Kitchen Ambush", text: $improvTitle)
                 Button("Start") { startBattle(blankPreset(named: improvTitle)) }
                 Button("Cancel", role: .cancel) {}
-            }
-            .alert(item: $remoteNote) { ref in
-                Alert(title: Text("\(ref.name) lives on another iPad"),
-                      message: Text("Awards can't land here directly — QR delivery is the next layer. For now, they use their sheet's gold stepper."),
-                      dismissButton: .default(Text("Got it")))
             }
     }
 
@@ -433,21 +432,24 @@ struct AdventureView: View {
         .overlay(RoundedRectangle(cornerRadius: 16)
             .strokeBorder(StoryStyle.gold.opacity(0.7), lineWidth: 2))
     }
-
+    
     /// Gold reward → pick a hero → the award composer opens prefilled. Local
     /// heroes grant directly; remote members get the QR explainer (next layer).
     private func giveMenu(gold: Int) -> some View {
-        Menu {
-            ForEach(party.members) { member in
-                Button(member.name) {
-                    if let hero = roster.characters.first(where: { $0.id == member.id }) {
+            Menu {
+                Button {
+                    goldPrefill = gold
+                    awardingParty = true
+                } label: {
+                    Label("Everyone", systemImage: "person.3.fill")
+                }
+                Divider()
+                ForEach(party.members) { member in
+                    Button(member.name) {
                         goldPrefill = gold
-                        awarding = hero
-                    } else {
-                        remoteNote = RemoteRef(name: member.name)
+                        awarding = member
                     }
                 }
-            }
         } label: {
             Label("Give \(gold)g", systemImage: "person.fill.badge.plus")
                 .font(questFont(12)).foregroundStyle(.black)

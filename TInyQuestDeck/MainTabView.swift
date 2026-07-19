@@ -62,7 +62,7 @@ struct MainTabView: View {
     private func tabs(_ repo: ContentRepository) -> some View {
         TabView(selection: $tab) {
             Tab("Character Sheet", systemImage: "person.text.rectangle", value: .sheet) {
-                CharacterSheetView(repo: repo, roster: roster, combat: combat,
+                CharacterSheetView(repo: repo, roster: roster, combat: combat, gm: gm,
                                    characterID: selectedHeroID ?? UUID())
             }
             Tab("Heroes", systemImage: "person.3.fill", value: .heroes) {

@@ -74,8 +74,11 @@ enum QuestQR {
             }
             return .hero(card)
         case Kind.grant:
-            // Milestone B lands on the KID's iPad, not here.
-            return .unsupported("That's a reward code — scan it on the player's iPad, not the GM's.")
+            guard let token = try? JSONDecoder().decode(GrantToken.self, from: data),
+                  !token.nonce.isEmpty else {
+                return .unsupported("That reward code looks scrambled — try holding steadier.")
+            }
+            return .grant(token)
         default:
             return .unsupported("This iPad doesn't know that kind of code yet.")
         }
@@ -84,6 +87,7 @@ enum QuestQR {
 
 enum QRScan {
     case hero(HeroCard)
+    case grant(GrantToken)
     case unsupported(String)        // the message to show, already kid-readable
 }
 
@@ -152,6 +156,79 @@ extension HeroCard {
     }
 }
 
+// MARK: - Payload: the grant token (Milestone B)
+//
+// THE TOKEN IS THE AWARD; THE QR IS ONLY TRANSPORT. A hero on this iPad gets the same
+// struct redeemed in-process (no code, no camera — an iPad physically cannot scan its
+// own screen); a hero on another iPad gets it rendered and scanned. One redeem path,
+// two transports.
+//
+// `kind` is GrantKind verbatim — the ledger's vocabulary, unforked. Its `.purchasable`
+// id is already namespaced ("gear:x" / "item:y"), so the kid's device resolves it from
+// its OWN content.json via Purchasable.resolve. Small payload; robust code.
+//
+// No signing. The threat model is a kid double-tapping, not forgery.
+
+struct GrantToken: Codable, Hashable {
+    var v: Int = QuestQR.version
+    var t: String = QuestQR.Kind.grant
+    /// One-shot id. Dedup keys on (nonce, hero) — NEVER nonce alone. See SeenTokens.
+    var nonce: String
+    /// nil = a PARTY token: ANY hero may redeem it, once each. This is the party-star
+    /// mechanism — one code, each kid scans it in turn.
+    var hero: UUID?
+    /// Display only, and only on a single-hero token. Lets the wrong iPad say "this
+    /// reward is for Mittens" instead of a shrug. Never trusted for anything.
+    var heroName: String?
+    var kind: GrantKind
+
+    enum CodingKeys: String, CodingKey {
+        case v, t, nonce, hero, kind
+        case heroName = "n"     // short on the wire; every byte is a QR module
+    }
+
+    init(nonce: String, hero: UUID?, heroName: String?, kind: GrantKind) {
+        self.nonce = nonce; self.hero = hero; self.heroName = heroName; self.kind = kind
+    }
+
+    /// decodeIfPresent throughout — the CharacterChoices pattern, so a v2 token that
+    /// only ADDS fields still redeems on a v1 build. `kind` is the exception: a token
+    /// with no kind isn't an award, so it throws and decode() reports "scrambled".
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        v        = try c.decodeIfPresent(Int.self,    forKey: .v) ?? QuestQR.version
+        t        = try c.decodeIfPresent(String.self, forKey: .t) ?? QuestQR.Kind.grant
+        nonce    = try c.decodeIfPresent(String.self, forKey: .nonce) ?? ""
+        hero     = try c.decodeIfPresent(UUID.self,   forKey: .hero)
+        heroName = try c.decodeIfPresent(String.self, forKey: .heroName)
+        kind     = try c.decode(GrantKind.self,       forKey: .kind)
+    }
+}
+
+extension GrantToken {
+    /// One hero's award.
+    static func single(_ kind: GrantKind, hero: UUID, name: String?) -> GrantToken {
+        GrantToken(nonce: UUID().uuidString, hero: hero, heroName: name, kind: kind)
+    }
+
+    /// The party's award — quest and boss stars, which are party-wide ALWAYS (the
+    /// sibling-proofing rule). ONE token, no hero, redeemed once per kid.
+    static func party(_ kind: GrantKind) -> GrantToken {
+        GrantToken(nonce: UUID().uuidString, hero: nil, heroName: nil, kind: kind)
+    }
+
+    var isParty: Bool { hero == nil }
+
+    /// A party token addresses everyone; a single token addresses exactly one hero.
+    func addresses(_ heroID: UUID) -> Bool { hero == nil || hero == heroID }
+}
+
+/// The nonce is unique by construction, so it's the id. View-layer convenience for
+/// `.sheet(item:)` — CodingKeys is explicit, so this never reaches the wire.
+extension GrantToken: Identifiable {
+    var id: String { nonce }
+}
+
 extension GMPartyMember {
     /// The GM's side: a scanned card becomes the SAME record `init(hero:)` builds —
     /// carrying the hero's real id, which is the whole reason the card exists.
@@ -163,7 +240,8 @@ extension GMPartyMember {
                   pathID: card.path.isEmpty ? nil : card.path,
                   level: card.level,
                   portraitCombo: card.portrait
-                      ?? QuestArtKey.portraitCombo(race: card.race, klass: card.klass))
+                  ?? QuestArtKey.portraitCombo(race: card.race, klass: card.klass),
+                  linked: true)      // the card carried the hero's real id
     }
 }
 
@@ -257,6 +335,393 @@ struct HeroCardSheet: View {
     }
 }
 
+// MARK: - KID SIDE: "Rewards" (Milestone B)
+//
+// The other half of the sheet's QR corner. Hero Card SHOWS who you are; Rewards TAKES
+// what the GM handed out. Both live beside the wallet because that's the "who am I to
+// the table" corner — and this one is why the placement matters: THE SHEET YOU'RE ON
+// IS THE HERO REDEEMING. A party token carries no hero, so something has to say which
+// kid is claiming it, and the sheet says it for free.
+//
+// Every path here ends at GMStore.redeem — the same call step 4's Give makes for a
+// local hero. The QR is transport. The token is the award.
+//
+// Duplicates ScanHeroCardSheet's camera gate and phase scaffolding rather than sharing
+// it: that one wears GM purple on cream, this one wears the hero's theme, and the
+// shared part is ~20 lines. Same call as StoryStyle mirroring BoardStyle — if a third
+// scanner shows up, factor then.
+
+struct RedeemSheet: View {
+    let hero: CharacterChoices
+    let repo: ContentRepository
+    let roster: RosterStore
+    let gm: GMStore
+    let bg: Color
+    let accent: Color
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var phase: Phase = .scanning
+    @State private var cameraReady = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+
+    private enum Phase: Equatable {
+        case scanning
+        case found(GrantToken)
+        case landed(String)         // the applied line, straight from RedeemResult
+        case problem(String)
+    }
+
+    var body: some View {
+        NavigationStack {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(bg.opacity(0.85).ignoresSafeArea())
+                .navigationTitle("Rewards")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { dismiss() }.font(questFont(16))
+                    }
+                }
+        }
+        .task {
+            // Ask BEFORE consulting isAvailable — an un-prompted camera reads as
+            // "unavailable", which shows the no-camera message on first run.
+            if AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined {
+                cameraReady = await AVCaptureDevice.requestAccess(for: .video)
+            }
+        }
+    }
+
+    @ViewBuilder private var content: some View {
+        switch phase {
+        case .scanning:             scanner
+        case .found(let token):     confirmation(token)
+        case .landed(let line):     landed(line)
+        case .problem(let message): problem(message)
+        }
+    }
+
+    // MARK: Scanning
+
+    @ViewBuilder private var scanner: some View {
+        if !cameraReady {
+            message(symbol: "camera.fill",
+                    title: "The camera is off",
+                    body: "Tiny Quest needs the camera to read reward codes. A grown-up can turn it on in Settings → Tiny Quest.")
+        } else if !DataScannerViewController.isSupported || !DataScannerViewController.isAvailable {
+            message(symbol: "qrcode.viewfinder",
+                    title: "Can't scan on this iPad",
+                    body: "Ask your GM to add it by hand instead.")
+        } else {
+            VStack(spacing: 0) {
+                DataScannerView { raw in
+                    guard phase == .scanning else { return }   // first code wins
+                    handle(raw)
+                }
+                Text("Point at the reward code on your GM's iPad.")
+                    .font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                    .padding(14)
+            }
+        }
+    }
+
+    /// The wrong-hero check happens HERE, before the kid is shown a prize they can't
+    /// have. `redeem` checks it again — it's the one that matters — but teasing a kid
+    /// with someone else's star and then snatching it back is a bad table moment.
+    private func handle(_ raw: String) {
+        switch QuestQR.decode(raw) {
+        case .grant(let token):
+            if token.addresses(hero.id) {
+                phase = .found(token)
+            } else {
+                phase = .problem(wrongHeroNote(token))
+            }
+        case .hero:
+            phase = .problem("That's a Hero Card, not a reward! Ask your GM to show you a reward code.")
+        case .unsupported(let note):
+            phase = .problem(note)
+        }
+    }
+
+    private func wrongHeroNote(_ token: GrantToken) -> String {
+            guard let name = token.heroName else {
+                return "That reward is for somebody else. Ask your GM to show yours!"
+            }
+            // NAME MATCHES, ID DOESN'T. The GM typed this player into the party instead of
+            // scanning their Hero Card, so the token addresses a hero that exists nowhere.
+            if name.caseInsensitiveCompare(hero.name) == .orderedSame {
+                return "This code has your name on it, but not your hero! Ask your GM to scan your Hero Card into the party, then send it again."
+            }
+            return "That reward is for \(name)! Ask your GM to show yours."
+        }
+
+    // MARK: Confirmation — what you're about to take
+
+    private func confirmation(_ token: GrantToken) -> some View {
+        let d = describe(token.kind)
+        return VStack(spacing: 16) {
+            Spacer(minLength: 0)
+            Image(systemName: d.symbol).font(.system(size: 60)).foregroundStyle(d.tint)
+            Text(d.title)
+                .font(questFont(28)).foregroundStyle(.black)
+                .multilineTextAlignment(.center)
+                .lineLimit(2).minimumScaleFactor(0.6)
+            Text(d.note)
+                .font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 30)
+            if token.isParty {
+                Label("Everyone gets this one — pass it on!", systemImage: "person.3.fill")
+                    .font(questFontLight(12)).foregroundStyle(.black.opacity(0.5))
+            }
+            HStack(spacing: 12) {
+                secondary("Not now") { phase = .scanning }
+                primary("Take it!", symbol: "hand.raised.fill") { take(token) }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+    }
+
+    private func take(_ token: GrantToken) {
+        switch gm.redeem(token, on: hero.id, roster: roster, repo: repo) {
+        case .applied(let line):
+            phase = .landed(line)
+        case .alreadyRedeemed:
+            phase = .problem("You already took this one! A code only works once for each hero.")
+        case .wrongHero:
+            phase = .problem(wrongHeroNote(token))
+        case .unknownContent(let name):
+            phase = .problem("This iPad doesn't know what a \"\(name)\" is yet — it might need an update.")
+        case .noHero:
+            phase = .problem("Couldn't find your hero. Close this and try again.")
+        }
+    }
+
+    // MARK: Landed
+
+    private func landed(_ line: String) -> some View {
+        // Live, not the snapshot — the award just changed it.
+        let readyToLevel = roster.characters.first { $0.id == hero.id }?.canLevelUp ?? false
+        return VStack(spacing: 16) {
+            Spacer(minLength: 0)
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 56)).foregroundStyle(accent)
+            Text(line).font(questFont(28)).foregroundStyle(.black)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text("It's on your sheet!")
+                .font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+
+            if readyToLevel {
+                // STARS ENTITLE, THE KID CLAIMS. This TELLS them; it must never do it.
+                // The level badge and the point-spend flow are still the only things
+                // that change a build.
+                Label("You've got enough stars to LEVEL UP! Tap the level badge on your sheet.",
+                      systemImage: "sparkles")
+                    .font(questFont(14)).foregroundStyle(TierColor.signature)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 24)
+            }
+
+            HStack(spacing: 12) {
+                secondary("Scan another") { phase = .scanning }
+                primary("Done", symbol: "checkmark") { dismiss() }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+    }
+
+    // MARK: Problem
+
+    private func problem(_ note: String) -> some View {
+        VStack(spacing: 16) {
+            message(symbol: "questionmark.circle.fill", title: "Hmm…", body: note)
+            primary("Try again", symbol: "qrcode.viewfinder") { phase = .scanning }
+        }
+        .padding(24)
+    }
+
+    // MARK: Describing a reward, kid-side
+    //
+    // GMView.grantLabel is the GM's ledger voice ("25 gold → Mittens"); this is the
+    // kid's. Same enum, different room — don't merge them.
+
+    private struct Described {
+        let title: String
+        let note: String
+        let symbol: String
+        let tint: Color
+    }
+
+    /// if/else rather than ternaries between struct literals — this function is exactly
+    /// the size where the Swift 6 type checker starts guessing.
+    private func describe(_ kind: GrantKind) -> Described {
+        switch kind {
+        case .gold(let n):
+            if n >= 0 {
+                return Described(title: "\(n) gold!", note: "Straight into your coin purse.",
+                                 symbol: "circle.fill", tint: Color(hex: "C79008"))
+            } else {
+                return Described(title: "\(-n) gold gone", note: "Your GM is taking some back — fair's fair.",
+                                 symbol: "circle.fill", tint: Color(hex: "C79008"))
+            }
+        case .star(let n):
+            if n >= 0 {
+                return Described(title: n == 1 ? "A star!" : "\(n) stars!",
+                                 note: "Stars are how you level up: 3 for Level 2, 6 for Level 3.",
+                                 symbol: "star.fill", tint: TierColor.signature)
+            } else {
+                return Described(title: "\(-n) star\(n == -1 ? "" : "s") gone",
+                                 note: "Off the track it comes.",
+                                 symbol: "star", tint: TierColor.signature)
+            }
+        case .purchasable(let id, let name):
+            // Resolved from THIS iPad's content — the token carried an id, not a thing.
+            let p = Purchasable.resolve(id, repo: repo)
+            return Described(title: p?.name ?? name, note: itemNote(p),
+                             symbol: "gift.fill", tint: accent)
+        case .homebrew(let name, let magic):
+            return Described(title: name,
+                             note: magic ? "Lands in your Magic Items." : "Lands in your Normal Items.",
+                             symbol: "gift.fill", tint: accent)
+        }
+    }
+
+    private func itemNote(_ p: Purchasable?) -> String {
+        guard let p else { return "Your GM sent this one over." }
+        switch p {
+        case .gear:
+            return "Lands in your owned gear — put it on from the Gear box's Add menu."
+        case .item(let i):
+            switch i.kind {
+            case .scroll:
+                return "A scroll! It goes in your Magic Items. If you're a caster you can learn it from there — or hang onto it for a friend who can."
+            case .consumable:
+                return "Lands in your Normal Items."
+            case .magicConsumable, .curio:
+                return "Lands in your Magic Items."
+            }
+        }
+    }
+
+    // MARK: Chrome
+
+    private func message(symbol: String, title: String, body: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: symbol).font(.system(size: 46))
+                .foregroundStyle(accent.opacity(0.7))
+            Text(title).font(questFont(22)).foregroundStyle(.black)
+            Text(body).font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
+        }
+    }
+
+    private func primary(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(questFont(16)).foregroundStyle(.black)
+                .lineLimit(1).fixedSize()
+                .padding(.horizontal, 20).padding(.vertical, 11)
+                .background(TierColor.selectPeach, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func secondary(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(questFont(15)).foregroundStyle(.black)
+                .lineLimit(1).fixedSize()
+                .padding(.horizontal, 18).padding(.vertical, 11)
+                .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// GMStyle is private to GMView.swift; these two are the only colors this file
+/// borrows. Fold into a shared QuestTheme if the dark-theme decision (§7) makes
+/// one.
+private enum GMAccent {
+    static let accent = Color(hex: "8A4FD0")
+    static let page   = Color(hex: "C9C4EC")
+}
+
+// MARK: - GM SIDE: "Show this code" (Milestone B)
+//
+// The mirror of HeroCardSheet: that one is the kid showing WHO THEY ARE, this is the
+// GM showing WHAT THEY EARNED. Pure display — `GMStore.issue` already minted the token
+// and recorded the ledger row before this sheet appeared. Showing it again mutates
+// nothing; the award lands on the KID's device, when they scan.
+//
+// `memberName == nil` means a PARTY code (hero == nil): one code, every kid scans it in
+// turn, and the (nonce, heroID) dedup makes it land exactly once each.
+
+struct GrantTokenSheet: View {
+    let token: GrantToken
+    /// nil = a party code, addressed to nobody in particular.
+    let memberName: String?
+    let repo: ContentRepository
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var title: String { memberName == nil ? "Party Reward" : "Reward Code" }
+
+    private var instruction: String {
+        guard let memberName else {
+            return "Everyone scans this one, one at a time — Rewards on their Character Sheet. Each hero can take it once."
+        }
+        return "Have \(memberName) tap Rewards on their Character Sheet and point the camera at this."
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    Text((memberName ?? "The whole party").uppercased())
+                        .font(questFont(24)).foregroundStyle(.black)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    Text(token.kind.summary)
+                        .font(questFont(20)).foregroundStyle(GMAccent.accent)
+
+                    QRCodeImage(payload: token)
+
+                    Text(instruction)
+                        .font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 20)
+
+                    // The ledger row said "sent," not "received," and that's the honest
+                    // limit of what this iPad can know. No backend, no read receipt.
+                    Text("It's in the ledger as sent. Their iPad is where it actually lands.")
+                        .font(questFontLight(12)).foregroundStyle(.black.opacity(0.4))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 30)
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity)
+            }
+            .background(GMAccent.page.opacity(0.35).ignoresSafeArea())
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }.font(questFont(16))
+                }
+            }
+        }
+    }
+}
+
 // MARK: - GM SIDE: "Scan a hero card…"
 //
 // Scan -> decode -> CONFIRM -> import. The confirm step is deliberate: it names who
@@ -327,6 +792,7 @@ struct ScanHeroCardSheet: View {
                     guard phase == .scanning else { return }   // first code wins
                     switch QuestQR.decode(raw) {
                     case .hero(let card):        phase = .found(card)
+                    case .grant:                 phase = .problem("That's a reward code — scan it on the player's iPad, not the GM's.")
                     case .unsupported(let note): phase = .problem(note)
                     }
                 }
@@ -336,7 +802,7 @@ struct ScanHeroCardSheet: View {
             }
         }
     }
-
+    
     // MARK: Confirmation
 
     private func confirmation(_ card: HeroCard) -> some View {
@@ -419,14 +885,6 @@ struct ScanHeroCardSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 24)
         }
-    }
-
-    /// GMStyle is private to GMView.swift; these two are the only colors this file
-    /// borrows. Fold into a shared QuestTheme if the dark-theme decision (§7) makes
-    /// one.
-    private enum GMAccent {
-        static let accent = Color(hex: "8A4FD0")
-        static let page   = Color(hex: "C9C4EC")
     }
 }
 
