@@ -51,6 +51,8 @@ struct GMView: View {
     @State private var openAdventure: Adventure? = nil
     @State private var scanningHero = false
     @State private var awardingParty = false
+    @State private var ledgerExpanded = false
+    @State private var benchExpanded = false
 
 
     var body: some View {
@@ -419,7 +421,7 @@ struct GMView: View {
     // MARK: Monster bench (§7.1.2 — the live bestiary; improviser is on the board)
 
     private var benchPanel: some View {
-        panel("Monster Bench") {
+        collapsiblePanel("Monster Bench", isExpanded: $benchExpanded) {
             let byThreat = Dictionary(grouping: repo.monsters(), by: \.threat)
             ForEach(MonsterThreat.allCases, id: \.self) { threat in
                 if let group = byThreat[threat], !group.isEmpty {
@@ -474,7 +476,7 @@ struct GMView: View {
     // MARK: Ledger (§7.1.3 back half)
 
     private var ledgerPanel: some View {
-        panel("Award Ledger") {
+        collapsiblePanel("Award Ledger", count: gm.ledger.count, isExpanded: $ledgerExpanded) {
             if gm.ledger.isEmpty {
                 Text("Every gold, star, and item award lands here, with a timestamp.")
                     .font(questFontLight(15)).foregroundStyle(.black.opacity(0.5))
@@ -517,6 +519,40 @@ struct GMView: View {
         }
 
     // MARK: Shared panel chrome
+
+    private func collapsiblePanel<Content: View>(_ title: String,
+                                                 count: Int? = nil,
+                                                 isExpanded: Binding<Bool>,
+                                                 @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                withAnimation(.snappy) { isExpanded.wrappedValue.toggle() }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(title.uppercased()).font(questFont(18)).foregroundStyle(.black.opacity(0.8))
+                    if let count {
+                        Text("· \(count)").font(questFont(18)).foregroundStyle(.black.opacity(0.4))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.black.opacity(0.4))
+                        .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded.wrappedValue {
+                content()
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(GMStyle.page.opacity(GMStyle.pageTint),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black.opacity(0.12), lineWidth: 1.5))
+    }
 
     private func panel<Content: View>(_ title: String,
                                       @ViewBuilder content: () -> Content) -> some View {
