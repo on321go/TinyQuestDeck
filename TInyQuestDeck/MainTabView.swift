@@ -22,7 +22,7 @@ struct MainTabView: View {
     @State private var content = ContentStore()
     @State private var roster = RosterStore()
     @State private var combat = CombatStore()
-    @State private var rulebookStore = RulebookStore()
+    @State private var libraryStore = LibraryStore()
     @State private var shop = ShopStore()
     @State private var gm = GMStore()
     @State private var party = GMPartyStore()
@@ -71,20 +71,19 @@ struct MainTabView: View {
                           onNew: { building = true })
             }
             Tab("Books", systemImage: "book.fill", value: .books) {
-                RulebookView(store: rulebookStore, repo: repo)
-            
+                LibraryView(store: libraryStore, repo: repo)
             }
-//            Tab("Spells", systemImage: "sparkles", value: .spells) {
-//                ComingSoonTab(title: "Spells", symbol: "sparkles",
-//                              blurb: "Every spell, for quick reference mid-game.")
-//            }
+            //            Tab("Spells", systemImage: "sparkles", value: .spells) {
+            //                ComingSoonTab(title: "Spells", symbol: "sparkles",
+            //                              blurb: "Every spell, for quick reference mid-game.")
+            //            }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
                 ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
             }
             Tab("GM", systemImage: "crown.fill", value: .gm) {
                 GMView(repo: repo, roster: roster, gm: gm,
                        party: party, encounters: encounters,
-                       adventures: adventureStore, rulebook: rulebookStore)
+                       adventures: adventureStore, library: libraryStore)
             }
         }
     }

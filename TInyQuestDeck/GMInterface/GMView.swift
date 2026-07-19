@@ -40,7 +40,7 @@ struct GMView: View {
     let party: GMPartyStore
     let encounters: EncounterStore
     let adventures: AdventureStore
-    let rulebook: RulebookStore
+    let library: LibraryStore
 
     @State private var awarding: GMPartyMember? = nil
     @State private var shortcut: RuleSection? = nil
@@ -71,15 +71,15 @@ struct GMView: View {
             }
             .background(Color.white)
         }
-        .onAppear { if rulebook.rulebook == nil && rulebook.error == nil { rulebook.load() } }
+        .onAppear { if library.books.isEmpty && library.error == nil { library.load() } }
         .sheet(item: $awarding) { member in
-                    AwardComposer(target: .one(member), repo: repo, roster: roster, gm: gm)
-                }
-                .sheet(isPresented: $awardingParty) {
-                    AwardComposer(target: .party(party.members), repo: repo, roster: roster, gm: gm)
-                }
+            AwardComposer(target: .one(member), repo: repo, roster: roster, gm: gm)
+        }
+        .sheet(isPresented: $awardingParty) {
+            AwardComposer(target: .party(party.members), repo: repo, roster: roster, gm: gm)
+        }
         .sheet(item: $shortcut) { section in
-            NavigationStack { RuleSectionDetail(section: section, store: rulebook) }
+            NavigationStack { RuleSectionDetail(section: section, store: library) }
         }
         .sheet(isPresented: $addingMember) {
             AddPartyMemberSheet(repo: repo) { party.add($0) }
@@ -123,8 +123,8 @@ struct GMView: View {
     ]
 
     private func section(_ id: String) -> RuleSection? {
-        rulebook.rulebook?.sections.first { $0.id == id }
-    }
+            library.section(id)
+        }
 
     private var shortcutsRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {

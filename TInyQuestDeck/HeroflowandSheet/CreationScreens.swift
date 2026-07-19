@@ -298,7 +298,7 @@ struct KindDetailView: View {
                         caption: "\(race.name) card")
                         .frame(maxWidth: 330)
                         .rotationEffect(.degrees(-7))
-                        .zIndex(1)
+                        .zIndex(0)
 
                     TierPanel(title: race.tagline) {
                         VStack(alignment: .leading, spacing: 10) {

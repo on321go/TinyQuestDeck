@@ -51,17 +51,17 @@ enum RuleStyle {
 }
 
 // MARK: - Root (Books tab)
+// MARK: - Level 1: the library (Books tab root)
+//
+// The Books tab is two levels now. This is level 1 — a grid of book covers derived
+// from LibraryStore.books (library.json). It owns the tab's ONE NavigationStack and
+// registers BOTH destinations: a Book pushes its detail (level 2), a RuleSection
+// pushes its reader (level 3). Nothing is hardcoded to the rulebook — add a book to
+// library.json and it appears.
 
-struct RulebookView: View {
-    let store: RulebookStore
+struct LibraryView: View {
+    let store: LibraryStore
     let repo: ContentRepository
-    @State private var query = ""
-    @State private var browsing: BrowseTarget? = nil
-
-    enum BrowseTarget: Identifiable { case classes, kinds; var id: Self { self } }
-
-    private var results: [RuleSection] { store.sections(matching: query) }
-    private var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
     private let columns = [GridItem(.adaptive(minimum: 260, maximum: 380), spacing: 16)]
 
@@ -69,18 +69,11 @@ struct RulebookView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    QuestChip(text: "Rulebook", fill: RuleStyle.blue, size: 22)
-
-                    searchField
-
+                    QuestChip(text: "Books", fill: RuleStyle.blue, size: 22)
                     if let error = store.error {
                         Text(error).font(.callout.monospaced()).foregroundStyle(.red)
-                    } else if searching {
-                        resultsGrid
                     } else {
-                        browseRow
-                        group("Playing the Game", store.playerSections, tint: RuleStyle.playerPage)
-                        group("For the Game Master", store.gmSections, tint: RuleStyle.gmPage)
+                        pageGround("Your Books", tint: RuleStyle.browsePage) { booksGrid }
                     }
                 }
                 .padding(20)
@@ -88,9 +81,125 @@ struct RulebookView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Color.white)
-            .navigationDestination(for: RuleSection.self) { RuleSectionDetail(section: $0, store: store) }
+            .navigationDestination(for: Book.self) { book in
+                BookDetailView(book: book, store: store, repo: repo)
+            }
+            .navigationDestination(for: RuleSection.self) { section in
+                RuleSectionDetail(section: section, store: store)
+            }
         }
-        .onAppear { if store.rulebook == nil && store.error == nil { store.load() } }
+        .onAppear { if store.books.isEmpty && store.error == nil { store.load() } }
+    }
+
+    // Covers reuse BrowseCard's chrome (cream card, overhanging art) so level 1 reads
+    // as the same grid family as the section cards inside. Cover art is a QuestArt
+    // keyed by the catalog's coverArt, SF-Symbol fallback until it's drawn.
+    private var booksGrid: some View {
+        LazyVGrid(columns: columns, spacing: 22) {
+            ForEach(store.books) { book in
+                NavigationLink(value: book) {
+                    BookCoverCard(info: book.info)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+// MARK: - Book cover card (level-1 list tile)
+//
+// The books' OWN card — deliberately not BrowseCard, so retuning the list here never
+// touches the deck-browser tiles that reuse BrowseCard. Uses a real 5:7 cover thumb
+// (framed → clipped, book-shaped) instead of the small overhanging emblem. This is the
+// seam to grow into a taller portrait cover for the 2-column book-grid look later.
+
+private struct BookCoverCard: View {
+    let info: BookInfo
+
+    var body: some View {
+        HStack(spacing: 16) {
+            QuestArt(name: info.coverArt, ratio: QuestRatio.card,
+                     colors: [RuleStyle.blue, RuleStyle.blue.opacity(0.5)],
+                     symbol: info.coverSymbol, caption: nil, framed: false)
+            .frame(width: 88)                 // 5:7 → ~123 tall                // 5:7 → ~123 tall
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(info.title)
+                    .font(questFont(20)).foregroundStyle(.black)
+                    .lineLimit(2).minimumScaleFactor(0.7)
+                Text(info.blurb)
+                    .font(questFontLight(14)).foregroundStyle(.black.opacity(0.6))
+                    .lineLimit(3).minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(systemName: "chevron.right")
+                .font(.body).foregroundStyle(.black.opacity(0.3))
+        }
+        .padding(14)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.black, lineWidth: 2.5))
+    }
+}
+
+/// The tinted page ground: titled card field behind a grid. One helper so every ground
+/// (Library / Browse / Player / GM) can only ever differ by title and hue. Free
+/// function (was a method on the old root) so both levels share it.
+private func pageGround<Content: View>(_ title: String,
+                                       tint: Color,
+                                       @ViewBuilder content: () -> Content) -> some View {
+    VStack(alignment: .leading, spacing: 14) {
+        Text(title.uppercased()).font(questFont(18)).foregroundStyle(.black.opacity(0.8))
+        content()
+            .padding(.top, 8)   // room for the first row's poking icons
+    }
+    .padding(16)
+    .background(tint.opacity(RuleStyle.pageTint),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black.opacity(0.12), lineWidth: 1.5))
+}
+
+// MARK: - Level 2: one book's sections (was the Books-tab root)
+
+struct BookDetailView: View {
+    let book: Book
+    let store: LibraryStore
+    let repo: ContentRepository
+    @State private var query = ""
+    @State private var browsing: BrowseTarget? = nil
+
+    enum BrowseTarget: Identifiable { case classes, kinds; var id: Self { self } }
+
+    private var results: [RuleSection] { book.sections(matching: query) }
+    private var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    private let columns = [GridItem(.adaptive(minimum: 260, maximum: 380), spacing: 16)]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                QuestChip(text: book.title, fill: RuleStyle.blue, size: 22)
+
+                searchField
+
+                if let error = store.error {
+                    Text(error).font(.callout.monospaced()).foregroundStyle(.red)
+                } else if searching {
+                    resultsGrid
+                } else {
+                    if book.showsDeckBrowser { browseRow }
+                    group("Playing the Game", book.playerSections, tint: RuleStyle.playerPage)
+                    group("For the Game Master", book.gmSections, tint: RuleStyle.gmPage)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: 1000)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Color.white)
+        .navigationTitle(book.title)
+        .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(item: $browsing) { target in
             switch target {
             case .classes: BrowseClassesView(repo: repo) { browsing = nil }
@@ -119,8 +228,7 @@ struct RulebookView: View {
 
     /// "Browse Classes / Kinds" — read-only galleries reusing the creation screens,
     /// opened as full-screen covers (their own NavigationStack) so they never nest
-    /// inside this reader's stack. Sits on its own blue ground, matching the two
-    /// section groups below it.
+    /// inside this reader's stack. Rulebook-only, gated by book.showsDeckBrowser.
     private var browseRow: some View {
         pageGround("Browse the Deck", tint: RuleStyle.browsePage) {
             LazyVGrid(columns: columns, spacing: 22) {   // extra row spacing so icons can poke up
@@ -155,22 +263,6 @@ struct RulebookView: View {
                 }
             }
         }
-    }
-
-    /// The tinted page ground: titled card field behind a grid. One helper so the three
-    /// grounds (Browse / Player / GM) can only ever differ by title and hue.
-    private func pageGround<Content: View>(_ title: String,
-                                           tint: Color,
-                                           @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title.uppercased()).font(questFont(18)).foregroundStyle(.black.opacity(0.8))
-            content()
-                .padding(.top, 8)   // room for the first row's poking icons
-        }
-        .padding(16)
-        .background(tint.opacity(RuleStyle.pageTint),
-                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.black.opacity(0.12), lineWidth: 1.5))
     }
 
     @ViewBuilder
@@ -235,7 +327,7 @@ struct RuleSectionDetail: View {
     let section: RuleSection
     /// Needed so `crossLink` pills can resolve target ids → live section titles
     /// (labels are never duplicated into rulebook.json) and push them.
-    let store: RulebookStore
+    let store: LibraryStore
 
     private var pageTint: Color {
         (section.group == .gm ? RuleStyle.gmPage : RuleStyle.playerPage)
@@ -269,7 +361,7 @@ struct RuleSectionDetail: View {
 
 private struct BlockView: View {
     let block: RuleBlock
-    let store: RulebookStore
+    let store: LibraryStore
     let accent: Color
 
     var body: some View {
@@ -371,7 +463,7 @@ private struct CalloutBox: View {
 
 private struct StepsSpine: View {
     let steps: [RuleStep]
-    let store: RulebookStore
+    let store: LibraryStore
     let accent: Color
 
     var body: some View {
@@ -387,7 +479,7 @@ private struct StepsSpine: View {
 private struct StepRow: View {
     let step: RuleStep
     let isLast: Bool
-    let store: RulebookStore
+    let store: LibraryStore
     let accent: Color
 
     private let bubble: CGFloat = 34
@@ -622,7 +714,7 @@ private struct EconomyChip: View {
 private struct CrossLinkRow: View {
     let title: String?
     let targets: [String]
-    let store: RulebookStore
+    let store: LibraryStore
     let accent: Color
 
     private var sections: [RuleSection] { targets.compactMap { store.section($0) } }

@@ -14,8 +14,49 @@ import Foundation
 
 // MARK: - Models
 
-struct Rulebook: Codable {
+/// One book's on-disk payload — `<id>.json` (rulebook.json, almanac.json, …).
+/// Deliberately the SAME `{ "sections": [...] }` shape the rulebook has always used,
+/// so rulebook.json is untouched by the move to a multi-book library.
+struct BookFile: Codable {
     let sections: [RuleSection]
+}
+
+/// library.json — the table of contents. Metadata ONLY; a book's rules text lives in
+/// its own `<id>.json`. Adding a book = one entry here + one file, no code.
+struct BookCatalog: Codable {
+    let books: [BookInfo]
+}
+
+/// A catalog entry. `id` doubles as the sections-file stem ("rulebook" → rulebook.json).
+struct BookInfo: Codable, Identifiable, Hashable {
+    let id: String
+    let title: String
+    let blurb: String            // one-line description on the cover card
+    let coverArt: String         // QuestArt asset key, e.g. "book-cover-rulebook"
+    let coverSymbol: String      // SF Symbol fallback until the cover art is drawn
+    let deckBrowser: Bool?        // opt-in Browse Classes/Kinds row (rulebook today). nil = off.
+}
+
+/// A catalog entry joined to its loaded sections — what the reader renders and what
+/// NavigationLinks carry. Assembled at load time, so not Codable.
+struct Book: Identifiable, Hashable {
+    let info: BookInfo
+    let sections: [RuleSection]
+
+    var id: String { info.id }
+    var title: String { info.title }
+    var showsDeckBrowser: Bool { info.deckBrowser ?? false }
+
+    /// The two group buckets, unchanged from the old store-level split.
+    var playerSections: [RuleSection] { sections.filter { $0.group == .player } }
+    var gmSections: [RuleSection] { sections.filter { $0.group == .gm } }
+
+    /// Case-insensitive keyword match across this book's titles + block text.
+    func sections(matching query: String) -> [RuleSection] {
+        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !q.isEmpty else { return sections }
+        return sections.filter { $0.searchText.contains(q) }
+    }
 }
 
 /// group: "player" or "gm" — drives the two-group section list.
@@ -219,36 +260,48 @@ enum CalloutTier: String, Codable, Hashable {
 
 @MainActor
 @Observable
-final class RulebookStore {
-    var rulebook: Rulebook?
+final class LibraryStore {
+    var books: [Book] = []
     var error: String?
 
-    var playerSections: [RuleSection] { rulebook?.sections.filter { $0.group == .player } ?? [] }
-    var gmSections: [RuleSection] { rulebook?.sections.filter { $0.group == .gm } ?? [] }
+    func book(_ id: String) -> Book? { books.first { $0.info.id == id } }
 
-    /// Resolve a section id — the seam `crossLink` pills use to render their labels
-    /// from the live section titles instead of duplicating them into the JSON.
-    /// A bad/renamed id returns nil and the pill is simply dropped.
+    /// Resolve a section id ACROSS THE WHOLE LIBRARY — the seam `crossLink` pills use to
+    /// render labels from live section titles. Section ids are unique library-wide, so
+    /// one global lookup keeps the entire block layer (RuleSectionDetail, CrossLinkRow)
+    /// exactly as it was. A bad/renamed id returns nil and the pill is dropped.
     func section(_ id: String) -> RuleSection? {
-        rulebook?.sections.first { $0.id == id }
+        books.lazy.flatMap(\.sections).first { $0.id == id }
     }
 
-    /// Case-insensitive keyword match across titles + block text.
-    func sections(matching query: String) -> [RuleSection] {
-        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !q.isEmpty else { return rulebook?.sections ?? [] }
-        return (rulebook?.sections ?? []).filter { $0.searchText.contains(q) }
-    }
-
+    /// Read library.json (the catalog), then load each book's `<id>.json` and assemble.
+    /// rulebook.json is just the first entry's file — no special-casing.
     func load() {
-        guard let url = Bundle.main.url(forResource: "rulebook", withExtension: "json") else {
-            error = "rulebook.json not found in bundle."
+        guard let catalogURL = Bundle.main.url(forResource: "library", withExtension: "json") else {
+            error = "library.json not found in bundle."
             return
         }
         do {
-            rulebook = try JSONDecoder().decode(Rulebook.self, from: Data(contentsOf: url))
+            let catalog = try JSONDecoder().decode(BookCatalog.self, from: Data(contentsOf: catalogURL))
+            books = try catalog.books.map { info in
+                guard let url = Bundle.main.url(forResource: info.id, withExtension: "json") else {
+                    throw LoadError.missingFile(info.id)
+                }
+                let file = try JSONDecoder().decode(BookFile.self, from: Data(contentsOf: url))
+                return Book(info: info, sections: file.sections)
+            }
         } catch {
-            self.error = "Failed to parse rulebook.json: \(error)"
+            self.error = "Failed to load library: \(error)"
+        }
+    }
+
+    private enum LoadError: LocalizedError {
+        case missingFile(String)
+        var errorDescription: String? {
+            switch self {
+            case .missingFile(let id):
+                "Book '\(id)' is listed in library.json but \(id).json isn't in the bundle."
+            }
         }
     }
 }

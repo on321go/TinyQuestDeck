@@ -1,0 +1,12 @@
+{
+  "books": [
+    {
+      "id": "rulebook",
+      "title": "Rulebook",
+      "blurb": "How to play — everything a hero and a Game Master need.",
+      "coverArt": "book-cover-rulebook",
+      "coverSymbol": "book.closed.fill",
+      "deckBrowser": true
+    }
+  ]
+}
