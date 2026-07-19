@@ -31,6 +31,7 @@ struct MainTabView: View {
     @State private var tab: MainTab = .heroes
     @State private var selectedHeroID: UUID? = nil
     @State private var building = false
+    @AppStorage("hasEverCreatedHero") private var hasEverCreatedHero = false
     
 
     var body: some View {
@@ -54,11 +55,12 @@ struct MainTabView: View {
                     selectedHeroID = newHero.id
                     tab = .sheet
                     building = false
+                    hasEverCreatedHero = true
                 }
             }
         }
     }
-
+    
     private func tabs(_ repo: ContentRepository) -> some View {
         TabView(selection: $tab) {
             Tab("Character Sheet", systemImage: "person.text.rectangle", value: .sheet) {
@@ -68,7 +70,8 @@ struct MainTabView: View {
             Tab("Heroes", systemImage: "person.3.fill", value: .heroes) {
                 HeroesTab(repo: repo, roster: roster,
                           onOpen: { id in selectedHeroID = id; tab = .sheet },
-                          onNew: { building = true })
+                          onNew: { building = true },
+                          onLearnToPlay: { tab = .books })
             }
             Tab("Books", systemImage: "book.fill", value: .books) {
                 LibraryView(store: libraryStore, repo: repo)
@@ -96,15 +99,30 @@ struct HeroesTab: View {
     let roster: RosterStore
     var onOpen: (UUID) -> Void
     var onNew: () -> Void
-
+    var onLearnToPlay: () -> Void
+    
+    // Real newcomer signal: has this user ever finished creating a hero? Written
+    // at the creation choke point in MainTabView, read here. No onAppear, no
+    // self-gating — set by an action, not by this view appearing.
+    @AppStorage("hasEverCreatedHero") private var hasEverCreatedHero = false
+    @State private var showWelcome = false
+    
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 320), spacing: 16)]
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     QuestChip(text: "Heroes", size: 22)
                     Spacer()
+                    Button { showWelcome = true } label: {
+                        Label("Starting Info", systemImage: "questionmark.circle.fill")
+                            .font(questFont(16)).foregroundStyle(.black)
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.black, lineWidth: 2))
+                    }
+                    .buttonStyle(.plain)
                     Button(action: onNew) {
                         Label("New Hero", systemImage: "plus.circle.fill")
                             .font(questFont(16)).foregroundStyle(.black)
@@ -114,14 +132,20 @@ struct HeroesTab: View {
                     }
                     .buttonStyle(.plain)
                 }
-
+                
                 if roster.characters.isEmpty {
-                    ContentUnavailableView {
-                        Label("No heroes yet", systemImage: "person.crop.circle.badge.plus")
-                    } description: {
-                        Text("Tap New Hero to step through the portal.")
+                    if hasEverCreatedHero {
+                        ContentUnavailableView {
+                            Label("No heroes yet", systemImage: "person.crop.circle.badge.plus")
+                        } description: {
+                            Text("Tap New Hero to step through the portal, or Starting Info for a refresher.")
+                        }
+                        .padding(.top, 60)
+                    } else {
+                        WelcomeView(onCreateHero: onNew, onLearnToPlay: onLearnToPlay)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
                     }
-                    .padding(.top, 60)
                 } else {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(roster.characters) { c in
@@ -142,8 +166,17 @@ struct HeroesTab: View {
             .frame(maxWidth: 1000)
             .frame(maxWidth: .infinity)
         }
-        .background(Color.white)
-    }
+      .background(Color.white)
+      .sheet(isPresented: $showWelcome) {
+          WelcomeView(
+              onCreateHero: { showWelcome = false; onNew() },
+              onLearnToPlay: { showWelcome = false; onLearnToPlay() },
+              onClose: { showWelcome = false }
+          )
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .presentationDetents([.medium, .large])
+      }
+  }
 
     private func heroTile(_ c: CharacterChoices) -> some View {
         let sheet = deriveSheet(from: c, using: repo)
@@ -196,5 +229,81 @@ struct ComingSoonTab: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
+    }
+}
+
+// MARK: - First-run welcome / routing
+// Shown inline on an empty Heroes tab AND from the "Starting Info" button.
+// Built once; each site supplies the closures. onClose nil = inline (no dismiss
+// control); non-nil = sheet (renders an ×). The auto/flag logic lives at the
+// call site, never here.
+
+struct WelcomeView: View {
+    var onCreateHero: () -> Void
+    var onLearnToPlay: () -> Void
+    var onClose: (() -> Void)? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            header
+            VStack(spacing: 12) {
+                routeButton(title: "Create your first hero",
+                            symbol: "person.crop.circle.badge.plus",
+                            fill: TierColor.selectPeach, action: onCreateHero)
+                routeButton(title: "Learn to play",
+                            symbol: "book.fill",
+                            fill: Color(hex: "E8E2F4"), action: onLearnToPlay)
+            }
+            grownUpLine
+        }
+        .padding(24)
+        .frame(maxWidth: 460)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 22))
+        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.black, lineWidth: 2))
+        .overlay(alignment: .topTrailing) { closeControl }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            QuestChip(text: "Welcome", size: 22)
+            Text("Two taps to your first adventure.")
+                .font(questFontLight(16)).foregroundStyle(.black.opacity(0.65))
+        }
+    }
+
+    private func routeButton(title: String, symbol: String,
+                             fill: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: symbol).font(.system(size: 20, weight: .bold))
+                Text(title).font(questFont(17))
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.black.opacity(0.4))
+            }
+            .foregroundStyle(.black)
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .background(fill, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var grownUpLine: some View {
+        Text("Playing with a grown-up? They run the Game Master tab.")
+            .font(questFontLight(14)).foregroundStyle(.black.opacity(0.55))
+            .padding(.top, 2)
+    }
+
+    @ViewBuilder private var closeControl: some View {
+        if let onClose {
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 26)).foregroundStyle(.black.opacity(0.35))
+                    .padding(12)
+            }
+            .buttonStyle(.plain)
+        }
     }
 }
