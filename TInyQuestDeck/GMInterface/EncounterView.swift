@@ -539,7 +539,7 @@ struct EncounterView: View {
 
 // MARK: - Combatant detail (damage entry, conditions, quirk)
 
-private struct CombatantDetail: View {
+struct CombatantDetail: View {
     let combatant: Combatant
     let repo: ContentRepository
     let store: EncounterStore
@@ -673,7 +673,7 @@ private struct CombatantDetail: View {
 
 // MARK: - "+ Place" (required mid-fight — spec §1.1) with the structured lock editor
 
-private struct AddPlaceSheet: View {
+struct AddPlaceSheet: View {
     let strip: [Place]
     var onAdd: (String, String?, UUID?, LockedSide?) -> Void
 

@@ -220,11 +220,16 @@ struct ShopView: View {
 
 // MARK: - Category detail (lists the stocked items; price + Buy per row)
 
-private struct ShopCardDetailView: View {
+struct ShopCardDetailView: View {
     let card: ShopCard
     let repo: ContentRepository
     let roster: RosterStore
     let shopperID: UUID?
+    
+    /// This screen is SHARED between the iPad and phone shops; the price/buy row
+        /// is the one spot it forks by width (the 190pt art column leaves ~108pt of
+        /// text column on a phone). Everything else fits both.
+        @Environment(\.horizontalSizeClass) private var hSize
 
     @State private var toast: String?
     private let accent = Color(hex: "6B4E8E")
@@ -292,11 +297,7 @@ private struct ShopCardDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 12)
-                HStack(alignment: .center, spacing: 12) {
-                    goldLabel(p.cost, size: 18)
-                    Spacer()
-                    buyButton(p, short: short)
-                }
+                priceAndBuy(p, short: short)
             }
             .frame(maxWidth: .infinity, minHeight: boxHeight, alignment: .topLeading)
         }
@@ -351,20 +352,42 @@ private struct ShopCardDetailView: View {
         }
     }
 
-    private func buyButton(_ p: Purchasable, short: Int?) -> some View {
-        let disabled = shopper == nil || short != nil
-        return Button { buy(p) } label: {
-            Text(short.map { "Need \($0)g" } ?? "Buy")
-                .font(questFont(15)).foregroundStyle(disabled ? .black.opacity(0.4) : .black)
-                .padding(.horizontal, 16).padding(.vertical, 8)
-                .background(disabled ? Color.gray.opacity(0.2) : TierColor.selectPeach,
-                            in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(.black.opacity(disabled ? 0.25 : 1), lineWidth: 2))
+    /// Price + Buy. Regular width keeps the iPad's side-by-side row VERBATIM;
+        /// compact stacks them trailing (gold above Buy) a size down — the fixed art
+        /// column eats most of a phone row, so side-by-side smushed.
+        @ViewBuilder
+        private func priceAndBuy(_ p: Purchasable, short: Int?) -> some View {
+            if hSize == .compact {
+                VStack(alignment: .trailing, spacing: 8) {
+                    goldLabel(p.cost, size: 15)
+                    buyButton(p, short: short, compact: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            } else {
+                HStack(alignment: .center, spacing: 12) {
+                    goldLabel(p.cost, size: 18)
+                    Spacer()
+                    buyButton(p, short: short)
+                }
+            }
         }
-        .buttonStyle(.plain)
-        .disabled(disabled)
-    }
+
+        private func buyButton(_ p: Purchasable, short: Int?, compact: Bool = false) -> some View {
+            let disabled = shopper == nil || short != nil
+            return Button { buy(p) } label: {
+                Text(short.map { "Need \($0)g" } ?? "Buy")
+                    .font(questFont(compact ? 13 : 15))
+                    .foregroundStyle(disabled ? .black.opacity(0.4) : .black)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .padding(.horizontal, compact ? 12 : 16).padding(.vertical, compact ? 7 : 8)
+                    .background(disabled ? Color.gray.opacity(0.2) : TierColor.selectPeach,
+                                in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(.black.opacity(disabled ? 0.25 : 1), lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .disabled(disabled)
+        }
 
     /// The canonical buy: gold-gated, resolve the grant for THIS buyer (scrolls fork on
     /// caster-ness), deduct, land it, persist through the roster's single write path.
@@ -380,7 +403,8 @@ private struct ShopCardDetailView: View {
 // MARK: - File-private shared bits (used by both the grid and the detail)
 
 /// A little gold coin + amount, optionally prefixed ("from ").
-private func goldLabel(_ amount: Int, size: CGFloat, prefix: String = "") -> some View {
+// Internal (not private): ShopPhoneView draws the same coin — one canonical look.
+func goldLabel(_ amount: Int, size: CGFloat, prefix: String = "") -> some View {
     HStack(spacing: 4) {
         if !prefix.isEmpty {
             Text(prefix).font(questFontLight(size)).foregroundStyle(.black.opacity(0.55))
@@ -394,7 +418,7 @@ private func goldLabel(_ amount: Int, size: CGFloat, prefix: String = "") -> som
 
 /// Pastel ground per category (the mock's per-card colors). Purely presentational —
 /// lives here, not on the domain enum.
-private func cardTint(_ c: ShopCategory) -> Color {
+func cardTint(_ c: ShopCategory) -> Color {
     switch c {
     case .heavyWeapons:    Color(hex: "D9C7B4")
     case .heavyOneHanders: Color(hex: "C7CEEA")
@@ -466,7 +490,7 @@ private func gearLine(_ g: GearDefinition) -> String? {
 
 // MARK: - Sell (owned gear back at half price)
 
-private struct SellView: View {
+struct SellView: View {
     let repo: ContentRepository
     let roster: RosterStore
     let combat: CombatStore

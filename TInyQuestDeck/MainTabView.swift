@@ -32,6 +32,9 @@ struct MainTabView: View {
     @State private var selectedHeroID: UUID? = nil
     @State private var building = false
     @AppStorage("hasEverCreatedHero") private var hasEverCreatedHero = false
+    /// compact = iPhone (and iPad Split View / Slide Over): the GM tab renders its
+    /// phone variants. The iPad views are untouched — they're just not selected here.
+    @Environment(\.horizontalSizeClass) private var hSize
     
 
     var body: some View {
@@ -50,12 +53,22 @@ struct MainTabView: View {
         .onAppear { if content.repo == nil && content.error == nil { content.load() } }
         .fullScreenCover(isPresented: $building) {
             if let repo = content.repo {
-                CreationFlowView(repo: repo) { newHero in
-                    roster.add(newHero)
-                    selectedHeroID = newHero.id
-                    tab = .sheet
-                    building = false
-                    hasEverCreatedHero = true
+                if hSize == .compact {
+                    CreationFlowPhoneView(repo: repo) { newHero in
+                        roster.add(newHero)
+                        selectedHeroID = newHero.id
+                        tab = .sheet
+                        building = false
+                        hasEverCreatedHero = true
+                    }
+                } else {
+                    CreationFlowView(repo: repo) { newHero in
+                        roster.add(newHero)
+                        selectedHeroID = newHero.id
+                        tab = .sheet
+                        building = false
+                        hasEverCreatedHero = true
+                    }
                 }
             }
         }
@@ -64,8 +77,13 @@ struct MainTabView: View {
     private func tabs(_ repo: ContentRepository) -> some View {
         TabView(selection: $tab) {
             Tab("Character Sheet", systemImage: "person.text.rectangle", value: .sheet) {
-                CharacterSheetView(repo: repo, roster: roster, combat: combat, gm: gm,
-                                   characterID: selectedHeroID ?? UUID())
+                if hSize == .compact {
+                    CharacterSheetPhoneView(repo: repo, roster: roster, combat: combat, gm: gm,
+                                            characterID: selectedHeroID ?? UUID())
+                } else {
+                    CharacterSheetView(repo: repo, roster: roster, combat: combat, gm: gm,
+                                       characterID: selectedHeroID ?? UUID())
+                }
             }
             Tab("Heroes", systemImage: "person.3.fill", value: .heroes) {
                 HeroesTab(repo: repo, roster: roster,
@@ -81,12 +99,22 @@ struct MainTabView: View {
             //                              blurb: "Every spell, for quick reference mid-game.")
             //            }
             Tab("Shop", systemImage: "bag.fill", value: .shop) {
-                ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
+                if hSize == .compact {
+                    ShopPhoneView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
+                } else {
+                    ShopView(repo: repo, roster: roster, shop: shop, combat: combat, activeHeroID: selectedHeroID)
+                }
             }
             Tab("GM", systemImage: "crown.fill", value: .gm) {
-                GMView(repo: repo, roster: roster, gm: gm,
-                       party: party, encounters: encounters,
-                       adventures: adventureStore, library: libraryStore)
+                if hSize == .compact {
+                    GMPhoneView(repo: repo, roster: roster, gm: gm,
+                                party: party, encounters: encounters,
+                                adventures: adventureStore, library: libraryStore)
+                } else {
+                    GMView(repo: repo, roster: roster, gm: gm,
+                           party: party, encounters: encounters,
+                           adventures: adventureStore, library: libraryStore)
+                }
             }
         }
     }

@@ -1628,7 +1628,7 @@ private struct SheetBody: View {
 
 // MARK: - "What did you roll?" — the physical-dice Recharge prompt
 
-private struct RechargeRollView: View {
+struct RechargeRollView: View {
     var onRolled: (Int) -> Void
 
     var body: some View {
@@ -1939,7 +1939,7 @@ private struct LevelUpSheet: View {
 /// catalog named "portrait-<raceID>-<classID>"; nothing to wire). Tapping a cell
 /// stores its opaque combo string on the character; reachable from the sheet, so the
 /// look is changeable any time.
-private struct PortraitPicker: View {
+struct PortraitPicker: View {
     let repo: ContentRepository
     let currentCombo: String
     let bg: Color
@@ -2061,7 +2061,7 @@ private struct PortraitPicker: View {
 /// cells. When `defaultArtName` is set, the first cell is "Default" (clears the stored
 /// imageID → bespoke/fallback art); pass nil to omit it. The pick is handed back via
 /// onPick (a slot string, or nil for Default).
-private struct ArtPicker: View {
+struct ArtPicker: View {
     let title: String
     let currentImageID: String?
     let defaultArtName: String?      // nil = no "Default" cell
