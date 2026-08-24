@@ -17,10 +17,19 @@ struct BrowseClassesView: View {
     let repo: ContentRepository
     var onClose: () -> Void
     @State private var path: [String] = []          // pathIDs being viewed
+        /// compact = phone browse: same read-only wiring, phone creation screens.
+        /// Their onSelect defaults to nil, so the SELECT bar never renders here.
+        @Environment(\.horizontalSizeClass) private var hSize
 
-    var body: some View {
-        NavigationStack(path: $path) {
-            PickPathView(repo: repo) { pathID in path.append(pathID) }   // draft nil → browse
+        var body: some View {
+            NavigationStack(path: $path) {
+                Group {
+                    if hSize == .compact {
+                        PickPathPhoneView(repo: repo) { pathID in path.append(pathID) }   // draft nil → browse
+                    } else {
+                        PickPathView(repo: repo) { pathID in path.append(pathID) }        // draft nil → browse
+                    }
+                }
                 .navigationTitle("Classes")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -29,12 +38,18 @@ struct BrowseClassesView: View {
                     }
                 }
                 .navigationDestination(for: String.self) { pathID in
-                    PathDetailView(repo: repo, pathID: pathID)           // onSelect nil → no Select
-                        .navigationTitle(repo.path(pathID)?.name ?? "Path")
-                        .navigationBarTitleDisplayMode(.inline)
+                    Group {
+                        if hSize == .compact {
+                            PathDetailPhoneView(repo: repo, pathID: pathID)   // onSelect nil → no Select
+                        } else {
+                            PathDetailView(repo: repo, pathID: pathID)        // onSelect nil → no Select
+                        }
+                    }
+                    .navigationTitle(repo.path(pathID)?.name ?? "Path")
+                    .navigationBarTitleDisplayMode(.inline)
                 }
+            }
         }
-    }
 }
 
 // MARK: - Browse Kinds (Pick a Kind → Kind Detail, read-only)
@@ -43,10 +58,18 @@ struct BrowseKindsView: View {
     let repo: ContentRepository
     var onClose: () -> Void
     @State private var path: [String] = []          // raceIDs being viewed
+        /// compact = phone browse: same read-only wiring, phone creation screens.
+        @Environment(\.horizontalSizeClass) private var hSize
 
-    var body: some View {
-        NavigationStack(path: $path) {
-            PickKindView(repo: repo) { raceID in path.append(raceID) }   // draft nil → browse
+        var body: some View {
+            NavigationStack(path: $path) {
+                Group {
+                    if hSize == .compact {
+                        PickKindPhoneView(repo: repo) { raceID in path.append(raceID) }   // draft nil → browse
+                    } else {
+                        PickKindView(repo: repo) { raceID in path.append(raceID) }        // draft nil → browse
+                    }
+                }
                 .navigationTitle("Kinds")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -55,12 +78,18 @@ struct BrowseKindsView: View {
                     }
                 }
                 .navigationDestination(for: String.self) { raceID in
-                    KindDetailView(repo: repo, raceID: raceID)           // onSelect nil → no Select
-                        .navigationTitle(repo.race(raceID)?.name ?? "Kind")
-                        .navigationBarTitleDisplayMode(.inline)
+                    Group {
+                        if hSize == .compact {
+                            KindDetailPhoneView(repo: repo, raceID: raceID)   // onSelect nil → no Select
+                        } else {
+                            KindDetailView(repo: repo, raceID: raceID)        // onSelect nil → no Select
+                        }
+                    }
+                    .navigationTitle(repo.race(raceID)?.name ?? "Kind")
+                    .navigationBarTitleDisplayMode(.inline)
                 }
+            }
         }
-    }
 }
 
 // MARK: - Books-tab entry card

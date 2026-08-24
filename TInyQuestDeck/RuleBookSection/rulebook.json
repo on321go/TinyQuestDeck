@@ -54,9 +54,34 @@
             {
               "n": 3,
               "title": "Know your three numbers",
-              "body": "Might = strong. Mind = smart and magic. Speed = quick and sneaky.",
               "highlight": "Roll the d20, add your stat. 10 or more — you did it!",
-              "highlightIcon": "die.face.5.fill"
+              "highlightIcon": "die.face.5.fill",
+              "blocks": [
+                {
+                  "kind": "cards",
+                  "columns": 3,
+                  "items": [
+                    {
+                      "icon": "figure.strengthtraining.traditional",
+                      "title": "Might",
+                      "text": "Strong",
+                      "examples": "lift the gate · swing the axe"
+                    },
+                    {
+                      "icon": "brain.head.profile",
+                      "title": "Mind",
+                      "text": "Smart & magic",
+                      "examples": "cast a spell · solve the riddle"
+                    },
+                    {
+                      "icon": "hare.fill",
+                      "title": "Speed",
+                      "text": "Quick & sneaky",
+                      "examples": "sneak past · shoot the bow"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "n": 4,
@@ -257,7 +282,7 @@
         {
           "kind": "bullets",
           "items": [
-            "Move (you can always move a little bit, no roll needed).",
+            "Move one place (no roll, nothing spent).",
             "Do ONE thing: attack, cast a spell, or help a friend."
           ]
         },
@@ -287,6 +312,117 @@
           "tier": "path",
           "body": [
             "If your HP hits 0, you're knocked out. A friend can heal you to wake you up. You don't die — Tiny Quest Deck is a friendly game."
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "Where the Fight Happens: Places"
+        },
+        {
+          "kind": "paragraph",
+          "text": "No grid. No ruler. No moving one square at a time. Every fight happens in 2–4 named places — the GM says them out loud, and that's the whole map. Who's where is the only position that matters."
+        },
+        {
+          "kind": "places",
+          "caption": "The Webbed Cave — three places, one of them locked. Who's where is the only position that matters.",
+          "items": [
+            {
+              "name": "The Roof",
+              "lock": "Speed 12 to climb",
+              "fighters": [
+                {
+                  "name": "Giant Spider",
+                  "hp": "9/9",
+                  "side": "monster"
+                }
+              ]
+            },
+            {
+              "name": "Cave Mouth",
+              "fighters": [
+                {
+                  "name": "Lila",
+                  "hp": "17/17",
+                  "side": "hero"
+                },
+                {
+                  "name": "Pip",
+                  "hp": "12/12",
+                  "side": "hero"
+                }
+              ]
+            },
+            {
+              "name": "The Dark Pool",
+              "fighters": [
+                {
+                  "name": "Slime",
+                  "hp": "8/8",
+                  "side": "monster"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "cards",
+          "columns": 2,
+          "items": [
+            {
+              "icon": "shoeprints.fill",
+              "title": "Move — one place, free",
+              "color": "move",
+              "text": "Every place is one Move away from every other — a fight is walking distance. No roll, nothing spent. Say where you're going and you're there."
+            },
+            {
+              "icon": "wind",
+              "title": "Run — two places",
+              "color": "thing",
+              "text": "Need to cross the whole fight? You can — but running that far eats your one thing. Fast feet or a sword swing. Pick."
+            },
+            {
+              "icon": "lock.fill",
+              "title": "Locked places",
+              "text": "Some places make you earn them — Speed 12 to climb the roof. Roll the check as your Move. Pass: you're up. Fail: you stay put but keep your one thing — a lock costs a Move, never your turn. Everyone makes their own climb, every time. The spider got up there; so can you."
+            },
+            {
+              "icon": "target",
+              "title": "Close & Far",
+              "text": "Close hits your place. Far hits anything you can see — including a locked place. Locks stop feet, not arrows and spells."
+            }
+          ]
+        },
+        {
+          "kind": "chips",
+          "title": "Pip's turn, in blocks",
+          "rows": [
+            {
+              "joined": true,
+              "items": [
+                {
+                  "text": "Move — Speed 12 to climb the roof… rolls 14, she's up!",
+                  "color": "move"
+                },
+                {
+                  "text": "One thing — dagger to the spider!",
+                  "color": "thing"
+                }
+              ]
+            },
+            {
+              "label": "Next round, if the climb had failed:",
+              "joined": true,
+              "items": [
+                {
+                  "text": "Move — wasted on the wall",
+                  "color": "move"
+                },
+                {
+                  "text": "One thing — shoot it from below (Far!)",
+                  "color": "thing"
+                }
+              ]
+            }
           ]
         }
       ]
@@ -605,7 +741,98 @@
           "targets": [
             "gm-difficulty",
             "gm-stat-call",
+            "gm-places",
             "gm-legendary",
+            "gm-monsters"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gm-places",
+      "title": "Running a Fight with Places",
+      "group": "gm",
+      "icon": "map.fill",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": "Places make fights fast because there's nothing to measure and nothing to argue about — only where everyone is and what they try next."
+        },
+        {
+          "kind": "steps",
+          "items": [
+            {
+              "n": 1,
+              "title": "Name 2–4 places out loud",
+              "body": "“The cave mouth, the dark pool, and — up there — the webbed roof.” Naming them makes them real. Kids will aim for the coolest one immediately."
+            },
+            {
+              "n": 2,
+              "title": "Lock one, if it's fun",
+              "body": "Pick a stat and a target: Speed 12 to climb, Might 13 to wade the current. Put something worth wanting behind it — the sniper perch, the treasure, the boss."
+            },
+            {
+              "n": 3,
+              "title": "Let the places tell the truth",
+              "body": "Nothing is enforced. The map isn't a referee — it just shows where everyone is. Monsters follow the same rules: one Move, one thing, and their own climbs."
+            }
+          ]
+        },
+        {
+          "kind": "heading",
+          "text": "The Built-in Battles"
+        },
+        {
+          "kind": "table",
+          "headers": [
+            "Battle",
+            "Places",
+            "The Lock"
+          ],
+          "rows": [
+            [
+              "The Webbed Cave",
+              "2 places + 1 locked",
+              "Speed 12 to climb to the roof"
+            ],
+            [
+              "The Old Bridge",
+              "3 places + 1 locked",
+              "Speed 10 to climb down"
+            ],
+            [
+              "The Wizard's Tower",
+              "3 places + 1 locked",
+              "Speed 12 to climb the ivy"
+            ],
+            [
+              "The Pirate Ship",
+              "3 places + 1 locked",
+              "Speed 12 to climb the rigging"
+            ]
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "Why a lock beats a wall",
+          "tier": "signature",
+          "body": [
+            "A wall says no. A lock says not yet — and hands the Scout the best moment of the fight. Whoever makes the climb gets the story: “I'm on the roof with the spider. Hi.”"
+          ]
+        },
+        {
+          "kind": "callout",
+          "title": "In the app",
+          "tier": "path",
+          "body": [
+            "The GM tab's fight board runs this exactly: tap a fighter, tap where they go. Rounds, turns, HP, and locked places are all one tap — and the four battles above are preloaded."
+          ]
+        },
+        {
+          "kind": "crossLink",
+          "title": "One tap away:",
+          "targets": [
+            "fighting",
             "gm-monsters"
           ]
         }

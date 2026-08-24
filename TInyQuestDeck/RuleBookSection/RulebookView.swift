@@ -34,6 +34,17 @@ enum RuleStyle {
 
     static let cardHeight: CGFloat = 88             // ~25% taller than the old ~70
     static let iconSize: CGFloat   = 46             // ~2x the old 26
+    
+    // Places diagram (the Webbed Cave block). Hero/monster chip tints echo the GM
+    // fight board's blue/red so the two surfaces read as the same idea, re-lit for
+    // the cream page instead of the dark board.
+    static let heroFill    = Color(hex: "DCE9F8")
+    static let heroInk     = Color(hex: "2C5A8C")
+    static let monsterFill = Color(hex: "F6DAD2")
+    static let monsterInk  = Color(hex: "9C4530")
+    static let lockGold    = Color(hex: "F2D374")   // lock pill fill
+    static let lockInk     = Color(hex: "8A6A14")   // dashed border + pill stroke
+    static let lockedFill  = Color(hex: "F5EBD3")   // locked place card (warm tan)
 
     // Action-economy colors (SPEC §2.1). Page-local visual aid for the Big Idea's
     // economy block — deliberately NOT a global contract, so the overlap with the
@@ -408,6 +419,9 @@ private struct BlockView: View {
 
         case let .crossLink(title, targets):
             CrossLinkRow(title: title, targets: targets, store: store, accent: accent)
+            
+        case let .places(caption, items):
+            PlacesDiagram(caption: caption, places: items)
 
         case .unknown:
             EmptyView()
@@ -567,8 +581,12 @@ private struct HighlightPill: View {
 private struct CardsGrid: View {
     let columns: Int
     let items: [RuleCard]
+    /// compact: these grids often sit inside the step spine (~300pt of content
+    /// column at 390) — two-up, the Reaction card's fixedSize badge alone
+    /// overflows a ~145pt card. One card per row on phone; iPad honors `columns`.
+    @Environment(\.horizontalSizeClass) private var hSize
 
-    private var perRow: Int { max(1, columns) }
+    private var perRow: Int { hSize == .compact ? 1 : max(1, columns) }
     private var rows: [[RuleCard]] {
         stride(from: 0, to: items.count, by: perRow).map {
             Array(items[$0 ..< min($0 + perRow, items.count)])
@@ -692,6 +710,122 @@ private struct ChipFlow: View {
     }
 }
 
+// MARK: - Places diagram (the Webbed Cave map)
+//
+// The rulebook-native version of the GM fight board's layout: place cards with
+// fighter chips, locked places dashed in gold. Deliberately NOT the live board —
+// this is a picture of a moment, styled for the cream page. Same non-lazy stance
+// as CardsGrid (nested-in-ScrollView, tiny item counts).
+
+private struct PlacesDiagram: View {
+    let caption: String?
+    let places: [PlaceSpot]
+    /// compact: three columns can't share a ~350pt phone column — stack them.
+    @Environment(\.horizontalSizeClass) private var hSize
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if hSize == .compact {
+                VStack(spacing: 12) {
+                    ForEach(Array(places.enumerated()), id: \.offset) { _, place in
+                        PlaceCardView(place: place)
+                    }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 14) {
+                    ForEach(Array(places.enumerated()), id: \.offset) { _, place in
+                        PlaceCardView(place: place)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let caption {
+                Text(caption)
+                    .font(questFontLight(14))
+                    .foregroundStyle(.black.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct PlaceCardView: View {
+    let place: PlaceSpot
+    private var locked: Bool { place.lock != nil }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(place.name.uppercased())
+                .font(questFont(14)).foregroundStyle(.black)
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .padding(.horizontal, 12).padding(.vertical, 5)
+                .background(RuleStyle.blue, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.black, lineWidth: 2))
+
+            if let lock = place.lock {
+                HStack(spacing: 4) {
+                    Image(systemName: "lock.fill").font(.system(size: 10, weight: .bold))
+                    Text(lock).font(questFont(12))
+                }
+                .foregroundStyle(.black)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(RuleStyle.lockGold, in: Capsule())
+                .overlay(Capsule().strokeBorder(RuleStyle.lockInk, lineWidth: 1.5))
+            }
+
+            ForEach(Array(place.fighters.enumerated()), id: \.offset) { _, fighter in
+                FighterChip(fighter: fighter)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 130, alignment: .top)
+        .background(locked ? RuleStyle.lockedFill : TierColor.panelCream,
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            if locked {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(RuleStyle.lockInk,
+                                  style: StrokeStyle(lineWidth: 2.5, dash: [7, 5]))
+            } else {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.black, lineWidth: 2.5)
+            }
+        }
+    }
+}
+
+private struct FighterChip: View {
+    let fighter: PlaceFighter
+
+    private var fill: Color { fighter.side == .hero ? RuleStyle.heroFill : RuleStyle.monsterFill }
+    private var ink: Color  { fighter.side == .hero ? RuleStyle.heroInk  : RuleStyle.monsterInk }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle().fill(ink)
+                Text(fighter.initial).font(questFont(13)).foregroundStyle(.white)
+            }
+            .frame(width: 26, height: 26)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(fighter.name).font(questFont(14)).foregroundStyle(.black)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+                Text("HP \(fighter.hp)").font(questFontLight(12)).foregroundStyle(.black.opacity(0.55))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(ink.opacity(0.7), lineWidth: 1.5))
+    }
+}
+
 private struct EconomyChip: View {
     let chip: RuleChip
 
@@ -800,8 +934,17 @@ private struct FlowLayout: Layout {
 private struct RuleTable: View {
     let headers: [String]
     let rows: [[String]]
+    /// compact = iPhone (and iPad Split View / Slide Over): equal-share columns
+    /// can't split ~350pt three or more ways (gm-monsters is five). Every table
+    /// stacks into per-row cards on phone; `table` below is the iPad body verbatim.
+    @Environment(\.horizontalSizeClass) private var hSize
 
     var body: some View {
+        if hSize == .compact { stacked } else { table }
+    }
+
+    // The iPad table — untouched.
+    private var table: some View {
         VStack(spacing: 0) {
             row(headers, isHeader: true)
             ForEach(Array(rows.enumerated()), id: \.offset) { i, cells in
@@ -811,6 +954,48 @@ private struct RuleTable: View {
         }
         .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2.5))
+    }
+
+    // Phone: one card per row. The first cell is the card's title (its own header
+    // — "Monster", "Stat", "Word" — shows once as the caption above the stack);
+    // remaining cells render as HEADER-prefixed lines so nothing has to share a
+    // width with anything. No zebra on phone — the card gaps separate rows.
+    private var stacked: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let first = headers.first {
+                Text(first.uppercased())
+                    .font(questFont(12))
+                    .foregroundStyle(RuleStyle.blueInk.opacity(0.8))
+            }
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, cells in
+                rowCard(cells)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func rowCard(_ cells: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let title = cells.first {
+                Text(title)
+                    .font(questFont(16)).foregroundStyle(RuleStyle.blueInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(Array(zip(headers, cells).enumerated().dropFirst()), id: \.offset) { _, pair in
+                (Text(pair.0.uppercased() + "  ")
+                    .font(questFont(11))
+                    .foregroundStyle(RuleStyle.blueInk.opacity(0.75))
+                 + Text(pair.1)
+                    .font(questFontLight(15))
+                    .foregroundStyle(Color.black.opacity(0.85)))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TierColor.panelCream, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.black, lineWidth: 2))
     }
 
     private func row(_ cells: [String], isHeader: Bool, striped: Bool = false) -> some View {

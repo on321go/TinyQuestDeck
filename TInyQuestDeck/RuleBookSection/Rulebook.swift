@@ -135,6 +135,40 @@ struct RuleChip: Codable, Hashable {
     let color: EconomyColor?
 }
 
+/// One fighter chip inside a place — display-only strings, no game logic.
+/// `hp` is whatever the page wants to show ("9/9"); the rulebook never computes.
+struct PlaceFighter: Codable, Hashable {
+    let name: String
+    let hp: String
+    let side: FighterSide
+
+    var initial: String { String(name.prefix(1)).uppercased() }
+    var plainText: String { name }
+}
+
+/// hero = blue chip, monster = red chip. Tolerant decode like EconomyColor —
+/// an unknown side renders as a monster rather than failing the whole block.
+enum FighterSide: String, Codable, Hashable {
+    case hero, monster
+
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = FighterSide(rawValue: raw) ?? .monster
+    }
+}
+
+/// One place card in a `places` diagram. `lock` doubles as the locked flag —
+/// its presence draws the dashed gold border and the lock pill; no separate bool.
+struct PlaceSpot: Codable, Hashable {
+    let name: String
+    let lock: String?               // "Speed 12 to climb" — nil = open place
+    let fighters: [PlaceFighter]
+
+    var plainText: String {
+        ([name] + (lock.map { [$0] } ?? []) + fighters.map(\.plainText)).joined(separator: " ")
+    }
+}
+
 /// The action-economy color language (RULEBOOK_ONBOARDING_AND_XP_SPEC §2.1).
 /// Move = blue, your one thing = coral, Free Action = green, Reaction = purple.
 /// Scope is deliberately page-local: it's a quick visual aid inside the Big Idea's
@@ -165,6 +199,7 @@ enum RuleBlock: Codable, Hashable {
     case cards(columns: Int, items: [RuleCard])            // mini-card grid
     case chips(title: String?, rows: [RuleChipRow])        // sample-turn strip
     case crossLink(title: String?, targets: [String])      // pill row → other sections
+    case places(caption: String?, items: [PlaceSpot])   // themed fight diagram (Webbed Cave)
     case unknown
 
     /// Text used for search (callouts/tables/steps/cards flattened). crossLink is
@@ -182,15 +217,17 @@ enum RuleBlock: Codable, Hashable {
         case .chips(let title, let rows):
             return ((title.map { [$0] } ?? []) + rows.map(\.plainText)).joined(separator: " ")
         case .image, .crossLink, .unknown: return ""
+        case let .places(caption, items):
+            return ((caption.map { [$0] } ?? []) + items.map(\.plainText)).joined(separator: " ")
         }
     }
 
     // Tagged Codable
     private enum CodingKeys: String, CodingKey {
-        case kind, text, items, title, body, tier, headers, rows, key, columns, targets
+        case kind, text, items, title, body, tier, headers, rows, key, columns, targets, caption
     }
     private enum Kind: String, Codable {
-        case heading, paragraph, bullets, callout, table, image, steps, cards, chips, crossLink
+        case heading, paragraph, bullets, callout, table, image, steps, cards, chips, crossLink, places
     }
 
     init(from decoder: Decoder) throws {
@@ -218,6 +255,9 @@ enum RuleBlock: Codable, Hashable {
         case .crossLink:
             self = .crossLink(title: try? c.decode(String.self, forKey: .title),
                               targets: try c.decode([String].self, forKey: .targets))
+        case .places:
+            self = .places(caption: try? c.decode(String.self, forKey: .caption),
+                           items: try c.decode([PlaceSpot].self, forKey: .items))
         }
     }
 
@@ -244,6 +284,10 @@ enum RuleBlock: Codable, Hashable {
         case let .crossLink(title, targets):
             try c.encode(Kind.crossLink, forKey: .kind)
             try c.encodeIfPresent(title, forKey: .title); try c.encode(targets, forKey: .targets)
+        case let .places(caption, items):
+            try c.encode(Kind.places, forKey: .kind)
+            try c.encodeIfPresent(caption, forKey: .caption)
+            try c.encode(items, forKey: .items)
         case .unknown:          break
         }
     }
